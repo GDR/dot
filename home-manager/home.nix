@@ -19,11 +19,11 @@ in {
     homeDirectory = "/home/gdr";
 
     packages = with pkgs; [
-      pkgs.tdesktop
-      pkgs.qbittorrent
-      pkgs.keepassxc
-      pkgs.mpv
-      pkgs.nnn
+      tdesktop # Telegram
+      qbittorrent
+      keepassxc
+      mpv
+      firefox
       vlc
     ];
 
