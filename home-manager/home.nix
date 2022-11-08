@@ -1,7 +1,7 @@
 # This is your home-manager configuration file
 # Use this to configure your home environment (it replaces ~/.config/nixpkgs/home.nix)
 
-{ inputs, lib, config, pkgs, ... }: let 
+{ inputs, lib, config, pkgs, environment, ... }: let 
 in {
   imports = [
     # If you want to use home-manager modules from other flakes (such as nix-colors), use something like:
@@ -10,6 +10,7 @@ in {
     # Feel free to split up your configuration and import pieces of it here.
   ];
 
+  home.sessionVariables.EDITOR = "nvim";
   nixpkgs.config.allowUnfree = true;
 
   # TODO: Set your username
@@ -40,7 +41,6 @@ in {
   programs.alacritty.enable = true;
   programs.vscode.enable = true;
   programs.firefox.enable = true;
-  programs.neovim.enable = true;
 
   programs = {
     git = {
@@ -60,6 +60,10 @@ in {
         plugins = [ "git" ];
         theme = "agnoster";
       };
+    };
+
+    neovim = {
+      enable = true;
     };
   };
   
