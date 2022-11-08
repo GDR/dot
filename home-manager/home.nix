@@ -45,6 +45,8 @@ in {
   programs = {
     git = {
       enable = true;
+      userName = "Damir Garifullin";
+      userEmail = "gosugdr@gmail.com";
     };
 
     zsh = {
