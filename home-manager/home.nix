@@ -23,8 +23,8 @@ in {
       qbittorrent
       keepassxc
       mpv
-      firefox
       vlc
+      google-chrome
     ];
 
     file = {
