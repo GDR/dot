@@ -2,6 +2,9 @@
   description = "Your new nix config";
 
   inputs = {
+    # Hardware
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
@@ -19,7 +22,7 @@
     # nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  outputs = { nur, nixpkgs, home-manager, ... }@inputs:
+  outputs = { nur, nixpkgs, home-manager, nixos-hardware, ... }@inputs:
     let
       forAllSystems = nixpkgs.lib.genAttrs [
         "aarch64-linux"
@@ -62,6 +65,7 @@
           system = "x86_64-linux";
           specialArgs = { inherit inputs; }; # Pass flake inputs to our config
           modules = (builtins.attrValues nixosModules) ++ [
+            nixos-hardware.nixosModules.lenovo-thinkpad-t480
             # > Our main nixos configuration file <
             ./nixos/configuration.nix
             # Our common nixpkgs config (unfree, overlays, etc)
