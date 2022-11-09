@@ -13,7 +13,7 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # Nur packages
-    nur.url = github:nix-community/NUR;
+    nur.url = "github:nix-community/NUR";
     # TODO: Add any other flake you might need
     hardware.url = "github:nixos/nixos-hardware";
 
@@ -22,7 +22,7 @@
     # nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  outputs = { nur, nixpkgs, home-manager, nixos-hardware, ... }@inputs:
+  outputs = { nur, nixpkgs, home-manager, ... }@inputs:
     let
       forAllSystems = nixpkgs.lib.genAttrs [
         "aarch64-linux"
@@ -59,15 +59,13 @@
       homeManagerModules = import ./modules/home-manager;
 
       nixosConfigurations = {
-        # FIXME replace with your hostname
         Nix-Germany = nixpkgs.lib.nixosSystem {
           pkgs = legacyPackages."x86_64-linux";
           system = "x86_64-linux";
           specialArgs = { inherit inputs; }; # Pass flake inputs to our config
           modules = (builtins.attrValues nixosModules) ++ [
-            nixos-hardware.nixosModules.lenovo-thinkpad-t480
             # > Our main nixos configuration file <
-            ./nixos/configuration.nix
+            ./hosts/nix-germany/configuration.nix
             # Our common nixpkgs config (unfree, overlays, etc)
             (import ./nixpkgs-config.nix { inherit overlays; })
           ];
@@ -75,7 +73,6 @@
       };
 
       homeConfigurations = {
-        # FIXME replace with your username@hostname
         "gdr@Nix-Germany" = home-manager.lib.homeManagerConfiguration {
           pkgs = legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
           extraSpecialArgs = { inherit inputs; }; # Pass flake inputs to our config
