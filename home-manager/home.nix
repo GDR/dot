@@ -29,6 +29,7 @@ in {
 
     file = {
       ".config/alacritty" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/alacritty; };
+      ".config/awesome" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/awesome; };
     };
   };
 
