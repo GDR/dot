@@ -41,7 +41,6 @@ in {
   programs.home-manager.enable = true;
   programs.alacritty.enable = true;
   programs.vscode.enable = true;
-  programs.firefox.enable = true;
 
   programs = {
     git = {
