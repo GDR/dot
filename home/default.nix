@@ -8,6 +8,8 @@
     # inputs.nix-colors.homeManagerModule
 
     # Feel free to split up your configuration and import pieces of it here.
+    ./desktop
+    ./terminal
   ];
 
   home.sessionVariables.EDITOR = "nvim";
@@ -29,7 +31,7 @@
 
     file = {
       ".config/alacritty" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/alacritty; };
-      ".config/awesome" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/awesome; };
+      # ".config/awesome" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/awesome; };
     };
   };
 

@@ -1,7 +1,7 @@
 { overlays, ... }:
 {
   nixpkgs = {
-    config = break {
+    config = {
       allowUnfree = true;
     };
     # Overlays is an attrset, convert to a list

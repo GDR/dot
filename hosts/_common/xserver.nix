@@ -6,7 +6,6 @@
     layout = "us,ru";
     xkbVariant = "";
     xkbOptions = "grp:alt_space_toggle";
-
     libinput = {
       enable = true;
       touchpad = {
@@ -18,14 +17,13 @@
       xterm.enable = false;
     };
 
-    displayManager = {
-      defaultSession = "none+awesome";
-    };
-
     windowManager.awesome = {
       enable = true;
     };
+    displayManager = {
+      defaultSession = "none+awesome";
+      lightdm.enable = true;
+    };
   };
 
-  sound.enable = true;
 }

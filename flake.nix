@@ -17,6 +17,10 @@
     # TODO: Add any other flake you might need
     hardware.url = "github:nixos/nixos-hardware";
 
+    hyprland = {
+      url = "github:gdr/Hyprland";
+    };
+
     # Shameless plug: looking for a way to nixify your themes and make
     # everything match nicely? Try nix-colors!
     # nix-colors.url = "github:misterio77/nix-colors";
@@ -56,7 +60,7 @@
       nixosModules = import ./modules/nixos;
       # Reusable home-manager modules you might want to export
       # These are usually stuff you would upstream into home-manager
-      homeManagerModules = import ./modules/home-manager;
+      homeManagerModules = import ./modules/home;
 
       nixosConfigurations = {
         Nix-Germany = nixpkgs.lib.nixosSystem {
@@ -73,13 +77,13 @@
       };
 
       homeConfigurations = {
-        "gdr@Nix-Germany" = home-manager.lib.homeManagerConfiguration {
+        "gdr" = home-manager.lib.homeManagerConfiguration {
           pkgs = legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
           extraSpecialArgs = { inherit inputs; }; # Pass flake inputs to our config
           modules = (builtins.attrValues homeManagerModules) ++ [
             nur.nixosModules.nur
             # > Our main home-manager configuration file <
-            ./home-manager/home.nix
+            ./home
             # Our common nixpkgs config (unfree, overlays, etc)
             (import ./nixpkgs-config.nix { inherit overlays; })
           ];
