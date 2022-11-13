@@ -1,7 +1,7 @@
 # This is your home-manager configuration file
 # Use this to configure your home environment (it replaces ~/.config/nixpkgs/home.nix)
 
-{ inputs, lib, config, pkgs, environment, ... }:
+{ inputs, lib, config, pkgs, environment, ... }: 
 {
   imports = [
     # If you want to use home-manager modules from other flakes (such as nix-colors), use something like:
@@ -15,7 +15,6 @@
   home.sessionVariables.EDITOR = "nvim";
   nixpkgs.config.allowUnfree = true;
 
-  # TODO: Set your username
   home = {
     username = "gdr";
     homeDirectory = "/home/gdr";
@@ -31,9 +30,12 @@
 
     file = {
       ".config/alacritty" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/alacritty; };
-      # ".config/awesome" = { source = config.lib.file.mkOutOfStoreSymlink ../dotfiles/awesome; };
     };
   };
+  
+  # Add stuff for your user as you see fit:
+  # programs.neovim.enable = true;
+  # home.packages = with pkgs; [ steam ];
 
   # Enable home-manager and git
   programs.home-manager.enable = true;
@@ -49,13 +51,28 @@
 
     zsh = {
       enable = true;
+      enableCompletion = true;
       shellAliases = {
         "ls" = "ls -l --color --group-directories-first";
         "dotfiles" = "cd ~/.config/nixos";
       };
+      plugins = [
+        {
+          name = "zsh-nix-shell";
+          file = "nix-shell.plugin.zsh";
+          src = pkgs.fetchFromGitHub {
+            owner = "chisui";
+            repo = "zsh-nix-shell";
+            rev = "v0.5.0";
+            sha256 = "0za4aiwwrlawnia4f29msk822rj9bgcygw6a8a6iikiwzjjz0g91";
+          };
+        }
+      ];
       oh-my-zsh = {
         enable = true;
-        plugins = [ "git" ];
+        plugins = [ 
+          "git"
+        ];
         theme = "agnoster";
       };
     };

@@ -3,5 +3,5 @@
 
 { pkgs ? (import ../nixpkgs.nix) { } }: {
   # example = pkgs.callPackage ./example { };
-  picom = pkgs.callPackage ./picom.nix { };
+  # picom = pkgs.callPackage ./picom.nix { };
 }

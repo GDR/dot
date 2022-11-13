@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   services.xserver = {
     enable = true;
@@ -19,6 +19,9 @@
 
     windowManager.awesome = {
       enable = true;
+      luaModules = [
+        pkgs.luaPackages.lgi
+      ];
     };
     displayManager = {
       defaultSession = "none+awesome";

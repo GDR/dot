@@ -1,4 +1,4 @@
-{ inputs, config, lib, ... }:
+{ inputs, pkgs, config, lib, ... }:
 {
   imports = [ 
     ./nix.nix
@@ -6,8 +6,13 @@
     ./xserver.nix
   ];
 
+  environment.systemPackages = with pkgs; [
+    zlib
+  ];
   # Enable networking
   networking.networkmanager.enable = true;
+
+  virtualisation.docker.enable = true;
   
   sound.enable = true;
 
