@@ -3,6 +3,7 @@
   git     = import ./shell/git.nix;
   neovim  = import ./shell/neovim.nix;
   htop    = import ./shell/htop.nix;
+  xbacklight = import ./shell/xbacklight.nix;
 
   awesomewm = import ./desktop/awesomewm.nix;
   ru-layout = import ./desktop/ru-layout.nix;
