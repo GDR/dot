@@ -12,6 +12,7 @@ in {
   config = mkIf cfg.enable {
     programs = {
       neovim.enable = true;
+      neovim.defaultEditor = true;
     };
   };
 }
