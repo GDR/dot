@@ -4,6 +4,14 @@
 
 This is my personal dotfiles for my dev environment.
 
+## What's Inside
+
+**TODO**
+
+## Instalation
+
+**TODO**
+
 ## Inspired by
 
 * [Misterio77/nix-starter-configs](https://github.com/Misterio77/nix-starter-configs)
