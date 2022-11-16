@@ -17,6 +17,9 @@
 
   networking.hostName = "Nix-Germany";
   networking.networkmanager.enable = true;
+
+  time.timeZone = "Europe/Moscow";
+
   modules = {
     shell = {
       git.enable    = true;
