@@ -31,6 +31,8 @@ in {
       };
     };
 
+    user.shell = pkgs.zsh;
+
     home.programs.zsh = {
       plugins = [
         "git"
