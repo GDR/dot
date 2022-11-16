@@ -1,8 +1,0 @@
-{ ... }:
-{
-  imports = [
-    ./awesome
-    ./fonts
-    ./development
-  ];
-}

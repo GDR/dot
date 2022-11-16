@@ -8,3 +8,4 @@ This is my personal dotfiles for my dev environment.
 
 * [Misterio77/nix-starter-configs](https://github.com/Misterio77/nix-starter-configs)
 * [Misterio77/nix-config](https://github.com/Misterio77/nix-config)
+* [hlissner/dotfiles](https://github.com/hlissner/dotfiles)

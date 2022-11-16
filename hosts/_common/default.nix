@@ -1,19 +1,11 @@
 { inputs, pkgs, config, lib, ... }:
 {
   imports = [ 
-    ./nix.nix
-    # ./desktop
-    ./xserver.nix
   ];
 
-  environment.systemPackages = with pkgs; [
-    zlib
-  ];
   # Enable networking
   networking.networkmanager.enable = true;
 
-  virtualisation.docker.enable = true;
-  
   sound.enable = true;
 
   # This setups a SSH server. Very important if you're setting up a headless system.

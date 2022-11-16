@@ -7,6 +7,7 @@
 
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.url = "nixpkgs/nixos-unstable"; 
 
     # Home manager
     home-manager.url = "github:nix-community/home-manager";
@@ -14,16 +15,7 @@
 
     # Nur packages
     nur.url = "github:nix-community/NUR";
-    # TODO: Add any other flake you might need
     hardware.url = "github:nixos/nixos-hardware";
-
-    hyprland = {
-      url = "github:gdr/Hyprland";
-    };
-
-    # Shameless plug: looking for a way to nixify your themes and make
-    # everything match nicely? Try nix-colors!
-    # nix-colors.url = "github:misterio77/nix-colors";
   };
 
   outputs = { nur, nixpkgs, home-manager, ... }@inputs:
@@ -57,7 +49,7 @@
       overlays = import ./overlays;
       # Reusable nixos modules you might want to export
       # These are usually stuff you would upstream into nixpkgs
-      nixosModules = import ./modules/nixos;
+      nixosModules = import ./modules;
       # Reusable home-manager modules you might want to export
       # These are usually stuff you would upstream into home-manager
       homeManagerModules = import ./modules/home;
@@ -83,7 +75,7 @@
           modules = (builtins.attrValues homeManagerModules) ++ [
             nur.nixosModules.nur
             # > Our main home-manager configuration file <
-            ./home
+            ./home/gdr.nix
             # Our common nixpkgs config (unfree, overlays, etc)
             (import ./nixpkgs-config.nix { inherit overlays; })
           ];
