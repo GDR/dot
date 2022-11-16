@@ -25,6 +25,7 @@
       htop.enable   = true;
 
       xbacklight.enable = true;
+      acpi.enable = true;
     };
 
     virtualization = {

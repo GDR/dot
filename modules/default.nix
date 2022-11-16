@@ -4,6 +4,7 @@
   neovim  = import ./shell/neovim.nix;
   htop    = import ./shell/htop.nix;
   xbacklight = import ./shell/xbacklight.nix;
+  acpi    = import ./shell/acpi.nix;
 
   awesomewm = import ./desktop/awesomewm.nix;
   ru-layout = import ./desktop/ru-layout.nix;
