@@ -15,6 +15,9 @@ in {
         enable = true;
         userName = "Damir Garifullin";
         userEmail = "gosugdr@gmail.com";
+        extraConfig = {
+          core.editor = "nvim";
+        };
       };
     };
   };
