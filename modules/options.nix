@@ -38,7 +38,6 @@ with lib;
           name = if elem user [ "" "root" ] then "gdr" else user;
       in {
         inherit name;
-        description = "The primary user account";
         extraGroups = [ "wheel" ];
         isNormalUser = true;
         home = "/home/${name}";
