@@ -13,5 +13,8 @@ in {
     home.programs = {
       kitty.enable = true;
     };
+
+    # Add config file for awesome wm
+    home.file.".config/kitty".source = ../../../dotfiles/kitty;
   };
 }
