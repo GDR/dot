@@ -5,6 +5,7 @@
   htop    = import ./shell/htop.nix;
   xbacklight = import ./shell/xbacklight.nix;
   acpi    = import ./shell/acpi.nix;
+  exa    = import ./shell/exa.nix;
 
   awesomewm = import ./desktop/awesomewm.nix;
   ru-layout = import ./desktop/ru-layout.nix;

@@ -23,6 +23,7 @@
       zsh.enable    = true;
       neovim.enable = true;
       htop.enable   = true;
+      exa.enable   = true;
 
       xbacklight.enable = true;
       acpi.enable = true;
