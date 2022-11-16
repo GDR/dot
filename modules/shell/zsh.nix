@@ -1,7 +1,6 @@
 { config, options, pkgs, lib, ... }: with lib;
 let 
-  cfg = config.modules.shell.zsh; 
-  hm = config.home-manager.users.gdr;
+  cfg = config.modules.shell.zsh;
 in {
   options.modules.shell.zsh = with types; {
     enable = mkOption {
