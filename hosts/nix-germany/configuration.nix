@@ -12,7 +12,6 @@
     inputs.hardware.nixosModules.lenovo-thinkpad-t480
 
     ./hardware-configuration.nix
-    ../_common
   ];
 
   networking.hostName = "Nix-Germany";
@@ -27,6 +26,7 @@
       neovim.enable = true;
       htop.enable   = true;
       exa.enable   = true;
+      ssh.enable   = true;
 
       xbacklight.enable = true;
       acpi.enable = true;
@@ -58,6 +58,9 @@
       awesomewm.enable  = true;
       touchpad.enable   = true;
       ru-layout.enable  = true;
+      sound.enable      = true;
     };
   };
+
+  system.stateVersion = "22.11";
 }

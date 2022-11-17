@@ -6,10 +6,12 @@
   xbacklight = import ./shell/xbacklight.nix;
   acpi    = import ./shell/acpi.nix;
   exa    = import ./shell/exa.nix;
+  ssh    = import ./shell/ssh.nix;
 
   awesomewm = import ./desktop/awesomewm.nix;
   ru-layout = import ./desktop/ru-layout.nix;
   touchpad  = import ./desktop/touchpad.nix;
+  sound  = import ./desktop/sound.nix;
 
   telegram    = import ./desktop/apps/telegram.nix;
   keepass     = import ./desktop/apps/keepass.nix;
