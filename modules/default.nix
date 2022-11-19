@@ -7,6 +7,7 @@
   acpi    = import ./shell/acpi.nix;
   exa    = import ./shell/exa.nix;
   ssh    = import ./shell/ssh.nix;
+  tmux = import ./shell/tmux.nix;
 
   awesomewm = import ./desktop/awesomewm.nix;
   ru-layout = import ./desktop/ru-layout.nix;

@@ -27,6 +27,7 @@
       htop.enable   = true;
       exa.enable   = true;
       ssh.enable   = true;
+      tmux.enable   = true;
 
       xbacklight.enable = true;
       acpi.enable = true;
