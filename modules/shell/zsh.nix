@@ -18,6 +18,8 @@ in {
 
     # environment.pathsToLink = "/share/zsh";
 
+    home.file.".config/zsh".source = ../../dotfiles/zsh;
+
     home.programs.zsh = {
       enable = true;
       enableCompletion = true;
@@ -37,7 +39,7 @@ in {
       };
 
       initExtra = ''
-        source ~/.p10k.zsh
+        source ~/.config/zsh/.p10k.zsh
       '';
 
       shellAliases = {
