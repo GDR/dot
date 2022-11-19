@@ -50,9 +50,6 @@
       # Reusable nixos modules you might want to export
       # These are usually stuff you would upstream into nixpkgs
       nixosModules = import ./modules;
-      # Reusable home-manager modules you might want to export
-      # These are usually stuff you would upstream into home-manager
-      homeManagerModules = import ./modules/home;
 
       nixosConfigurations = {
         Nix-Germany = nixpkgs.lib.nixosSystem {
@@ -62,20 +59,6 @@
           modules = (builtins.attrValues nixosModules) ++ [
             # > Our main nixos configuration file <
             ./hosts/nix-germany/configuration.nix
-            # Our common nixpkgs config (unfree, overlays, etc)
-            (import ./nixpkgs-config.nix { inherit overlays; })
-          ];
-        };
-      };
-
-      homeConfigurations = {
-        "gdr" = home-manager.lib.homeManagerConfiguration {
-          pkgs = legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
-          extraSpecialArgs = { inherit inputs; }; # Pass flake inputs to our config
-          modules = (builtins.attrValues homeManagerModules) ++ [
-            nur.nixosModules.nur
-            # > Our main home-manager configuration file <
-            ./home/gdr.nix
             # Our common nixpkgs config (unfree, overlays, etc)
             (import ./nixpkgs-config.nix { inherit overlays; })
           ];
