@@ -43,6 +43,8 @@ in {
       '';
 
       shellAliases = {
+        "vim" = "nvim";
+        "vi" = "nvim";
         "ls" = "exa -l --group-directories-first";
         "dotfiles" = "cd ~/.config/nixos";
       };
