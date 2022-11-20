@@ -1,6 +1,0 @@
-[submodule "home/desktop/awesome/config/modules/bling"]
-	path = home/desktop/awesome/config/modules/bling
-	url = git@github.com:BlingCorp/bling.git
-[submodule "home/desktop/awesome/config/modules/layout-machi"]
-	path = home/desktop/awesome/config/modules/layout-machi
-	url = git@github.com:xinhaoyuan/layout-machi.git
