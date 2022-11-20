@@ -48,6 +48,9 @@
         vlc.enable          = true;
         qbittorrent.enable  = true;
       };
+      browsers = {
+        chrome.enable = true;
+      };
       terminal = {
         alacritty.enable  = true;
         kitty.enable      = true;

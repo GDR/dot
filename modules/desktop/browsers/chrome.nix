@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let 
-  cfg = config.modules.desktop.apps.keepass; 
+  cfg = config.modules.desktop.browsers.chrome; 
 in {
-  options.modules.desktop.apps.keepass = with types; {
+  options.modules.desktop.browsers.chrome = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;

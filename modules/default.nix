@@ -1,31 +1,16 @@
-{
-  zsh     = import ./shell/zsh.nix;
-  git     = import ./shell/git.nix;
-  neovim  = import ./shell/neovim.nix;
-  htop    = import ./shell/htop.nix;
-  xbacklight = import ./shell/xbacklight.nix;
-  acpi    = import ./shell/acpi.nix;
-  exa    = import ./shell/exa.nix;
-  ssh    = import ./shell/ssh.nix;
-  tmux = import ./shell/tmux.nix;
+{ nixpkgs, ... }: with nixpkgs.lib; rec {
+  recursiveDirs = dir: mapAttrs' (n: v:
+    if v == "directory" then nameValuePair n (recursiveDirs "${toString dir}/${n}")
+    else nameValuePair (removeSuffix ".nix" n) "${toString dir}/${n}"
+  ) (builtins.readDir dir);
 
-  awesomewm = import ./desktop/awesomewm.nix;
-  ru-layout = import ./desktop/ru-layout.nix;
-  touchpad  = import ./desktop/touchpad.nix;
-  sound  = import ./desktop/sound.nix;
+  flattenModules = modules: (
+    concatMap (x: 
+      if isAttrs modules.${x} then (flattenModules modules.${x})
+      else if x == "default" || x == "_default" then [] 
+      else [modules.${x}]
+    ) (attrNames modules)
+  );
 
-  telegram    = import ./desktop/apps/telegram.nix;
-  keepass     = import ./desktop/apps/keepass.nix;
-  vlc         = import ./desktop/apps/vlc.nix;
-  qbittorrent = import ./desktop/apps/qbittorrent.nix;
-
-  vscode = import ./desktop/development/vscode.nix;
-
-  alacritty = import ./desktop/terminal/alacritty.nix;
-  kitty     = import ./desktop/terminal/kitty.nix;
-
-  docker = import ./virtualization/docker.nix;
-  development-common = import ./development/common.nix;
-
-  options = import ./options.nix;
+  modules = flattenModules (recursiveDirs ./.);
 }
