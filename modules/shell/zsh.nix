@@ -12,12 +12,6 @@ in {
   config = mkIf cfg.enable {
     user.shell = pkgs.zsh;
 
-    environment.sessionVariables = {
-      HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE = "1";
-    };
-
-    # environment.pathsToLink = "/share/zsh";
-
     home.file.".config/zsh".source = ../../dotfiles/zsh;
 
     home.programs.zsh = {
@@ -46,7 +40,7 @@ in {
         "vim" = "nvim";
         "vi" = "nvim";
         "ls" = "exa -l --group-directories-first";
-        "dotfiles" = "cd ~/.config/nixos";
+        "dotfiles" = "cd ~/Workspaces/gdr/github/dot";
       };
     };
   };

@@ -32,6 +32,7 @@ in {
 
     user.packages = with pkgs; [
       rofi
+      picom
     ];
 
     # Add config file for awesome wm

@@ -10,10 +10,8 @@ in {
   };
 
   config = mkIf cfg.enable {
-    home.programs = {
-      neovim = {
-        enable = true;
-      };
+    home.programs.neovim = {
+      enable = true;
     };
   };
 }

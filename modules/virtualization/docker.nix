@@ -1,13 +1,8 @@
- { config, options, pkgs, lib, ... }: with lib;
+ { config, options, pkgs, lib, ... }: with lib; with lib.my;
 let 
   cfg = config.modules.virtualization.docker; 
 in {
-  options.modules.virtualization.docker = with types; {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-  };
+  options.modules.virtualization.docker.enable = mkEnableOption "docker";
 
   config = mkIf cfg.enable {
     virtualisation.docker.enable = true;

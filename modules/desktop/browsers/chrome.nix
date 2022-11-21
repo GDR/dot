@@ -1,6 +1,6 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-  cfg = config.modules.desktop.browsers.chrome; 
+let
+  cfg = config.modules.desktop.browsers.chrome;
 in {
   options.modules.desktop.browsers.chrome = with types; {
     enable = mkOption {

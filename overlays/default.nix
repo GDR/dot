@@ -10,10 +10,5 @@
     # example = prev.example.overrideAttrs (oldAttrs: rec {
     # ...
     # });
-    final.lib = prev.lib // {
-      my = {
-        
-      };
-    };
   };
 }

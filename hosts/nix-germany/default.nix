@@ -5,7 +5,7 @@
 
   # Configure nix and nixpkgs
   nixpkgs.config.allowUnfree = true;
-  
+
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.hardware.nixosModules.lenovo-thinkpad-t480
@@ -22,7 +22,6 @@
       git.enable    = true;
       zsh.enable    = true;
       neovim.enable = true;
-      htop.enable   = true;
       exa.enable   = true;
       ssh.enable   = true;
       tmux.enable   = true;
