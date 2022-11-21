@@ -8,7 +8,7 @@ This is my personal dotfiles for my dev environment.
 
 **TODO**
 
-## Instalation
+## Installation
 
 **TODO**
 
