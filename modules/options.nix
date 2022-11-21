@@ -1,10 +1,10 @@
-{ config, options, lib, ...}: 
+{ config, options, lib, ...}:
 with lib;
 {
   options = with types; {
     user = mkOption {
       type = attrs;
-      default = {}; 
+      default = {};
       description = "Asd";
     };
 
@@ -61,7 +61,7 @@ with lib;
         programs = mkAliasDefinitions options.home.programs;
       };
     };
-    
+
     users.users.${config.user.name} = mkAliasDefinitions options.user;
 
     nix.settings = let users = [ "root" config.user.name ]; in {
