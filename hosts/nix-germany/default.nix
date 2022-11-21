@@ -4,13 +4,11 @@
 { inputs, lib, config, pkgs, home-manager, ... }: {
 
   # Configure nix and nixpkgs
-  environment.variables.NIXPKGS_ALLOW_UNFREE = "1";
   nixpkgs.config.allowUnfree = true;
   
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.hardware.nixosModules.lenovo-thinkpad-t480
-
     ./hardware-configuration.nix
   ];
 
@@ -28,7 +26,6 @@
       exa.enable   = true;
       ssh.enable   = true;
       tmux.enable   = true;
-
       xbacklight.enable = true;
       acpi.enable = true;
     };
