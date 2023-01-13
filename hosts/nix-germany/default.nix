@@ -43,6 +43,7 @@
         telegram.enable     = true;
         vlc.enable          = true;
         qbittorrent.enable  = true;
+        steam.enable        = true;
       };
       browsers = {
         chrome.enable = true;
