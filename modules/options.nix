@@ -49,6 +49,7 @@ with lib;
       useUserPackages = true;
 
       users.${config.user.name} = {
+        nixpkgs.config.allowUnfree = true;
         home = {
           file = mkAliasDefinitions options.home.file;
           stateVersion = config.system.stateVersion;

@@ -1,6 +1,3 @@
-# This is your system's configuration file.
-# Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
-
 { inputs, lib, config, pkgs, home-manager, ... }: {
 
   # Configure nix and nixpkgs
@@ -44,16 +41,17 @@
         vlc.enable          = true;
         qbittorrent.enable  = true;
         steam.enable        = true;
+        zoom.enable         = true;
       };
       browsers = {
         chrome.enable = true;
       };
       terminal = {
-        alacritty.enable  = true;
         kitty.enable      = true;
       };
       development = {
-        vscode.enable = true;
+        vscode.enable = false;
+        gcc.enable = true;
       };
 
       awesomewm.enable  = true;

@@ -1,5 +1,5 @@
 {
-  description = "Your new nix config";
+  description = "My personal nixos configuration";
 
   inputs = {
     # Hardware
@@ -18,23 +18,23 @@
   };
 
   outputs = { nur, nixpkgs, home-manager, ... }@inputs:
-    rec {
-      lib = nixpkgs.lib.extend (lib: _: {
-        my = import ./lib { inherit inputs lib; };
-      });
+  rec {
+    lib = nixpkgs.lib.extend (lib: _: {
+      my = import ./lib { inherit inputs lib; };
+    });
 
-      overlays = import ./overlays;
+    overlays = import ./overlays;
 
-      modules = import ./modules { inherit inputs lib; };
+    modules = import ./modules { inherit inputs lib; };
 
-      nixosConfigurations = {
-        Nix-Germany = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = { inherit inputs lib; };
-          modules = (modules.modules) ++ [
-            ./hosts/nix-germany
-          ];
-        };
+    nixosConfigurations = {
+      Nix-Germany = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs lib; };
+        modules = (modules.modules) ++ [
+          ./hosts/nix-germany
+        ];
       };
     };
+  };
 }

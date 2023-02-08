@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.desktop.apps.telegram;
+  cfg = config.modules.desktop.development.gcc;
 in {
-  options.modules.desktop.apps.telegram = with types; {
+  options.modules.desktop.development.gcc = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
@@ -11,8 +11,8 @@ in {
 
   config = mkIf cfg.enable {
     user.packages = with pkgs; [
-      # Telegram application
-      tdesktop
+      gcc
+      clang
     ];
   };
 }
