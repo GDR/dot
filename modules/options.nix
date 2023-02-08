@@ -1,4 +1,4 @@
-{ config, options, lib, ...}:
+{ config, options, lib, nixpkgs, ...}:
 with lib;
 {
   options = with types; {
@@ -33,6 +33,8 @@ with lib;
   };
 
   config = {
+    nixpkgs.config.allowUnfree = true;
+
     user =
       let user = builtins.getEnv "USER";
           name = if elem user [ "" "root" ] then "gdr" else user;
