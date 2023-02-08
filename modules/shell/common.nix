@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.shell.xbacklight;
+  cfg = config.modules.shell.common;
 in {
-  options.modules.shell.xbacklight = with types; {
+  options.modules.shell.common = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
@@ -10,6 +10,9 @@ in {
   };
 
   config = mkIf cfg.enable {
-    user.packages = with pkgs; [ xorg.xbacklight ];
+    user.packages = with pkgs; [
+      exa
+      xorg.xbacklight
+    ];
   };
 }

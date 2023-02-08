@@ -4,8 +4,6 @@ with lib;
   options = with types; {
     user = mkOption {
       type = attrs;
-      default = {};
-      description = "Asd";
     };
 
     home = {

@@ -1,8 +1,4 @@
 { inputs, lib, config, pkgs, home-manager, ... }: {
-
-  # Configure nix and nixpkgs
-  nixpkgs.config.allowUnfree = true;
-
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.hardware.nixosModules.lenovo-thinkpad-t480
@@ -19,11 +15,8 @@
       git.enable    = true;
       zsh.enable    = true;
       neovim.enable = true;
-      exa.enable   = true;
-      ssh.enable   = true;
-      tmux.enable   = true;
-      xbacklight.enable = true;
-      acpi.enable = true;
+      common.enable = true;
+      ssh.enable    = true;
     };
 
     virtualization = {
