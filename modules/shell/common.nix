@@ -11,8 +11,10 @@ in {
 
   config = mkIf cfg.enable {
     user.packages = with pkgs; [
+      acpi
       exa
       xorg.xbacklight
+      tmux
     ];
   };
 }
