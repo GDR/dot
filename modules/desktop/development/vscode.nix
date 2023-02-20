@@ -10,11 +10,14 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # home-manager.users.gdr.programs.vscode = {
-    #   enable = true;
-    #   extensions = with pkgs.vscode-extensions; [
-    #     ms-vscode.cpptools
-    #   ];
-    # };
+     home-manager.users.gdr.programs.vscode = {
+       enable = true;
+       extensions = with pkgs.vscode-extensions; [
+         ms-vscode.cpptools         
+         ms-azuretools.vscode-docker
+         bbenoist.nix
+         mkhl.direnv
+       ];
+     };
   };
 }

@@ -13,6 +13,7 @@ in {
     user.packages = with pkgs; [
       gcc
       clang
+      gdb
     ];
   };
 }

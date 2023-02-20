@@ -5,8 +5,18 @@
     ./hardware-configuration.nix
   ];
 
+  services.xserver.videoDrivers = ["intel"];
+  services.xserver.deviceSection = ''
+    Option "TearFree" "true"
+  '';
+
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.efi.efiSysMountPoint = "/boot";
   networking.hostName = "Nix-Germany";
   networking.networkmanager.enable = true;
+
+  programs.nm-applet.enable = true;
 
   time.timeZone = "Europe/Moscow";
 
@@ -17,6 +27,10 @@
       neovim.enable = true;
       common.enable = true;
       ssh.enable    = true;
+    };
+
+    secure = {
+      wireguard.enable = true;
     };
 
     virtualization = {
@@ -43,7 +57,7 @@
         kitty.enable      = true;
       };
       development = {
-        vscode.enable = false;
+        vscode.enable = true;
         gcc.enable = true;
       };
 
