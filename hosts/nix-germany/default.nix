@@ -65,6 +65,7 @@
       touchpad.enable   = true;
       ru-layout.enable  = true;
       sound.enable      = true;
+      fonts.enable      = true;
     };
   };
 
