@@ -1,6 +1,10 @@
-{ config, options, lib, nixpkgs, ...}:
+{ config, options, inputs, lib, nixpkgs, ...}:
 with lib;
 {
+  imports = [
+    inputs.home-manager.nixosModules.home-manager
+  ];
+
   options = with types; {
     user = mkOption {
       type = attrs;
