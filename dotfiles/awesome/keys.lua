@@ -108,39 +108,31 @@ globalkeys = gears.table.join(
               {description = "lua execute prompt", group = "awesome"}),
     -- Menubar
     awful.key({ modkey }, "p", function() awful.spawn("rofi -show run") end,
-              {description = "show the menubar", group = "launcher"}),
+              {description = "show the menubar", group = "launcher"})
+)
 
+xf86_buttons = gears.table.join(
     awful.key({}, "XF86MonBrightnessUp",
-        function()
-            awful.spawn("xbacklight -inc 15")
-        end, { description = "Increase brightness", group = "Fn keys" }
+        function() awful.spawn("xbacklight -inc 15") end
     ),
     awful.key({}, "XF86MonBrightnessDown",
-        function()
-            awful.spawn("xbacklight -dec 15")
-        end, { description = "Decrease brightness", group = "Fn keys" }
+        function() awful.spawn("xbacklight -dec 15") end
     ),
     awful.key({}, "XF86AudioRaiseVolume",
-        function()
-            awful.spawn("amixer set 'Master' 5%+")
-        end, { description = "Increase volume", group = "Fn keys" }
+        function() awful.spawn("amixer set 'Master' 5%+") end
     ),
     awful.key({}, "XF86AudioLowerVolume",
-        function()
-            awful.spawn("amixer set 'Master' 5%-")
-        end, { description = "Decrease volume", group = "Fn keys" }
+        function() awful.spawn("amixer set 'Master' 5%-") end
     ),
     awful.key({}, "XF86AudioMute",
-        function()
-            awful.spawn("amixer set 'Master' toggle")
-        end, { description = "Toggle audio", group = "Fn keys" }
+        function() awful.spawn("amixer set 'Master' toggle") end
     ),
     awful.key({}, "XF86AudioMicMute",
-        function()
-            awful.spawn("amixer set 'Capture' toggle")
-        end, { description = "Toggle audio", group = "Fn keys" }
+        function() awful.spawn("amixer set 'Capture' toggle") end
     )
 )
+
+globalkeys = gears.table.join(globalkeys, xf86_buttons)
 
 clientkeys = gears.table.join(
     awful.key({ modkey,           }, "f",
