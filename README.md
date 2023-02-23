@@ -10,11 +10,20 @@ In this repository, you will find my personal NixOS configurations, which includ
 
 ## What's Inside
 
-**TODO**
+* AwesomeWM — highly configurable, next generation framework window manager for X.
+* Rofi — highly customizable dmenu replacement.
+* Kitty — really fast and thin terminal emulator.
+* ZSH/Powerline10k — on of the best shells with cute theme.
 
 ## Installation
 
-**TODO**
+For a basic isntall you should proceed to official Nixos documentation.
+
+After you get to your system run make command:
+
+```
+$ make switch-nix
+```
 
 ## Inspired by
 
