@@ -1,11 +1,13 @@
-{ config, options, lib, ...}: 
+{ config, options, inputs, lib, nixpkgs, ...}:
 with lib;
 {
+  imports = [
+    inputs.home-manager.nixosModules.home-manager
+  ];
+
   options = with types; {
     user = mkOption {
       type = attrs;
-      default = {}; 
-      description = "Asd";
     };
 
     home = {
@@ -33,6 +35,8 @@ with lib;
   };
 
   config = {
+    nixpkgs.config.allowUnfree = true;
+
     user =
       let user = builtins.getEnv "USER";
           name = if elem user [ "" "root" ] then "gdr" else user;
@@ -49,6 +53,7 @@ with lib;
       useUserPackages = true;
 
       users.${config.user.name} = {
+        nixpkgs.config.allowUnfree = true;
         home = {
           file = mkAliasDefinitions options.home.file;
           stateVersion = config.system.stateVersion;
@@ -61,7 +66,7 @@ with lib;
         programs = mkAliasDefinitions options.home.programs;
       };
     };
-    
+
     users.users.${config.user.name} = mkAliasDefinitions options.user;
 
     nix.settings = let users = [ "root" config.user.name ]; in {

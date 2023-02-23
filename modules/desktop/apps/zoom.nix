@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.shell.exa;
+  cfg = config.modules.desktop.apps.zoom;
 in {
-  options.modules.shell.exa = with types; {
+  options.modules.desktop.apps.zoom = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
@@ -10,7 +10,8 @@ in {
   };
 
   config = mkIf cfg.enable {
-    user.packages = with pkgs; [ exa ];
-
+    user.packages = with pkgs; [
+      zoom-us
+    ];
   };
 }

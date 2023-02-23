@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.shell.tmux;
+  cfg = config.modules.desktop.apps.qbittorrent;
 in {
-  options.modules.shell.tmux = with types; {
+  options.modules.desktop.apps.steam = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
@@ -10,6 +10,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    user.packages = with pkgs; [ tmux ];
+    programs.steam.enable = true;
   };
 }

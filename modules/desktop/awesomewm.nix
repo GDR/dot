@@ -1,6 +1,6 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-  cfg = config.modules.desktop.awesomewm; 
+let
+  cfg = config.modules.desktop.awesomewm;
 in {
   options.modules.desktop.awesomewm = with types; {
     enable = mkOption {
@@ -13,7 +13,7 @@ in {
     services = {
       xserver = {
         enable = true;
-        
+
         # Enable awesome wm
         windowManager.awesome = {
           enable = true;

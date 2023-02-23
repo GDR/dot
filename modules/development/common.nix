@@ -1,6 +1,6 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-  cfg = config.modules.development.common; 
+let
+  cfg = config.modules.development.common;
 in {
   options.modules.development.common = with types; {
     enable = mkOption {
@@ -13,6 +13,9 @@ in {
     user.packages = with pkgs; [
       nil
       gnumake
+      nodejs
+      nodePackages.pnpm
+      nodePackages."@nestjs/cli"
     ];
   };
 }

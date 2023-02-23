@@ -10,6 +10,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    user.packages = with pkgs; [ acpi ];
+    user.packages = with pkgs; [  ];
   };
 }
