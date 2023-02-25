@@ -5,7 +5,7 @@ local themes_path = gfs.get_themes_dir()
 local theme = dofile(themes_path .. "default/theme.lua")
 local xresources = require("beautiful.xresources")
 local dpi = xresources.apply_dpi
--- local helpers = require("../helpers/init.lua")
+local helpers = require("helpers")
 
 -- Font
 theme.font_name = "Hack"
@@ -67,6 +67,10 @@ theme.bg_minimize = theme.black
 --- Gaps
 theme.useless_gap = dpi(4)
 
+--- Titlebars
+theme.titlebar_bg = theme.black
+theme.titlebar_fg = theme.white
+
 --- Borders
 theme.border_width = 0
 theme.oof_border_width = 0
@@ -78,6 +82,7 @@ theme.border_color_urgent = theme.titlebar_bg
 theme.border_color_floating = theme.titlebar_bg
 theme.border_color_maximized = theme.titlebar_bg
 theme.border_color_fullscreen = theme.titlebar_bg
+theme.border_color_focus = theme.titlebar_bg
 
 --- Wibar
 theme.wibar_bg = "#101213"
@@ -87,7 +92,7 @@ theme.border_radius = 12
 
 --- Edge snap
 theme.snap_bg = theme.color8
--- theme.snap_shape = helpers.ui.rrect(0)
+theme.snap_shape = helpers.ui.rrect(0)
 
 theme.wallpaper = gears.surface.load_uncached(gfs.get_configuration_dir() .. "theme/assets/wave.png")
 
