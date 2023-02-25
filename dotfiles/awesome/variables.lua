@@ -4,7 +4,9 @@ local gears = require("gears")
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
-beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
+
+local theme_dir = gears.filesystem.get_configuration_dir() .. "theme/"
+beautiful.init(theme_dir .. "theme.lua")
 
 -- This is used later as the default terminal and editor to run.
 

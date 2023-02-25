@@ -1,6 +1,5 @@
 { inputs, lib, config, pkgs, home-manager, ... }: {
   imports = [
-    inputs.home-manager.nixosModules.home-manager
     inputs.hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
   ];
