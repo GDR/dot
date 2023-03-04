@@ -35,7 +35,8 @@ in {
       picom
     ];
 
-    # Add config file for awesome wm
+    # Add config file for awesome wm and picom
     home.file.".config/awesome".source = ../../dotfiles/awesome;
+    home.file.".config/picom".source = ../../dotfiles/picom;
   };
 }

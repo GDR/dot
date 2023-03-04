@@ -15,6 +15,9 @@
 
     # Hardware
     hardware.url = "github:nixos/nixos-hardware";
+
+    #Custom flakes
+    nixpkgs-f2k.url = "github:fortuneteller2k/nixpkgs-f2k";
   };
 
   outputs = { nur, nixpkgs, home-manager, ... }@inputs:

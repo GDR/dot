@@ -13,6 +13,7 @@ local naughty = require("naughty")
 local menubar = require("menubar")
 
 require("./variables")
+require("./autorun")
 -- Enable hotkeys help widget for VIM and other apps
 -- when client with a matching name is opened:
 require("awful.hotkeys_popup.keys")
