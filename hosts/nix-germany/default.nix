@@ -4,6 +4,8 @@
     ./hardware-configuration.nix
   ];
 
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   services.xserver.videoDrivers = ["intel"];
   services.xserver.deviceSection = ''
     Option "TearFree" "true"
@@ -51,6 +53,7 @@
       };
       browsers = {
         chrome.enable = true;
+        edge.enable   = true;
       };
       terminal = {
         kitty.enable      = true;
