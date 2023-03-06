@@ -26,7 +26,7 @@
       my = import ./lib { inherit inputs lib; };
     });
 
-    overlays = import ./overlays;
+    overlays = import ./overlays { inherit inputs; };
 
     modules = import ./modules { inherit inputs lib; };
 

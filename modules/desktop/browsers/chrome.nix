@@ -10,8 +10,16 @@ in {
   };
 
   config = mkIf cfg.enable {
-    user.packages = with pkgs; [
-      google-chrome
-    ];
+    home-manager.users.gdr.programs.google-chrome = {
+      enable = true;
+      commandLineArgs = [
+        # Enable VAAPI support for google chrome
+        "--disable-features=UseSkiaRenderer"
+        "--disable-features=UseChromeOSDirectVideoDecoder"
+        "--enable-features=VaapiIgnoreDriverChecks"
+        "--use-gl=egl"
+        "--enable-features=VaapiVideoDecoder"
+      ];
+    };
   };
 }
