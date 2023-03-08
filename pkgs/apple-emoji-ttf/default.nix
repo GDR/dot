@@ -22,20 +22,10 @@ stdenv.mkDerivation {
   '';
 
   meta = with lib; {
-    description = "Color emoji SVGinOT font using Twitter Unicode 10 emoji with diversity and country flags";
-    longDescription = ''
-      A color and B&W emoji SVGinOT font built from the Twitter Emoji for
-      Everyone artwork with support for ZWJ, skin tone diversity and country
-      flags.
-      The font works in all operating systems, but will currently only show
-      color emoji in Firefox, Thunderbird, Photoshop CC 2017, and Windows Edge
-      V38.14393+. This is not a limitation of the font, but of the operating
-      systems and applications. Regular B&W outline emoji are included for
-      backwards/fallback compatibility.
-    '';
-    homepage = "https://github.com/eosrei/twemoji-color-font";
-    downloadPage = "https://github.com/eosrei/twemoji-color-font/releases";
-    license = with licenses; [ cc-by-40 mit ];
-    maintainers = [ maintainers.fgaz ];
+    description = "Color emoji font using Apple Color Emojis with diversity and country flags";
+    homepage = "https://github.com/samuelngs/apple-emoji-linux/";
+    downloadPage = "https://github.com/samuelngs/apple-emoji-linux/releases";
+    license = with licenses; [ asl20 ];
+    maintainers = [ maintainers.gdr ];
   };
 }
