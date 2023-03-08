@@ -59,6 +59,7 @@
       };
       browsers = {
         chrome.enable = true;
+        edge.enable = true;
       };
       terminal = {
         kitty.enable        = true;
