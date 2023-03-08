@@ -1,10 +1,16 @@
-{ inputs, lib, config, pkgs, home-manager, ... }: {
+{ inputs, outputs, lib, config, pkgs, home-manager, ... }: {
+  
+  nixpkgs = {
+    overlays = [
+      outputs.overlays.additions
+      outputs.overlays.modifications
+    ];
+  };
+
   imports = [
     inputs.hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
   ];
-
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   services.xserver.videoDrivers = ["intel"];
   services.xserver.deviceSection = ''
@@ -53,10 +59,9 @@
       };
       browsers = {
         chrome.enable = true;
-        edge.enable   = true;
       };
       terminal = {
-        kitty.enable      = true;
+        kitty.enable        = true;
       };
       development = {
         vscode.enable = true;
