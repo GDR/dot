@@ -4,4 +4,5 @@
 { pkgs ? (import ../nixpkgs.nix) { } }: {
   # example = pkgs.callPackage ./example { };
   # picom = pkgs.callPackage ./picom.nix { };
+  apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
 }

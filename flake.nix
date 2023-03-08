@@ -20,20 +20,39 @@
     nixpkgs-f2k.url = "github:fortuneteller2k/nixpkgs-f2k";
   };
 
-  outputs = { nur, nixpkgs, home-manager, ... }@inputs:
-  rec {
+  outputs = { self, nur, nixpkgs, home-manager, ... }@inputs:
+  let
+    inherit (self) outputs;
+    forAllSystems = nixpkgs.lib.genAttrs [
+      "aarch64-linux"
+      "i686-linux"
+      "x86_64-linux"
+      "aarch64-darwin"
+      "x86_64-darwin"
+    ];
+  in rec {
     lib = nixpkgs.lib.extend (lib: _: {
       my = import ./lib { inherit inputs lib; };
     });
 
-    overlays = import ./overlays { inherit inputs; };
+    overlays = import ./overlays { inherit inputs lib; };
 
     modules = import ./modules { inherit inputs lib; };
+
+    packages = forAllSystems (system:
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in import ./pkgs { inherit pkgs; }
+    );
+
+    devShells = forAllSystems (system:
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in import ./shell.nix { inherit pkgs; }
+    );
 
     nixosConfigurations = {
       Nix-Germany = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs lib; };
+        specialArgs = { inherit inputs outputs lib; };
         modules = (modules.modules) ++ [
           ./hosts/nix-germany
         ];

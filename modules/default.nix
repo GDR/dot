@@ -1,3 +1,3 @@
-{ lib, ... }: with lib; with lib.my; rec {
+{ lib, ... }: with lib; with lib.my; {
   modules = flattenModules (recursiveDirs ./.);
 }
