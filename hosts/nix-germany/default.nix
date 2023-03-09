@@ -46,6 +46,7 @@
 
     development = {
       common.enable = true;
+      direnv.enable = true;
     };
 
     desktop = {
