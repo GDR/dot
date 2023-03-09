@@ -94,5 +94,11 @@
     };
   };
 
+  # For thinkpad
+  services.tlp.enable = true;
+
+  # Battery power management
+  services.upower.enable = true;
+
   system.stateVersion = "22.11";
 }
