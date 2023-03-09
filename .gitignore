@@ -122,3 +122,6 @@ $RECYCLE.BIN/
 
 # NixOS
 result
+
+# VS Code
+.vscode
