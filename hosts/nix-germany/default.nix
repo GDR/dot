@@ -37,6 +37,7 @@
       common.enable = true;
       ssh.enable    = true;
       xclip.enable  = true;
+      unarchive.enable = true;
     };
 
     secure = {
