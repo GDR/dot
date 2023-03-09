@@ -29,11 +29,14 @@
 
   modules = {
     shell = {
+      acpi.enable   = true;
+      fd.enable     = true;
       git.enable    = true;
       zsh.enable    = true;
       neovim.enable = true;
       common.enable = true;
       ssh.enable    = true;
+      xclip.enable  = true;
     };
 
     secure = {

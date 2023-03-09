@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.shell.acpi;
+  cfg = config.modules.shell.fd;
 in {
-  options.modules.shell.acpi = with types; {
+  options.modules.shell.fd = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
@@ -11,7 +11,7 @@ in {
 
   config = mkIf cfg.enable {
     user.packages = with pkgs; [ 
-      acpi 
-    ];
+      fd
+     ];
   };
 }
