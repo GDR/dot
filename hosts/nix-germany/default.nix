@@ -47,6 +47,7 @@
 
     virtualization = {
       docker.enable = true;
+      podman.enable = true;
     };
 
     development = {
