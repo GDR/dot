@@ -30,6 +30,7 @@
   modules = {
     shell = {
       acpi.enable   = true;
+      bat.enable    = true;
       fd.enable     = true;
       git.enable    = true;
       zsh.enable    = true;

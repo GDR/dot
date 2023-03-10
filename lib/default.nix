@@ -18,4 +18,21 @@
       else [modules.${x}]
     ) (attrNames modules)
   );
+
+  mkModule = config: name: cfg: let
+    optionsVal = {
+      enable = mkOption {
+        default = false;
+        type = types.bool;
+      };
+    };
+    options = {
+      modules = setAttrByPath name optionsVal;
+    };
+    defaultEnabled = { enable = false; };
+    enabled = (attrByPath name defaultEnabled config.modules).enable;
+  in {
+    inherit options;
+    config = mkIf enabled cfg.config;
+  };
 }
