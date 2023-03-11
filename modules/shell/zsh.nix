@@ -34,6 +34,7 @@ in {
 
       initExtra = ''
         source ~/.config/zsh/.p10k.zsh
+        source ~/.config/zsh/common.zsh
       '';
 
       shellAliases = {
