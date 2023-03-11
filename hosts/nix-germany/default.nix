@@ -106,5 +106,11 @@
   # Battery power management
   services.upower.enable = true;
 
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
   system.stateVersion = "22.11";
 }
