@@ -87,7 +87,7 @@
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
   };
-  
+
   hardware = {
     opengl = {
       enable = true;
@@ -112,6 +112,8 @@
     dates = "weekly";
     options = "--delete-older-than 30d";
   };
+
+  environment.shells = with pkgs; [ bashInteractive zsh ];
 
   system.stateVersion = "22.11";
 }
