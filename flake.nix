@@ -52,7 +52,7 @@
     nixosConfigurations = {
       Nix-Germany = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs outputs lib; };
+        specialArgs = { inherit inputs outputs lib overlays; };
         modules = (modules.modules) ++ [
           ./hosts/nix-germany
         ];

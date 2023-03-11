@@ -1,9 +1,9 @@
-{ inputs, outputs, lib, config, pkgs, home-manager, ... }: {
+{ inputs, overlays, lib, config, pkgs, home-manager, ... }: {
   
   nixpkgs = {
     overlays = [
-      outputs.overlays.additions
-      outputs.overlays.modifications
+      overlays.additions
+      overlays.modifications
     ];
   };
 
@@ -87,6 +87,7 @@
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
   };
+  
   hardware = {
     opengl = {
       enable = true;
