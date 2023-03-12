@@ -42,7 +42,7 @@ with lib;
           name = if elem user [ "" "root" ] then "gdr" else user;
       in {
         inherit name;
-        extraGroups = [ "wheel" ];
+        extraGroups = [ "wheel" "audio" ];
         isNormalUser = true;
         home = "/home/${name}";
         group = "users";
