@@ -1,5 +1,6 @@
 { inputs, overlays, lib, config, pkgs, home-manager, ... }: {
   
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nixpkgs = {
     overlays = [
       overlays.additions

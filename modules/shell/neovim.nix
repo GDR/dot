@@ -10,8 +10,15 @@ in {
   };
 
   config = mkIf cfg.enable {
+
+    # home.file.".config/nvim".source = ../../dotfiles/nvim;
+
     home.programs.neovim = {
       enable = true;
     };
+    user.packages = with pkgs; [
+      ripgrep
+      rnix-lsp
+    ];
   };
 }
