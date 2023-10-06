@@ -15,8 +15,6 @@ in {
       gnumake
       nodejs
       nodePackages.pnpm
-      nodePackages."@nestjs/cli"
-      nest-cli
     ];
   };
 }
