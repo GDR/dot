@@ -13,7 +13,7 @@ in {
 
   config = mkIf cfg.enable {
     fonts = {
-      fonts = with pkgs; [
+      packages = with pkgs; [
         hack-font
         apple-emoji-ttf
       ];

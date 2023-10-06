@@ -13,7 +13,7 @@ in {
     user.shell = pkgs.zsh;
 
     home.file.".config/zsh".source = ../../dotfiles/zsh;
-
+    programs.zsh.enable = true;
     home.programs.zsh = {
       enable = true;
       enableCompletion = true;
@@ -40,7 +40,7 @@ in {
       shellAliases = {
         "vim" = "nvim";
         "vi" = "nvim";
-        "ls" = "exa -l --group-directories-first";
+        "ls" = "eza -l --group-directories-first";
         "dotfiles" = "cd ~/Workspaces/gdr/github/dot";
       };
     };

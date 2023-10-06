@@ -12,8 +12,8 @@ in {
   config = mkIf cfg.enable {
     services.openssh = {
       enable = true;
-      permitRootLogin = "no";
-      passwordAuthentication = false;
+      settings.PermitRootLogin = "no";
+      settings.PasswordAuthentication = false;
     };
   };
 }

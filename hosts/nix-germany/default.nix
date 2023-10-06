@@ -27,6 +27,10 @@
   programs.nm-applet.enable = true;
 
   time.timeZone = "Europe/Moscow";
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 8096 ];
+  };
 
   modules = {
     shell = {
@@ -116,5 +120,5 @@
 
   environment.shells = with pkgs; [ bashInteractive zsh ];
 
-  system.stateVersion = "22.11";
+  system.stateVersion = "23.11";
 }
