@@ -1,5 +1,5 @@
 # NixOS Personal Dotfiles
-
+[![NixOS Version](https://img.shields.io/badge/nixos-23.11-blue)](https://nixos.org/)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
 Welcome to my personal NixOS configuration files repository! This repository contains my personal configurations for my NixOS system, including system configuration, user configurations, and package installation specifications.
