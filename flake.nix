@@ -13,7 +13,10 @@
       # List packages installed in system profile. To search by name, run:
       # $ nix-env -qaP | grep wget
       environment.systemPackages =
-        [ pkgs.vim
+        with pkgs; [ 
+            vim
+            neovim
+            git
         ];
 
       # Auto upgrade nix package and the daemon service.
@@ -29,6 +32,8 @@
 
       # Set Git commit hash for darwin-version.
       system.configurationRevision = self.rev or self.dirtyRev or null;
+
+      security.pam.enableSudoTouchIdAuth = true;
 
       # Used for backwards compatibility, please read the changelog before changing.
       # $ darwin-rebuild changelog
