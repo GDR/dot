@@ -27,7 +27,6 @@
       # $ nix-env -qaP | grep wget
       environment.systemPackages =
         with pkgs; [
-            git
         ];
 
 
@@ -90,6 +89,12 @@
                 ls = "ls -l";
                 lsa = "ls -la";
               };
+            };
+
+             programs.git = {
+              enable = true;
+              userName  = "Damir Garifullin";
+              userEmail = "gosugdr@gmail.com";
             };
           };
         }
