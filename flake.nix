@@ -96,6 +96,11 @@
               userName  = "Damir Garifullin";
               userEmail = "gosugdr@gmail.com";
             };
+
+            programs.neovim = {
+              enable = true;
+              defaultEditor = true;
+            };
           };
         }
       ];
