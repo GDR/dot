@@ -2,22 +2,36 @@
   description = "Example Darwin system flake";
 
   inputs = {
+    # Basic url
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    # Darwin
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Home manager
+    home-manager.url = "github:nix-community/home-manager";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs }:
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
   let
+    inherit (nix-darwin.lib) darwinSystem;
+    inherit (inputs.nixpkgs.lib) attrValues makeOverridable optionalAttrs singleton;
+    
+    nixpkgsConfig = {
+      config = { allowUnfree = true; };
+    }; 
     configuration = { pkgs, ... }: {
       # List packages installed in system profile. To search by name, run:
       # $ nix-env -qaP | grep wget
       environment.systemPackages =
-        with pkgs; [ 
-            vim
-            neovim
+        with pkgs; [
             git
         ];
+
+
+      nix.configureBuildUsers = true;
 
       # Auto upgrade nix package and the daemon service.
       services.nix-daemon.enable = true;
@@ -47,7 +61,39 @@
     # Build darwin flake using:
     # $ darwin-rebuild build --flake .#mac-italy
     darwinConfigurations."mac-italy" = nix-darwin.lib.darwinSystem {
-      modules = [ configuration ];
+      modules = [ configuration ] ++ [
+        home-manager.darwinModules.home-manager 
+        {
+          nixpkgs = nixpkgsConfig;
+
+          users = {
+            users = {
+              gdr = {
+                shell = nixpkgs.zsh;
+                description = "Damir Garifullin";
+                home = "/Users/gdr";
+              };
+            };
+          };
+          # `home-manager` config
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.users.gdr = {
+            home.stateVersion = "23.11";
+
+            programs.zsh = {
+              enable = true;
+              enableCompletion = true;
+              enableAutosuggestions = true;
+
+              shellAliases = {
+                ls = "ls -l";
+                lsa = "ls -la";
+              };
+            };
+          };
+        }
+      ];
     };
 
     # Expose the package set, including overlays, for convenience.
