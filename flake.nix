@@ -27,6 +27,7 @@
       # $ nix-env -qaP | grep wget
       environment.systemPackages =
         with pkgs; [
+          nixpkgs-fmt
         ];
 
 
@@ -77,7 +78,7 @@
           # `home-manager` config
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.users.gdr = {
+          home-manager.users.gdr = { pkgs, ...}: {
             home.stateVersion = "23.11";
 
             programs.zsh = {
@@ -100,6 +101,15 @@
             programs.neovim = {
               enable = true;
               defaultEditor = true;
+            };
+
+            programs.vscode = {
+              enable = true;
+              extensions = with pkgs.vscode-extensions; [
+                ms-python.python
+                bbenoist.nix
+                jnoortheen.nix-ide
+              ];
             };
           };
         }
