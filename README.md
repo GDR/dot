@@ -38,19 +38,19 @@ scripts/: Optional directory for storing any custom scripts used for managing or
 
 Usage
 -----
-System Configuration
+### System Configuration
 To apply system configurations, run:
 
 ```bash
 nixos-rebuild switch --flake .#mac-italy
 ```
-###Package Installation
+### Package Installation
 To install packages, use the nix command with flakes:
 
 ```bash
 nix develop github:gdr/dot#packages
 ```
-###Development Environment
+### Development Environment
 To set up a development environment, use flakes:
 
 ```bash
