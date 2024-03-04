@@ -39,6 +39,9 @@
             shell = {
               zsh.enable = true;
             };
+            editors = {
+              neovim.enable = true;
+            };
           };
           workstation = {
             fonts.enable = true;
@@ -98,12 +101,6 @@
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.gdr = { pkgs, ... }: {
-              programs.neovim = {
-                enable = true;
-                defaultEditor = true;
-              };
-            };
           }
         ];
       };
