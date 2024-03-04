@@ -30,6 +30,28 @@
             nixpkgs-fmt
           ];
 
+        modules = {
+          common = {
+            devtools = {
+              direnv.enable = true;
+            };
+            shell = {
+              zsh.enable = true;
+            };
+          };
+          workstation = {
+            fonts.enable = true;
+            editor = {
+              # vscode.enable = true;
+            };
+            terminal = {
+              kitty.enable = true;
+            };
+            osx = {
+              enable = true;
+            };
+          };
+        };
 
         nix.configureBuildUsers = true;
 
@@ -41,7 +63,7 @@
         nix.settings.experimental-features = "nix-command flakes";
 
         # Create /etc/zshrc that loads the nix-darwin environment.
-        programs.zsh.enable = true; # default shell on catalina
+        # programs.zsh.enable = true; # default shell on catalina
         # programs.fish.enable = true;
 
         # Set Git commit hash for darwin-version.
@@ -56,41 +78,39 @@
         # The platform the configuration will be used on.
         nixpkgs.hostPlatform = "aarch64-darwin";
       };
+
     in
+    rec
     {
+      lib = nixpkgs.lib.extend (lib: _: {
+        my = import ./lib { inherit inputs lib; };
+      });
+
+      modules = import ./modules { inherit inputs lib; nixpkgs = nixpkgsConfig; };
+
+
       # Build darwin flake using:
       # $ darwin-rebuild build --flake .#mac-italy
-      darwinConfigurations."mac-italy" = nix-darwin.lib.darwinSystem {
-        modules = [ configuration ] ++ [
+      darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
+        modules = [ configuration ] ++ (modules.modules) ++ [
           home-manager.darwinModules.home-manager
           {
-            nixpkgs = nixpkgsConfig;
+            # nixpkgs = nixpkgsConfig;
 
-            users = {
-              users = {
-                gdr = {
-                  shell = nixpkgs.zsh;
-                  description = "Damir Garifullin";
-                  home = "/Users/gdr";
-                };
-              };
-            };
+            # users = {
+            #   users = {
+            #     gdr = {
+            #       shell = nixpkgs.zsh;
+            #       description = "Damir Garifullin";
+            #       home = "/Users/gdr";
+            #     };
+            #   };
+            # };
             # `home-manager` config
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.gdr = { pkgs, ... }: {
-              home.stateVersion = "23.11";
-
-              programs.zsh = {
-                enable = true;
-                enableCompletion = true;
-                enableAutosuggestions = true;
-
-                shellAliases = {
-                  ls = "ls -l";
-                  lsa = "ls -la";
-                };
-              };
+              # home.stateVersion = "23.11";
 
               programs.git = {
                 enable = true;
@@ -101,15 +121,6 @@
               programs.neovim = {
                 enable = true;
                 defaultEditor = true;
-              };
-
-              programs.vscode = {
-                enable = true;
-                extensions = with pkgs.vscode-extensions; [
-                  ms-python.python
-                  bbenoist.nix
-                  jnoortheen.nix-ide
-                ];
               };
             };
           }
