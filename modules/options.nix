@@ -1,8 +1,8 @@
-{ config, options, inputs, lib, nixpkgs, ... }:
+{ config, options, inputs, lib, nixpkgs, home-manager, ... }:
 with lib;
 {
   imports = [
-    # inputs.home-manager.darwinModules.home-manager
+    inputs.home-manager.darwinModules.home-manager
     # TODO make compatible with nixosModules
     # inputs.home-manager.nixosModules.home-manager
   ];
@@ -59,6 +59,7 @@ with lib;
 
       home-manager = {
         useUserPackages = true;
+        useGlobalPkgs = true;
 
         users.${user.name} = {
           nixpkgs.config.allowUnfree = true;

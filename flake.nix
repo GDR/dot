@@ -28,21 +28,34 @@
       });
 
       modules = import ./modules { inherit inputs lib; nixpkgs = nixpkgsConfig; };
+
+      forAllSystems = nixpkgs.lib.genAttrs [
+        "aarch64-linux"
+        "i686-linux"
+        "x86_64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
     in
     rec
     {
       inherit lib modules;
 
+      # packages = forAllSystems (system:
+      #   let pkgs = nixpkgs.legacyPackages.${system};
+      #   in import ./pkgs { inherit pkgs; }
+      # );
+
+      packages.aarch64-darwin.mac-italy = ./pkgs;
+
+
       # Build darwin flake using:
       # $ darwin-rebuild build --flake .#mac-italy
       darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
-        modules = [ ./hosts/mac-italy  ] ++ (modules.modules) ++ [
-          home-manager.darwinModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-          }
-        ];
+        specialArgs = {
+          inherit self inputs;
+        };
+        modules = [ ./hosts/mac-italy ] ++ (modules.modules);
       };
 
       # Expose the package set, including overlays, for convenience.
