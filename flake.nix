@@ -97,7 +97,7 @@
       # Build darwin flake using:
       # $ darwin-rebuild build --flake .#mac-italy
       darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
-        modules = [ configuration ] ++ (modules.modules) ++ [
+        modules = [ ./hosts/mac-italy  ] ++ (modules.modules) ++ [
           home-manager.darwinModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
