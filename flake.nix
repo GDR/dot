@@ -22,6 +22,7 @@
       nixpkgsConfig = {
         config = { allowUnfree = true; };
       };
+
       configuration = { pkgs, ... }: {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
@@ -83,15 +84,15 @@
         nixpkgs.hostPlatform = "aarch64-darwin";
       };
 
-    in
-    rec
-    {
       lib = nixpkgs.lib.extend (lib: _: {
         my = import ./lib { inherit inputs lib; };
       });
 
       modules = import ./modules { inherit inputs lib; nixpkgs = nixpkgsConfig; };
-
+    in
+    rec
+    {
+      inherit lib modules;
 
       # Build darwin flake using:
       # $ darwin-rebuild build --flake .#mac-italy
