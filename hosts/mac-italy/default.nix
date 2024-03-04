@@ -23,7 +23,7 @@
     workstation = {
       fonts.enable = true;
       editor = {
-        # vscode.enable = true;
+        vscode.enable = true;
       };
       terminal = {
         kitty.enable = true;
