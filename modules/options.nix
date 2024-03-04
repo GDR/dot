@@ -33,6 +33,11 @@ with lib;
         default = { };
         description = "Programs defined in home-manager";
       };
+      packages = mkOption {
+        type = attrs;
+        default = { };
+        description = "Packages defined in home-manager";
+      };
     };
   };
 
@@ -67,6 +72,7 @@ with lib;
           };
 
           programs = mkAliasDefinitions options.home.programs;
+          home.packages = mkAliasDefinitions options.home.packages;
         };
       };
 

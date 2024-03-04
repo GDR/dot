@@ -18,6 +18,7 @@
       editors = {
         neovim.enable = true;
       };
+      utils.enable = true;
     };
     workstation = {
       fonts.enable = true;
