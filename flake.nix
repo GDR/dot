@@ -34,6 +34,7 @@
           common = {
             devtools = {
               direnv.enable = true;
+              git.enable = true;
             };
             shell = {
               zsh.enable = true;
@@ -95,29 +96,9 @@
         modules = [ configuration ] ++ (modules.modules) ++ [
           home-manager.darwinModules.home-manager
           {
-            # nixpkgs = nixpkgsConfig;
-
-            # users = {
-            #   users = {
-            #     gdr = {
-            #       shell = nixpkgs.zsh;
-            #       description = "Damir Garifullin";
-            #       home = "/Users/gdr";
-            #     };
-            #   };
-            # };
-            # `home-manager` config
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.gdr = { pkgs, ... }: {
-              # home.stateVersion = "23.11";
-
-              programs.git = {
-                enable = true;
-                userName = "Damir Garifullin";
-                userEmail = "gosugdr@gmail.com";
-              };
-
               programs.neovim = {
                 enable = true;
                 defaultEditor = true;
