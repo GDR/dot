@@ -41,13 +41,10 @@
     {
       inherit lib modules;
 
-      # packages = forAllSystems (system:
-      #   let pkgs = nixpkgs.legacyPackages.${system};
-      #   in import ./pkgs { inherit pkgs; }
-      # );
-
-      packages.aarch64-darwin.mac-italy = ./pkgs;
-
+      packages = forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in import ./pkgs { inherit pkgs; }
+      );
 
       # Build darwin flake using:
       # $ darwin-rebuild build --flake .#mac-italy
