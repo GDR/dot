@@ -12,6 +12,9 @@
     # Home manager
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Hardware
+    hardware.url = "github:nixos/nixos-hardware";
   };
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
