@@ -55,6 +55,16 @@
         modules = [ ./hosts/mac-italy ] ++ (modules.modules);
       };
 
+      nixosConfigurations = {
+        thinkpad-germany = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = { inherit inputs outputs lib overlays; };
+          modules = (modules.modules) ++ [
+            ./hosts/thinkpad-germany
+          ];
+        };
+      };
+
       # Expose the package set, including overlays, for convenience.
       darwinPackages = self.darwinConfigurations."mac-italy".pkgs;
     };
