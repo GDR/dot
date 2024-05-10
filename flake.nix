@@ -61,7 +61,7 @@
       nixosConfigurations = {
         thinkpad-germany = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = { inherit inputs outputs lib overlays; };
+          specialArgs = { inherit self inputs; };
           modules = (modules.modules) ++ [
             ./hosts/thinkpad-germany
           ];
