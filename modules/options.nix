@@ -35,7 +35,7 @@ with lib;
       };
       packages = mkOption {
         type = attrs;
-        default = { };
+        default = [ ];
         description = "Packages defined in home-manager";
       };
     };
@@ -50,12 +50,14 @@ with lib;
         in
         {
           inherit name;
-          home = "/Users/${name}";
+          isNormalUser = true;
+          home = "/home/${name}";
+          group = "users";
+          uid = 1000;
         };
     in
     {
       nixpkgs.config.allowUnfree = true;
-
 
       home-manager = {
         useUserPackages = true;
@@ -77,6 +79,17 @@ with lib;
         };
       };
 
-      users.users.${user.name} = user;
+      users.users.${user.name} = {
+        name = "gdr";
+        isNormalUser = true;
+        home = "/home/gdr";
+        group = "users";
+        uid = 1000;
+      };
+
+      nix.settings = let users = [ "root" user.name ]; in {
+        trusted-users = users;
+        allowed-users = users;
+      };
     };
 }

@@ -10,7 +10,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    user.shell = pkgs.zsh;
+    # user.shell = pkgs.zsh;
 
     environment.systemPackages =
       with pkgs; [
