@@ -41,50 +41,46 @@ with lib;
     };
   };
 
-  config =
-    let
-      user =
-        let
-          user = builtins.getEnv "USER";
+  config = {
+    nixpkgs.config.allowUnfree = true;
+
+    user =
+      let user = builtins.getEnv "USER";
           name = if elem user [ "" "root" ] then "gdr" else user;
-        in
-        {
-          inherit name;
-          isNormalUser = true;
-          home = "/home/${name}";
-          group = "users";
-          extraGroups = [ "wheel" "audio" ];
-          uid = 1000;
-        };
-    in
-    {
-      nixpkgs.config.allowUnfree = true;
-
-      home-manager = {
-        useUserPackages = true;
-        useGlobalPkgs = true;
-
-        users.${user.name} = {
-          nixpkgs.config.allowUnfree = true;
-          home = {
-            stateVersion = "24.05";
-            file = mkAliasDefinitions options.home.file;
-          };
-          xdg = {
-            configFile = mkAliasDefinitions options.home.configFile;
-            dataFile = mkAliasDefinitions options.home.dataFile;
-          };
-
-          programs = mkAliasDefinitions options.home.programs;
-          home.packages = mkAliasDefinitions options.home.packages;
-        };
+      in {
+        inherit name;
+        extraGroups = [ "wheel" "audio" ];
+        isNormalUser = true;
+        home = "/home/${name}";
+        group = "users";
+        uid = 1000;
       };
 
-      users.users.${user.name} = user;
+    home-manager = {
+      useUserPackages = true;
+      useGlobalPkgs = true;
 
-      nix.settings = let users = [ "root" user.name ]; in {
-        trusted-users = users;
-        allowed-users = users;
+      users.${config.user.name} = {
+        nixpkgs.config.allowUnfree = true;
+        home = {
+          stateVersion = "24.05";
+          file = mkAliasDefinitions options.home.file;
+        };
+        xdg = {
+          configFile = mkAliasDefinitions options.home.configFile;
+          dataFile = mkAliasDefinitions options.home.dataFile;
+        };
+
+        programs = mkAliasDefinitions options.home.programs;
+        home.packages = mkAliasDefinitions options.home.packages;
       };
     };
+
+    users.users.${config.user.name} = mkAliasDefinitions options.user;
+
+    nix.settings = let users = [ "root" config.user.name ]; in {
+      trusted-users = users;
+      allowed-users = users;
+    };
+  };
 }
