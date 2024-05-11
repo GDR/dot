@@ -81,5 +81,11 @@
 
   environment.shells = with pkgs; [ bashInteractive zsh ];
 
-  system.stateVersion = "24.05  ";
+  system.stateVersion = "24.05";
+
+  services.logind = {
+    lidSwitch = "ignore";
+  };
+
+  services.openssh.enable = true;
 }
