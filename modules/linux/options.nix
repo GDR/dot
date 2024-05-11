@@ -2,9 +2,9 @@
 with lib;
 {
   imports = [
-    inputs.home-manager.darwinModules.home-manager
+    # inputs.home-manager.darwinModules.home-manager
     # TODO make compatible with nixosModules
-    # inputs.home-manager.nixosModules.home-manager
+    inputs.home-manager.nixosModules.home-manager
   ];
 
   options = with types; {
@@ -53,6 +53,7 @@ with lib;
           isNormalUser = true;
           home = "/home/${name}";
           group = "users";
+          extraGroups = [ "wheel" "audio" ];
           uid = 1000;
         };
     in
@@ -79,13 +80,7 @@ with lib;
         };
       };
 
-      users.users.${user.name} = {
-        name = "gdr";
-        isNormalUser = true;
-        home = "/home/gdr";
-        group = "users";
-        uid = 1000;
-      };
+      users.users.${user.name} = user;
 
       nix.settings = let users = [ "root" user.name ]; in {
         trusted-users = users;

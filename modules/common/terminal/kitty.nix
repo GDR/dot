@@ -1,9 +1,9 @@
 { config, options, lib, ... }: with lib;
 let
-  cfg = config.modules.workstation.terminal.kitty;
+  cfg = config.modules.terminal.kitty;
 in
 {
-  options.modules.workstation.terminal.kitty = with types; {
+  options.modules.terminal.kitty = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
