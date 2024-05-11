@@ -35,8 +35,17 @@ in {
       picom
     ];
 
+    # Keyboard layout
+    services.xserver = {
+      xkb = {
+        layout = "us,ru";
+        variant = "";
+        options = "grp:alt_space_toggle";
+      };
+    };
+
     # Add config file for awesome wm and picom
-    # home.file.".config/awesome".source = ../../dotfiles/awesome;
+    home.file.".config/awesome".source = ./dotfiles;
     # home.file.".config/picom".source = ../../dotfiles/picom;
   };
 }
