@@ -1,16 +1,9 @@
-{ inputs, overlays, lib, config, pkgs, home-manager, ... }: {
+{ inputs, lib, config, pkgs, home-manager, hardware, ... }: {
   
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  
-  nixpkgs = {
-    overlays = [
-      overlays.additions
-      overlays.modifications
-    ];
-  };
 
   imports = [
-    inputs.hardware.nixosModules.lenovo-thinkpad-t480
+    hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
   ];
 

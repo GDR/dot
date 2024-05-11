@@ -17,7 +17,7 @@
     hardware.url = "github:nixos/nixos-hardware";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, hardware }:
     let
       inherit (nix-darwin.lib) darwinSystem;
       inherit (inputs.nixpkgs.lib) attrValues makeOverridable optionalAttrs singleton;
@@ -61,10 +61,10 @@
       nixosConfigurations = {
         thinkpad-germany = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          specialArgs = { inherit self inputs; };
-          modules = (modules.modules) ++ [
+          specialArgs = { inherit self inputs hardware; };
+          modules = [
             ./hosts/thinkpad-germany
-          ];
+          ] ++ (modules.modules);
         };
       };
 

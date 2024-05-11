@@ -11,9 +11,9 @@ in
   };
 
   config = mkIf cfg.enable {
-    homebrew = {
-      enable = true;
-      onActivation.autoUpdate = false; 
-    };
+    # homebrew = {
+    #   enable = true;
+    #   onActivation.autoUpdate = false; 
+    # };
   };
 }
