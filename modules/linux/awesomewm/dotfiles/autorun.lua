@@ -5,7 +5,7 @@ local helpers = require("helpers")
 
 function autorun_apps() 
 	helpers.run.check_if_running("picom --experimental-backends", nil, function()
-		awful.spawn("picom --experimental-backends", false)
+		awful.spawn("picom", false)
 	end)
 end
 
