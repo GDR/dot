@@ -35,6 +35,7 @@
     };
     linux = {
       awesomewm.enable = true;
+      sound.enable = true;
     };
     editors = {
       vscode.enable = true;
@@ -80,5 +81,5 @@
 
   environment.shells = with pkgs; [ bashInteractive zsh ];
 
-  system.stateVersion = "23.11";
+  system.stateVersion = "24.05  ";
 }
