@@ -55,7 +55,7 @@
         specialArgs = {
           inherit self inputs;
         };
-        modules = [ ./hosts/mac-italy ] ++ (modules.modules);
+        modules = [ ./hosts/mac-italy ] ++ (modules.modulesDarwin);
       };
 
       nixosConfigurations = {
@@ -64,7 +64,7 @@
           specialArgs = { inherit self inputs hardware; };
           modules = [
             ./hosts/thinkpad-germany
-          ] ++ (modules.modules);
+          ] ++ (modules.modulesLinux);
         };
       };
 
