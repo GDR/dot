@@ -15,16 +15,36 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.efi.efiSysMountPoint = "/boot";
-  networking.hostName = "Nix-Germany";
+
+  networking.hostName = "thinkpad-germany";
   networking.networkmanager.enable = true;
 
   programs.nm-applet.enable = true;
 
-  time.timeZone = "Europe/Moscow";
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [ 8096 ];
+  modules = {
+    common = {
+      devtools = {
+        git.enable = true;
+      };
+      shell = {
+        zsh.enable = true;
+      };
+      editors = {
+        neovim.enable = true;
+      };
+    };
+    linux = {
+      awesomewm.enable = true;
+    };
+    editors = {
+      vscode.enable = true;
+    };
+    terminal = {
+      kitty.enable = true;
+    };
   };
+
+  time.timeZone = "Europe/Moscow";
 
   nixpkgs.config.packageOverrides = pkgs: {
     vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };

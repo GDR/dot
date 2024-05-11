@@ -1,9 +1,9 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.workstation.editor.vscode;
+  cfg = config.modules.editors.vscode;
 in
 {
-  options.modules.workstation.editor.vscode = with types; {
+  options.modules.editors.vscode = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
