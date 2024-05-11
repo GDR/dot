@@ -42,6 +42,9 @@
     terminal = {
       kitty.enable = true;
     };
+    browsers = {
+      chrome.enable = true;
+    };
   };
 
   time.timeZone = "Europe/Moscow";
