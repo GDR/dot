@@ -26,6 +26,9 @@
       (attrNames modules)
   );
 
+  filterPrefix = prefix: files:
+    builtins.filter (file: builtins.hasPrefix prefix (builtins.basename file)) files;
+
   mkModule = config: name: cfg:
     let
       optionsVal = {
