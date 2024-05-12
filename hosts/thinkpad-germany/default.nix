@@ -49,6 +49,9 @@
     utils = {
       ssh.enable = true;
     };
+    virtualization = {
+      podman.enable = true;
+    };
   };
 
   time.timeZone = "Europe/Moscow";
@@ -89,4 +92,6 @@
   services.logind = {
     lidSwitch = "ignore";
   };
+
+  networking.firewall.allowedTCPPorts = [ 8080 ];
 }
