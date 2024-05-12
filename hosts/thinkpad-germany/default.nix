@@ -46,6 +46,9 @@
     browsers = {
       chrome.enable = true;
     };
+    utils = {
+      ssh.enable = true;
+    };
   };
 
   time.timeZone = "Europe/Moscow";
@@ -86,6 +89,4 @@
   services.logind = {
     lidSwitch = "ignore";
   };
-
-  services.openssh.enable = true;
 }

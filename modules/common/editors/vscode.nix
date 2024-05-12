@@ -10,6 +10,7 @@ in
     };
   };
 
+
   config = mkIf cfg.enable {
     home-manager.users.gdr.programs.vscode = {
       enable = true;
