@@ -1,4 +1,3 @@
-
 { config, options, pkgs, lib, ... }: with lib;
 let
   cfg = config.modules.virtualization.podman;
