@@ -25,5 +25,12 @@ in
       podman-tui 
       docker-compose 
     ];
+
+    security.sudo = {
+      enable = true;
+      extraConfig = ''
+        gdr ALL=(ALL) NOPASSWD: /run/current-system/sw/bin/podman
+      '';
+    };
   };
 }

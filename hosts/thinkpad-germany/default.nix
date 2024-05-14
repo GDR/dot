@@ -51,6 +51,7 @@
     };
     virtualization = {
       podman.enable = true;
+      minikube.enable = true;
     };
   };
 
@@ -93,5 +94,15 @@
     lidSwitch = "ignore";
   };
 
-  networking.firewall.allowedTCPPorts = [ 8080 ];
+
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 53 80 443 8080 8001 8081 ];
+    allowedUDPPorts = [ 53 80 443 8080 8001 8081 ];
+  };
+
+  # Podman
+  boot.kernelModules = [ "kvm-intel" ];
+  
+  # security.groups.extraGroups.libvirt.members = [ "gdr" ];
 }

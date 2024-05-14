@@ -49,7 +49,7 @@ with lib;
           name = if elem user [ "" "root" ] then "gdr" else user;
       in {
         inherit name;
-        extraGroups = [ "wheel" "audio" ];
+        extraGroups = [ "wheel" "audio" "libvirtd" ];
         isNormalUser = true;
         home = "/home/${name}";
         group = "users";
