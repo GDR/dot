@@ -40,6 +40,9 @@ in {
       initExtra = ''
         source ~/.config/zsh/.p10k.zsh
         source ~/.config/zsh/common.zsh
+        if [[ $(uname -m) == 'arm64' ]]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        fi
       '';
 
       shellAliases = {

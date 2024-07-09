@@ -1,6 +1,7 @@
 { inputs, config, options, lib, pkgs, ... }: with lib; {    
     imports = [
         inputs.home-manager.darwinModules.home-manager
+        inputs.nix-homebrew.darwinModules.nix-homebrew
     ];
     options = with types; {
     };
@@ -27,6 +28,14 @@
             brews = [
                 "htop"
             ];
+            casks = [
+                "yandex"
+            ];
+        };
+
+        nix-homebrew = {
+            enable = true;
+            user = "dgarifullin";
         };
     };
 }

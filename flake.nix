@@ -13,9 +13,13 @@
             url = "github:nix-community/home-manager";
             inputs.nixpkgs.follows = "nixpkgs";
         };
+        nix-homebrew = {
+            url = "github:zhaofengli-wip/nix-homebrew";
+            inputs.nixpkgs.follows = "nixpkgs";
+        };
     };
 
-    outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, ... }: let 
+    outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, ... }: let 
         lib = nixpkgs.lib.extend (lib: _: let hm = inputs.home-manager.lib.hm; in {
             inherit hm;
             my = import ./lib { inherit inputs lib; };
