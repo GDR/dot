@@ -10,7 +10,11 @@
         };
     };
 
-    outputs = inputs@{ self, nixpkgs, nix-darwin, ... }: {
+    outputs = inputs@{ self, nixpkgs, nix-darwin, ... }: let 
+        lib = nixpkgs.lib.extend (lib: _: {
+            my = import ./lib { inherit inputs lib; };
+        });
+    in {
         darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
             system = "aarch64-darwin";
             specialArgs = { inherit self inputs; };
@@ -20,6 +24,6 @@
         };
 
         darwinPackages = self.darwinConfigurations."simple".pkgs;
-        
+
     };
 }
