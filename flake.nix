@@ -16,16 +16,19 @@
     };
 
     outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, ... }: let 
-        lib = nixpkgs.lib.extend (lib: _: {
+        lib = nixpkgs.lib.extend (lib: _: let hm = inputs.home-manager.lib.hm; in {
+            inherit hm;
             my = import ./lib { inherit inputs lib; };
         });
     in {
+        inherit lib;
+
         darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
             system = "aarch64-darwin";
-            specialArgs = { inherit self inputs; };
-            modules = [
-                ./hosts/mac-italy
-            ] ++ (import ./modules/common { inherit inputs lib; }).modules;
+            specialArgs = { inherit self inputs lib; };
+            modules = [ ./hosts/mac-italy ]
+            ++ (import ./modules/common { inherit inputs lib; }).modules
+            ++ (import ./modules/darwin { inherit inputs lib; }).modules;
         };
     };
 }

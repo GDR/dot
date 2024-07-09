@@ -2,10 +2,6 @@
     isDarwin = pkgs.stdenv.isDarwin;
     isLinux = pkgs.stdenv.isLinux;
 in with lib; {
-    imports = [
-        inputs.home-manager.darwinModules.home-manager
-    ];
-
     options = with types; {
         user = mkOption {
             type = attrs;
@@ -37,6 +33,11 @@ in with lib; {
                 default = [ ];
                 description = "Packages defined in home-manager";
             };
+            activation = mkOption {
+                type = attrs;
+                default = { };
+                description = "Activation scripts";
+            };
         };
     };
     config = {
@@ -57,7 +58,6 @@ in with lib; {
 
                 programs = mkAliasDefinitions options.home.programs;
                 home.packages = mkAliasDefinitions options.home.packages;
-
             };
         };  
         users.users.dgarifullin = lib.mkMerge [
