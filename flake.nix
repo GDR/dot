@@ -27,8 +27,5 @@
                 ./hosts/mac-italy
             ] ++ (import ./modules/common { inherit inputs lib; }).modules;
         };
-
-        darwinPackages = self.darwinConfigurations."simple".pkgs;
-
     };
 }
