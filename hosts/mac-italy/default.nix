@@ -13,6 +13,11 @@
                 kitty.enable = true;
             };
         };
+        darwin = {
+            utils = {
+                raycast.enable = true;
+            };
+        };
     };
 
     services.nix-daemon.enable = true;
