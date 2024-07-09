@@ -6,6 +6,9 @@
                 utils.enable = true;
                 git.enable = true;
             };
+            editors = {
+                neovim.enable = true;
+            };
         };
     };
 
