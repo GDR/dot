@@ -9,6 +9,9 @@
             editors = {
                 neovim.enable = true;
             };
+            terminal = {
+                kitty.enable = true;
+            };
         };
     };
 
