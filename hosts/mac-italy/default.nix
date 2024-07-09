@@ -4,6 +4,7 @@
             shell = {
                 zsh.enable = true;
                 utils.enable = true;
+                git.enable = true;
             };
         };
     };
