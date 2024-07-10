@@ -15,5 +15,8 @@ in
       bat
       fzf
     ];
+    home.programs = {
+        direnv.enable = true;
+    };
   };
 }
