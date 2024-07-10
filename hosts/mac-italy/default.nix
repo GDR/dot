@@ -17,6 +17,10 @@
             utils = {
                 raycast.enable = true;
             };
+            vpn = {
+                outline-client.enable = true;
+                outline-manager.enable = true;
+            };
         };
     };
 
