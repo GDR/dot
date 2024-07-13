@@ -5,6 +5,7 @@
                 zsh.enable = true;
                 utils.enable = true;
                 git.enable = true;
+                tmux.enable = true;
             };
             editors = {
                 neovim.enable = true;
