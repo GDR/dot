@@ -20,8 +20,12 @@
             };
             vpn = {
                 outline-client.enable = true;
-                outline-manager.enable = true;
+                outline-manager.enable = true;  
             };
+            terminal = {
+                iterm2.enable = true;
+            };
+            fonts.enable = true;
         };
     };
 
