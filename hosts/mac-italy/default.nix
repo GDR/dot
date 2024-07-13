@@ -33,4 +33,6 @@
     system.stateVersion = 4;
 
     nixpkgs.hostPlatform = "aarch64-darwin";
+
+    security.pam.enableSudoTouchIdAuth = true;
 }
