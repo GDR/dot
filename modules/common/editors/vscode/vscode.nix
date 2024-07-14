@@ -13,6 +13,15 @@ in
   config = mkIf cfg.enable {
     home.programs.vscode = {
       enable = true;
+      extensions = with pkgs.vscode-extensions; [
+        ms-azuretools.vscode-docker
+        bbenoist.nix
+        mkhl.direnv
+
+        ms-python.python
+        bbenoist.nix
+        jnoortheen.nix-ide
+      ];
     };
   };
 }
