@@ -13,6 +13,9 @@
             terminal = {
                 kitty.enable = true;
             };
+            utils = {
+                keepassxc.enable = true;
+            };
         };
         darwin = {
             utils = {
