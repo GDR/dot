@@ -12,6 +12,7 @@
                 app_folder="/Users/dgarifullin/Applications/Home Manager Trampolines"
                 rm -rf "$app_folder"
                 mkdir -p "$app_folder"
+                echo "$genProfilePath"
                 find "$genProfilePath/home-path/Applications" -type l -print | while read -r app; do
                     app_target="$app_folder/$(basename "$app")"
                     real_app="$(readlink "$app")"
@@ -24,13 +25,6 @@
         # Enable homebrew
         homebrew = {
             enable = true;
-
-            brews = [
-                "htop"
-            ];
-            casks = [
-                "yandex"
-            ];
         };
 
         nix-homebrew = {

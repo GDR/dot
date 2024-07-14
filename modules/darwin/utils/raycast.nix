@@ -1,4 +1,4 @@
-{ config, options, lib, ... }: with lib;
+{ config, options, lib, pkgs, ... }: with lib;
 let
   cfg = config.modules.darwin.utils.raycast;
 in
@@ -11,10 +11,8 @@ in
   };
 
   config = mkIf cfg.enable {
-    homebrew = {
-        casks = [
-            "raycast"
-        ];
-    };
+    home.packages = with pkgs; [
+      raycast
+    ];
   };
 }

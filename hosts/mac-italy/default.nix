@@ -23,7 +23,7 @@
                 outline-manager.enable = true;  
             };
             terminal = {
-                iterm2.enable = true;
+                # iterm2.enable = true;
             };
             fonts.enable = true;
         };
@@ -38,6 +38,7 @@
     system.stateVersion = 4;
 
     nixpkgs.hostPlatform = "aarch64-darwin";
+    nixpkgs.config.allowUnfree = true;
 
     security.pam.enableSudoTouchIdAuth = true;
 }

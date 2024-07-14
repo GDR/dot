@@ -58,6 +58,7 @@ in with lib; {
 
                 programs = mkAliasDefinitions options.home.programs;
                 home.packages = mkAliasDefinitions options.home.packages;
+                home.activation = mkAliasDefinitions options.home.activation;
             };
         };  
         users.users.dgarifullin = lib.mkMerge [

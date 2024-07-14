@@ -22,8 +22,11 @@
             inherit hm;
             my = import ./lib { inherit inputs lib; };
         });
+        overlays = [ (final: prev: {
+            config = prev.config // { allowUnfree = true; };
+        }) ];
     in {
-        inherit lib;
+        inherit lib overlays;
 
         darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
             system = "aarch64-darwin";
