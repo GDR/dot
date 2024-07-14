@@ -20,9 +20,6 @@ in {
   config = mkIf cfg.enable {
 
   } // mkIf pkgs.stdenv.isDarwin {
-    users.users.dgarifullin.openssh = {
-        authorizedKeys.keyFiles = [ "${pkgs.fetchurl { url = "https://github.com/gdr.keys"; }}" ];
-    };
     home.activation = {
         sshActivation = authorizedKeysFetcher;
     };
