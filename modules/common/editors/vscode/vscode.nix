@@ -21,7 +21,19 @@ in
         ms-python.python
         bbenoist.nix
         jnoortheen.nix-ide
+
+        catppuccin.catppuccin-vsc
+        catppuccin.catppuccin-vsc-icons
       ];
+      userSettings = {
+        "editor.fontFamily" = "'FiraCode Nerd Font Mono'";
+        "editor.fontLigatures" = true;
+        "editor.fontWeight" = "300";
+        "extensions.autoUpdate" = true;
+        "extensions.autoCheckUpdates" = true;
+        "workbench.colorTheme" = "Catppuccin Mocha";
+        "workbench.iconTheme" = "catppuccin-mocha";
+      };
     };
   };
 }
