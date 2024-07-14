@@ -17,13 +17,11 @@
         darwin = {
             utils = {
                 raycast.enable = true;
+                yaak.enable = true;
             };
             vpn = {
                 outline-client.enable = true;
                 outline-manager.enable = true;  
-            };
-            terminal = {
-                # iterm2.enable = true;
             };
             fonts.enable = true;
         };
