@@ -10,6 +10,7 @@
             };
             editors = {
                 neovim.enable = true;
+                vscode.enable = true;
             };
             terminal = {
                 kitty.enable = true;
@@ -32,16 +33,6 @@
     };
 
     services.nix-daemon.enable = true;
-        users.users.dgarifullin.openssh = {
-        authorizedKeys.keyFiles = let 
-            gdr_keys = pkgs.fetchurl { 
-                url = "https://github.com/gdr.keys"; 
-                hash = "sha256-cksjHzUo/l0muEmsRBrJkebfCEc9XyJ8Sr7iJ3/fYuo=";
-            };
-        in [ 
-            gdr_keys
-        ];
-    };
 
     nix.settings.experimental-features = "nix-command flakes";
 
