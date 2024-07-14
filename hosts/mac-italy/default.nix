@@ -18,6 +18,9 @@
             utils = {
                 keepassxc.enable = true;
             };
+            messenger = {
+                telegram.enable = true;
+            };
         };
         darwin = {
             utils = {
