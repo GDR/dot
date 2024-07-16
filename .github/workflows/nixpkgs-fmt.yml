@@ -1,22 +1,12 @@
-name: Check Nixpkgs Format
-
-on: [push, pull_request]
-
+name: Check nix flake
+on: [ push, pull_request ]
 jobs:
-  nixpkgs-fmt:
+  tests:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Install Nix
-      uses: cachix/install-nix-action@v14
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v27
       with:
-        nix_path: nixpkgs=channel:nixos-unstable
-
-    - name: Install nixpkgs-fmt
-      run: nix-env -iA nixpkgs.nixpkgs-fmt
-
-    - name: Run nixpkgs-fmt
-      run: nixpkgs-fmt --check .
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+    - run: nix flake check --all-systems
+    - run: nixpkgs-fmt --check .
