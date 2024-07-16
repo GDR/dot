@@ -38,7 +38,7 @@
       ];
     in
     {
-      inherit lib overlays;
+      inherit lib;
 
       packages = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
