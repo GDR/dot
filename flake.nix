@@ -52,5 +52,12 @@
           ++ (import ./modules/common { inherit inputs lib; }).modules
           ++ (import ./modules/darwin { inherit inputs lib; }).modules;
       };
+
+      devShell = forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in pkgs.mkShell {
+          buildInputs = [ pkgs.nixpkgs-fmt ];
+        }
+      );
     };
 }
