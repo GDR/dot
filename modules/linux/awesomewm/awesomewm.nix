@@ -1,7 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
   cfg = config.modules.linux.awesomewm;
-in {
+in
+{
   options.modules.linux.awesomewm = with types; {
     enable = mkOption {
       default = false;

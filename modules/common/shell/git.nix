@@ -1,7 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-  cfg = config.modules.common.shell.git; 
-in {
+let
+  cfg = config.modules.common.shell.git;
+in
+{
   options.modules.common.shell.git = with types; {
     enable = mkOption {
       default = false;

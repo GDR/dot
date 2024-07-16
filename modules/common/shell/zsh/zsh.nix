@@ -1,7 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
   cfg = config.modules.common.shell.zsh;
-in {
+in
+{
   options.modules.common.shell.zsh = with types; {
     enable = mkOption {
       default = false;
@@ -31,9 +32,9 @@ in {
       zplug = {
         enable = true;
         plugins = [
-          { name = "plugins/git"; tags = ["from:oh-my-zsh"]; }
-          { name = "romkatv/powerlevel10k"; tags = ["as:theme" "depth:1"]; }
-          { name = "chisui/zsh-nix-shell"; tags = ["depth:1"]; }
+          { name = "plugins/git"; tags = [ "from:oh-my-zsh" ]; }
+          { name = "romkatv/powerlevel10k"; tags = [ "as:theme" "depth:1" ]; }
+          { name = "chisui/zsh-nix-shell"; tags = [ "depth:1" ]; }
         ];
       };
 

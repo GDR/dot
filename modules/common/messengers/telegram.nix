@@ -1,7 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-  cfg = config.modules.common.messenger.telegram; 
-in {
+let
+  cfg = config.modules.common.messenger.telegram;
+in
+{
   options.modules.common.messenger.telegram = with types; {
     enable = mkOption {
       default = false;

@@ -1,15 +1,16 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-    isDarwin = pkgs.stdenv.isDarwin;
-    isLinux = pkgs.stdenv.isLinux;
-    cfg = config.modules.common.shell.ssh; 
+let
+  isDarwin = pkgs.stdenv.isDarwin;
+  isLinux = pkgs.stdenv.isLinux;
+  cfg = config.modules.common.shell.ssh;
 
-    # Hack to bypass fetchurl hash computation
-    authorizedKeysFetcher = ''
-        mkdir -p $HOME/.ssh
-        ${pkgs.curl}/bin/curl -o $HOME/.ssh/authorized_keys https://github.com/gdr.keys > /dev/null 2>&1
-    '';
-in {
+  # Hack to bypass fetchurl hash computation
+  authorizedKeysFetcher = ''
+    mkdir -p $HOME/.ssh
+    ${pkgs.curl}/bin/curl -o $HOME/.ssh/authorized_keys https://github.com/gdr.keys > /dev/null 2>&1
+  '';
+in
+{
   options.modules.common.shell.ssh = with types; {
     enable = mkOption {
       default = false;
@@ -17,11 +18,10 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
-
-  } // mkIf pkgs.stdenv.isDarwin {
+  config = mkIf cfg.enable
+    { } // mkIf pkgs.stdenv.isDarwin {
     home.activation = {
-        sshActivation = authorizedKeysFetcher;
+      sshActivation = authorizedKeysFetcher;
     };
   };
 }

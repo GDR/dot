@@ -12,9 +12,9 @@ in
 
   config = mkIf cfg.enable {
     homebrew = {
-        casks = [
-            "yaak"
-        ];
+      casks = [
+        "yaak"
+      ];
     };
   };
 }

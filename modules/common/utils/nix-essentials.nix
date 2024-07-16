@@ -1,8 +1,9 @@
 { config, options, pkgs, lib, ... }: with lib;
-let 
-  cfg = config.modules.common.utils.keepassxc; 
-in {
-  options.modules.common.utils.keepassxc = with types; {
+let
+  cfg = config.modules.common.utils.nix-essentials;
+in
+{
+  options.modules.common.utils.nix-essentials = with types; {
     enable = mkOption {
       default = true;
       type = types.bool;
