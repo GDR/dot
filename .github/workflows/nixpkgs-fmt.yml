@@ -1,4 +1,4 @@
-name: Check nix flake
+name: check-nix-flake
 on: [ push, pull_request ]
 jobs:
   tests:
