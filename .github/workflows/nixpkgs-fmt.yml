@@ -9,4 +9,4 @@ jobs:
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
     - run: nix flake check --all-systems
-    - run: nixpkgs-fmt --check .
+    - run: nix-shell -p nixpkgs-fmt --run "nixpkgs-fmt . --check"
