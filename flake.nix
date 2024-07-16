@@ -44,8 +44,7 @@
         in import ./pkgs { inherit pkgs; }
       );
 
-      darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
-        system = "aarch64-darwin";
+      darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem { system = "aarch64-darwin";
         specialArgs = { inherit self inputs lib; };
         modules = [ ./hosts/mac-italy ]
           ++ (import ./modules/common { inherit inputs lib; }).modules
