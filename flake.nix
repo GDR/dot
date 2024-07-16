@@ -17,8 +17,7 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, ... }:
-    let
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, ... }: let
       lib = nixpkgs.lib.extend (lib: _:
         let hm = inputs.home-manager.lib.hm; in {
           inherit hm;
