@@ -3,7 +3,7 @@ Personal Nix Configuration for macOS
 
 [![NixOS Version](https://img.shields.io/badge/nixos-24.05-blue)](https://nixos.org/)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/gdr/dot/master)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/gdr/dot/master?cacheSeconds=5&link=https%3A%2F%2Fgithub.com%2FGDR%2Fdot%2Fsettings%2Factions)
 
 Overview
 --------
