@@ -8,5 +8,7 @@ jobs:
     - uses: cachix/install-nix-action@v27
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
-    - run: nix flake check --all-systems
-    - run: nix-shell -p nixpkgs-fmt --run "nixpkgs-fmt . --check"
+    - name: Check nix flake
+      run: nix flake check --all-systems
+    - name: Check format
+      run: nix develop --ignore-environment --command nixpkgs-fmt . --check
