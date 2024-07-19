@@ -14,6 +14,7 @@ in
     home.packages = with pkgs; [
       bat
       fzf
+      neofetch
     ];
     home.programs = {
       direnv.enable = true;
