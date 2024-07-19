@@ -24,11 +24,9 @@
           inherit hm;
           my = import ./lib { inherit inputs lib; };
         });
-      overlays = [
-        (final: prev: {
-          config = prev.config // { allowUnfree = true; };
-        })
-      ];
+
+      overlays = import ./overlays { inherit inputs lib; };
+
       forAllSystems = nixpkgs.lib.genAttrs [
         "aarch64-linux"
         "i686-linux"
@@ -38,7 +36,7 @@
       ];
     in
     {
-      inherit lib;
+      inherit lib overlays;
 
       packages = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
@@ -47,10 +45,10 @@
 
       darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
         system = "aarch64-darwin";
-        specialArgs = { inherit self inputs lib; };
+        specialArgs = { inherit self inputs lib overlays; };
         modules = [ ./hosts/mac-italy ]
-          ++ (import ./modules/common { inherit inputs lib; }).modules
-          ++ (import ./modules/darwin { inherit inputs lib; }).modules;
+          ++ (import ./modules/common { inherit inputs lib overlays; }).modules
+          ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
       };
 
       devShell = forAllSystems (system:

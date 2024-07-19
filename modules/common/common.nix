@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, home-manager, options, config, ... }:
+{ inputs, lib, pkgs, home-manager, options, config, overlays,... }:
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
@@ -43,6 +43,15 @@ with lib; {
     };
   };
   config = {
+    nixpkgs.overlays = [
+      # (
+      #   # final: prev: {
+      #   #   apple-emoji-ttf = final.callPackage ../../pkgs/apple-emoji-ttf {};
+      #   # }
+      # )
+      overlays.additions
+    ];
+
     home-manager = {
       useUserPackages = true;
       useGlobalPkgs = true;

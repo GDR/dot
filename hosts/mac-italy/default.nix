@@ -1,4 +1,4 @@
-{ self, pkgs, lib, ... }: {
+{ self, pkgs, lib, overlays, ... }: {
   modules = {
     common = {
       shell = {
