@@ -24,6 +24,8 @@ in
 
         catppuccin.catppuccin-vsc
         catppuccin.catppuccin-vsc-icons
+        
+        github.vscode-github-actions
       ];
       userSettings = {
         "editor.fontFamily" = "'FiraCode Nerd Font Mono'";
