@@ -12,15 +12,15 @@ in
     };
   };
 
-  config = {} 
-  // mkIf (cfg.enable && isLinux) {
+  config = { }
+    // mkIf (cfg.enable && isLinux) {
     home.programs = {
       firefox = {
         enable = true;
       };
     };
   }
-  // mkIf (cfg.enable && isDarwin) {
+    // mkIf (cfg.enable && isDarwin) {
     homebrew.casks = [
       "firefox"
     ];

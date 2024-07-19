@@ -12,8 +12,8 @@ in
     };
   };
 
-  config = {} 
-  // mkIf (cfg.enable && isLinux) {
+  config = { }
+    // mkIf (cfg.enable && isLinux) {
     home.programs = {
       google-chrome = {
         enable = true;
@@ -28,7 +28,7 @@ in
       };
     };
   }
-  // mkIf (cfg.enable && isDarwin) {
+    // mkIf (cfg.enable && isDarwin) {
     homebrew.casks = [
       "google-chrome"
     ];
