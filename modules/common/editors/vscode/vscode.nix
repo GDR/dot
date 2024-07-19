@@ -24,7 +24,7 @@ in
 
         catppuccin.catppuccin-vsc
         catppuccin.catppuccin-vsc-icons
-        
+
         github.vscode-github-actions
       ];
       userSettings = {
