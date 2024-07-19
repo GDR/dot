@@ -21,6 +21,9 @@
       messenger = {
         telegram.enable = true;
       };
+      browsers = {
+        chrome.enable = true;
+      };
     };
     darwin = {
       utils = {
