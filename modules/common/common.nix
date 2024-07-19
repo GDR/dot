@@ -1,4 +1,4 @@
-{ inputs, lib, pkgs, home-manager, options, config, overlays,... }:
+{ inputs, lib, pkgs, home-manager, options, config, overlays, ... }:
 let
   isDarwin = pkgs.stdenv.isDarwin;
   isLinux = pkgs.stdenv.isLinux;
