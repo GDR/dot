@@ -19,5 +19,7 @@ in
       rnix-lsp
       fzf
     ];
+
+    home.file.".config/nvim".source = ./config;
   };
 }
