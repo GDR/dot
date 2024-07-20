@@ -49,7 +49,7 @@ with lib; {
       #   #   apple-emoji-ttf = final.callPackage ../../pkgs/apple-emoji-ttf {};
       #   # }
       # )
-      overlays.additions
+      # overlays.additions
     ];
 
     home-manager = {

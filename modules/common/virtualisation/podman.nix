@@ -10,9 +10,8 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf (cfg.enable and isDarwin) {
     home.packages = with pkgs; [
-      podman
       vfkit
     ];
   };
