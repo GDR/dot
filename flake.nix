@@ -31,6 +31,30 @@
       ];
 
       overlays = forAllSystems (system: import ./overlays { inherit inputs lib system; });
+
+      mkDarwinConfiguration = host-config:
+        let
+          system = "aarch64-darwin";
+        in
+        nix-darwin.lib.darwinSystem {
+          inherit system;
+          specialArgs = { inherit self inputs lib overlays system; };
+          modules = [ host-config ]
+            ++ (import ./modules/common { inherit inputs lib overlays; }).modules
+            ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
+        };
+
+      mkLinuxConfiguration = host-config:
+        let
+          system = "x86_64-linux";
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit self inputs lib overlays system; };
+          modules = [ host-config ]
+            ++ (import ./modules/common { inherit inputs lib overlays; }).modules
+            ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
+        };
     in
     {
       inherit lib;
@@ -40,19 +64,6 @@
         in import ./pkgs { inherit pkgs lib system; }
       );
 
-      darwinConfigurations.mac-italy =
-        let
-          system = "aarch64-darwin";
-          overlays' = overlays.${system};
-        in
-        nix-darwin.lib.darwinSystem {
-          system = "aarch64-darwin";
-          specialArgs = { inherit self inputs lib overlays system; };
-          modules = [ ./hosts/mac-italy ]
-            ++ (import ./modules/common { inherit inputs lib overlays; }).modules
-            ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
-        };
-
       devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
         in {
@@ -61,5 +72,7 @@
           };
         }
       );
+
+      darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
     };
 }
