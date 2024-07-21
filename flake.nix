@@ -53,10 +53,12 @@
             ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
         };
 
-      devShell = forAllSystems (system:
+      devShells = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
-        in pkgs.mkShell {
-          buildInputs = [ pkgs.nixpkgs-fmt ];
+        in {
+          default = pkgs.mkShell {
+            buildInputs = [ pkgs.nixpkgs-fmt ];
+          };
         }
       );
     };
