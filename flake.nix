@@ -32,6 +32,9 @@
 
       overlays = forAllSystems (system: import ./overlays { inherit inputs lib system; });
 
+      mkConfigurationModules = lib.concatMap
+        (module: (import module { inherit inputs lib overlays; }).modules);
+
       mkDarwinConfiguration = host-config:
         let
           system = "aarch64-darwin";
@@ -40,8 +43,10 @@
           inherit system;
           specialArgs = { inherit self inputs lib overlays system; };
           modules = [ host-config ]
-            ++ (import ./modules/common { inherit inputs lib overlays; }).modules
-            ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
+            ++ mkConfigurationModules [
+            ./modules/common
+            ./modules/darwin
+          ];
         };
 
       mkLinuxConfiguration = host-config:
@@ -52,8 +57,10 @@
           inherit system;
           specialArgs = { inherit self inputs lib overlays system; };
           modules = [ host-config ]
-            ++ (import ./modules/common { inherit inputs lib overlays; }).modules
-            ++ (import ./modules/linux { inherit inputs lib overlays; }).modules;
+            ++ mkConfigurationModules [
+            ./modules/common
+            ./modules/linux
+          ];
         };
     in
     {
