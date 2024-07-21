@@ -88,5 +88,12 @@
       );
 
       darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
+
+      templates = {
+        python = {
+          path = ./templates/python;
+          description = "A template for a Python project using poetry";
+        };
+      };
     };
 }
