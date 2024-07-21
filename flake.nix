@@ -25,28 +25,33 @@
           my = import ./lib { inherit inputs lib; };
         });
 
-      overlays = import ./overlays { inherit inputs lib; };
-
       forAllSystems = nixpkgs.lib.genAttrs [
-        "aarch64-linux"
+        "aarch64-darwin"
         "x86_64-linux"
       ];
+
+      overlays = forAllSystems (system: import ./overlays { inherit inputs lib system; });
     in
     {
-      inherit lib overlays;
+      inherit lib;
 
       packages = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};
         in import ./pkgs { inherit pkgs lib system; }
       );
 
-      darwinConfigurations.mac-italy = nix-darwin.lib.darwinSystem {
-        system = "aarch64-darwin";
-        specialArgs = { inherit self inputs lib overlays; };
-        modules = [ ./hosts/mac-italy ]
-          ++ (import ./modules/common { inherit inputs lib overlays; }).modules
-          ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
-      };
+      darwinConfigurations.mac-italy =
+        let
+          system = "aarch64-darwin";
+          overlays' = overlays.${system};
+        in
+        nix-darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = { inherit self inputs lib overlays system; };
+          modules = [ ./hosts/mac-italy ]
+            ++ (import ./modules/common { inherit inputs lib overlays; }).modules
+            ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
+        };
 
       devShell = forAllSystems (system:
         let pkgs = nixpkgs.legacyPackages.${system};

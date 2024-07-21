@@ -8,8 +8,8 @@ let
 in
 {
   apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
-} // pkgs.lib.optionalAttrs isDarwin {
-  vfkit = pkgs.callPackage ./vfkit { };
-} // pkgs.lib.optionalAttrs isLinux {
-
 }
+// (if isDarwin then {
+  vfkit = pkgs.callPackage ./vfkit { };
+} else { })
+  // (if isLinux then { } else { })
