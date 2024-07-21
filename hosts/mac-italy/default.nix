@@ -17,6 +17,7 @@
       };
       utils = {
         keepassxc.enable = true;
+        qbittorrent.enable = true;
       };
       messenger = {
         telegram.enable = true;
