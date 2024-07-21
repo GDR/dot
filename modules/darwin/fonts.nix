@@ -16,7 +16,6 @@ in
         hack-font
         pixel-code
         fira-code-nerdfont
-        apple-emoji-ttf
       ];
     };
   };
