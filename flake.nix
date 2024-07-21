@@ -53,7 +53,7 @@
           specialArgs = { inherit self inputs lib overlays system; };
           modules = [ host-config ]
             ++ (import ./modules/common { inherit inputs lib overlays; }).modules
-            ++ (import ./modules/darwin { inherit inputs lib overlays; }).modules;
+            ++ (import ./modules/linux { inherit inputs lib overlays; }).modules;
         };
     in
     {
