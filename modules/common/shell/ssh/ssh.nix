@@ -4,11 +4,11 @@ let
   isLinux = pkgs.stdenv.isLinux;
   cfg = config.modules.common.shell.ssh;
 
-  # Hack to bypass fetchurl hash computation
-  authorizedKeysFetcher = ''
-    mkdir -p $HOME/.ssh
-    ${pkgs.curl}/bin/curl -o $HOME/.ssh/authorized_keys https://github.com/gdr.keys > /dev/null 2>&1
-  '';
+  # Fetch the authorized keys file
+  authorizedKeysFile = pkgs.fetchurl {
+    url = "https://github.com/gdr.keys";
+    sha256 = "sha256:0zxxp8rww8a08adnvgda4cnxpfb1nl7sybx0i0cxdi7mhxdhkzbk";
+  };
 in
 {
   options.modules.common.shell.ssh = with types; {
@@ -19,9 +19,10 @@ in
   };
 
   config = mkIf cfg.enable
-    { } // mkIf pkgs.stdenv.isDarwin {
-    home.activation = {
-      sshActivation = authorizedKeysFetcher;
-    };
+    { } // mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
+      
+    openssh.authorizedKeys.keyFiles = [
+      authorizedKeysFile
+    ];
   };
 }
