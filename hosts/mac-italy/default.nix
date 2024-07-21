@@ -27,6 +27,9 @@
       virtualisation = {
         podman.enable = true;
       };
+      media = {
+        vlc.enable = true;
+      };
     };
     darwin = {
       utils = {
