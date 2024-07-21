@@ -3,7 +3,7 @@
     inputs.home-manager.darwinModules.home-manager
     inputs.nix-homebrew.darwinModules.nix-homebrew
   ];
-  options = with types; { 
+  options = with types; {
     openssh = mkOption {
       type = attrs;
       default = { };

@@ -20,7 +20,7 @@ in
 
   config = mkIf cfg.enable
     { } // mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
-      
+
     openssh.authorizedKeys.keyFiles = [
       authorizedKeysFile
     ];
