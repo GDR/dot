@@ -155,7 +155,7 @@ fabric.properties
 !.idea/codeStyles
 !.idea/runConfigurations
 
-# Direnv storage 
+# Direnv storage
 .direnv
 
 ### Linux ###

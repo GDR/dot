@@ -65,10 +65,17 @@
       );
 
       devShells = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
-        in {
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          pre-commit-hooks = import ./pre-commit.nix { inherit pkgs; };
+        in
+        {
           default = pkgs.mkShell {
-            buildInputs = [ pkgs.nixpkgs-fmt ];
+            buildInputs = with pkgs; [
+              nixpkgs-fmt
+              pre-commit
+              direnv
+            ];
           };
         }
       );
