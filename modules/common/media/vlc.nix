@@ -1,8 +1,8 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
   cfg = config.modules.common.media.vlc;
-  isLinux = options.system.platform == "linux";
-  isDarwin = options.system.platform == "darwin";
+  isLinux = pkgs.stdenv.isLinux;
+  isDarwin = pkgs.stdenv.isDarwin;
 in
 {
   options.modules.common.media.vlc = with types; {
