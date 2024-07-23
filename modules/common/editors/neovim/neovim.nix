@@ -7,11 +7,12 @@ in
     ./colorschema.nix
     ./general.nix
     ./keymaps.nix
-    ./plugins/which-key.nix
     ./plugins/airline.nix
-    ./plugins/telescope.nix
-    ./plugins/noice.nix
     ./plugins/neoscroll.nix
+    ./plugins/neotree.nix
+    ./plugins/noice.nix
+    ./plugins/telescope.nix
+    ./plugins/which-key.nix
   ];
 
   options.modules.common.editors.neovim = with types; {
