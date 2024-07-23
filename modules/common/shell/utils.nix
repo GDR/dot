@@ -15,6 +15,7 @@ in
       bat
       fzf
       neofetch
+      wget
     ];
     home.programs = {
       direnv.enable = true;

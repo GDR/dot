@@ -18,6 +18,7 @@ in
       ripgrep
       rnix-lsp
       fzf
+      wget
     ];
 
     home.file.".config/nvim".source = ./config;
