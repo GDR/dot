@@ -3,6 +3,14 @@ let
   cfg = config.modules.common.editors.neovim;
 in
 {
+  imports = [
+    ./colorschema.nix
+    ./general.nix
+    ./keymaps.nix
+    ./plugins/which-key.nix
+    ./plugins/airline.nix
+  ];
+
   options.modules.common.editors.neovim = with types; {
     enable = mkOption {
       default = false;
@@ -11,16 +19,10 @@ in
   };
 
   config = mkIf cfg.enable {
-    home.programs.neovim = {
+    programs.nixvim = {
       enable = true;
-    };
-    user.packages = with pkgs; [
-      ripgrep
-      rnix-lsp
-      fzf
-      wget
-    ];
 
-    home.file.".config/nvim".source = ./config;
+      # globals.mapLeader = "<space>";da
+    };
   };
 }
