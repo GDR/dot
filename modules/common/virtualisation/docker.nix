@@ -1,10 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.common.virtualisation.podman;
+  cfg = config.modules.common.virtualisation.docker;
   isDarwin = pkgs.stdenv.isDarwin;
 in
 {
-  options.modules.common.virtualisation.podman = with types; {
+  options.modules.common.virtualisation.docker = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;
@@ -13,8 +13,7 @@ in
 
   config = mkIf (cfg.enable && isDarwin) {
     home.packages = with pkgs; [
-      podman
-      vfkit
+      docker
     ];
   };
 }
