@@ -5,6 +5,7 @@
 
       number = true;
       relativenumber = true;
+      timeoutlen = 150;
     };
   };
 }

@@ -9,6 +9,8 @@ in
     ./keymaps.nix
     ./plugins/which-key.nix
     ./plugins/airline.nix
+    ./plugins/telescope.nix
+    ./plugins/neoscroll.nix
   ];
 
   options.modules.common.editors.neovim = with types; {
@@ -21,8 +23,11 @@ in
   config = mkIf cfg.enable {
     programs.nixvim = {
       enable = true;
-
-      # globals.mapLeader = "<space>";da
     };
+
+    home.packages = with pkgs; [
+      ripgrep
+      fzf
+    ];
   };
 }
