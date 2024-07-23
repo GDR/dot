@@ -10,6 +10,7 @@ in
     ./plugins/which-key.nix
     ./plugins/airline.nix
     ./plugins/telescope.nix
+    ./plugins/noice.nix
     ./plugins/neoscroll.nix
   ];
 
