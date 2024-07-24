@@ -2,11 +2,11 @@
   modules = {
     common = {
       shell = {
-        zsh.enable = true;
         git.enable = true;
+        ssh.enable = true;
         tmux.enable = true;
         utils.enable = true;
-        ssh.enable = true;
+        zsh.enable = true;
       };
       editors = {
         neovim.enable = true;

@@ -18,6 +18,19 @@ in
         userEmail = "gosugdr@gmail.com";
         extraConfig = {
           core.editor = "nvim";
+
+          gpg = {
+            format = "ssh";
+          };
+
+          user = {
+            signingkey = "/Users/dgarifullin/.ssh/mac_italy_id_rsa.pub";
+          };
+
+          commit = {
+            gpgsign = true;
+            gpg.program = "gpg";
+          };
         };
       };
     };
