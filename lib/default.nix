@@ -9,7 +9,7 @@
   recursiveDirs = dir:
     let files = filterAttrs (n: v: hasSuffix ".nix" n || v == "directory") (builtins.readDir dir); in (mapAttrs'
       (n: v:
-        if v == "directory" then nameValuePair n (recursiveDirs "${toString dir}/${n}")
+        if v == "directory" && n != "dotfiles" then nameValuePair n (recursiveDirs "${toString dir}/${n}")
         else
           let name = removeSuffix ".nix" n;
           in nameValuePair name "${toString dir}/${n}"
@@ -19,7 +19,7 @@
   flattenModules = modules: (
     concatMap
       (x:
-        if x == [ ] || x == "default" || x == "_default" then [ ]
+        if x == [ ] || x == "default" || x == "_default" || x == "dotfiles" then [ ]
         else if isAttrs modules.${x} then (flattenModules modules.${x})
         else [ modules.${x} ]
       )

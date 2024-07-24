@@ -4,15 +4,15 @@ let
 in
 {
   imports = [
-    ./colorschema.nix
-    ./general.nix
-    ./keymaps.nix
-    ./plugins/airline.nix
-    ./plugins/neoscroll.nix
-    ./plugins/neotree.nix
-    ./plugins/noice.nix
-    ./plugins/telescope.nix
-    ./plugins/which-key.nix
+    ./dotfiles/colorschema.nix
+    ./dotfiles/general.nix
+    ./dotfiles/keymaps.nix
+    ./dotfiles/plugins/airline.nix
+    ./dotfiles/plugins/neoscroll.nix
+    ./dotfiles/plugins/neotree.nix
+    ./dotfiles/plugins/noice.nix
+    ./dotfiles/plugins/telescope.nix
+    ./dotfiles/plugins/which-key.nix
   ];
 
   options.modules.common.editors.neovim = with types; {
