@@ -12,9 +12,11 @@ with lib;
     nixpkgs.config.allowUnfree = true;
 
     user =
-      let user = builtins.getEnv "USER";
-          name = if elem user [ "" "root" ] then "dgarifullin" else user;
-      in {
+      let
+        user = builtins.getEnv "USER";
+        name = if elem user [ "" "root" ] then "dgarifullin" else user;
+      in
+      {
         inherit name;
         extraGroups = [ "wheel" "audio" "libvirtd" ];
         isNormalUser = true;

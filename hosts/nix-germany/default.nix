@@ -1,5 +1,5 @@
 { inputs, lib, config, pkgs, home-manager, hardware, ... }: {
-  
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   imports = [
@@ -7,7 +7,7 @@
     ./hardware-configuration.nix
   ];
 
-  services.xserver.videoDrivers = ["intel"];
+  services.xserver.videoDrivers = [ "intel" ];
   services.xserver.deviceSection = ''
     Option "TearFree" "true"
   '';
@@ -21,8 +21,7 @@
 
   programs.nm-applet.enable = true;
 
-  modules = {
-  };
+  modules = { };
 
   time.timeZone = "Europe/Moscow";
 
