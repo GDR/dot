@@ -52,14 +52,11 @@
     options = "--delete-older-than 30d";
   };
 
-  environment.shells = with pkgs; [ bashInteractive zsh ];
-
   system.stateVersion = "24.05";
 
   services.logind = {
     lidSwitch = "ignore";
   };
-
 
   networking.firewall = {
     enable = true;
