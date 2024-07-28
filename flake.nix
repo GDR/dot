@@ -19,9 +19,13 @@
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hardware = {
+      url = "github:nixos/nixos-hardware";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, nixvim, ... }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, nixvim, hardware, ... }:
     let
       lib = nixpkgs.lib.extend (lib: _:
         let hm = inputs.home-manager.lib.hm; in {
@@ -53,13 +57,13 @@
           ];
         };
 
-      mkLinuxConfiguration = host-config:
+      mkNixosConfiguration = host-config:
         let
           system = "x86_64-linux";
         in
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit self inputs lib overlays system; };
+          specialArgs = { inherit self inputs lib overlays system hardware; };
           modules = [ host-config ]
             ++ mkConfigurationModules [
             ./modules/common
@@ -91,7 +95,8 @@
         }
       );
 
-      darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
+      # darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
+      nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
 
       templates = {
         python = {

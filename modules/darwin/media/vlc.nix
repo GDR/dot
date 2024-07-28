@@ -11,5 +11,9 @@ in
     };
   };
 
-  config = { };
+  config = mkIf cfg.enable {
+    homebrew.casks = [
+      "vlc"
+    ];
+  };
 }

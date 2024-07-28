@@ -27,10 +27,5 @@ in
         ];
       };
     };
-  }
-    // mkIf (cfg.enable && isDarwin) {
-    homebrew.casks = [
-      "google-chrome"
-    ];
   };
 }
