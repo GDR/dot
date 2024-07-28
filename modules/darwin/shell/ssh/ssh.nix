@@ -18,8 +18,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable
-    { } // mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
+  config = mkIf cfg.enable {
 
     openssh.authorizedKeys.keyFiles = [
       authorizedKeysFile
