@@ -31,6 +31,7 @@
       };
       media = {
         vlc.enable = true;
+        spotify.enable = true;
       };
     };
     darwin = {
