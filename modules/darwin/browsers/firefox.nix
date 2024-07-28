@@ -10,7 +10,7 @@ in
     };
   };
 
-  config =  mkIf cfg.enable {
+  config = mkIf cfg.enable {
     homebrew.casks = [
       "firefox"
     ];
