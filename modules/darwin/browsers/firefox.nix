@@ -1,8 +1,6 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
   cfg = config.modules.common.browsers.firefox;
-  isLinux = pkgs.stdenv.isLinux;
-  isDarwin = pkgs.stdenv.isDarwin;
 in
 {
   options.modules.common.browsers.firefox = with types; {
@@ -12,12 +10,9 @@ in
     };
   };
 
-  config = { }
-    // mkIf (cfg.enable && isLinux) {
-    home.programs = {
-      firefox = {
-        enable = true;
-      };
-    };
+  config =  mkIf cfg.enable {
+    homebrew.casks = [
+      "firefox"
+    ];
   };
 }

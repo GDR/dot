@@ -18,5 +18,20 @@ in
     };
   };
 
-  config = mkIf cfg.enable { };
+  config = mkIf cfg.enable
+    { } // mkIf (cfg.enable && pkgs.stdenv.isDarwin) {
+
+    openssh.authorizedKeys.keyFiles = [
+      authorizedKeysFile
+    ];
+    home.file.".ssh/config".text = ''
+      Host *
+        AddKeysToAgent yes
+        UseKeychain yes
+
+      Host github.com
+        User gdr
+        IdentityFile ~/.ssh/mac_italy_id_rsa
+    '';
+  };
 }

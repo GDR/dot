@@ -14,7 +14,7 @@ in
   config = mkIf (cfg.enable && isDarwin) {
     home.packages = with pkgs; [
       podman
-      vfkit
+      # vfkit
     ];
   };
 }
