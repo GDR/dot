@@ -44,8 +44,8 @@
         outline-client.enable = true;
         outline-manager.enable = true;
       };
-      fonts.enable = true;
     };
+    fonts.enable = true;
   };
 
   services.nix-daemon.enable = true;

@@ -21,7 +21,31 @@
 
   programs.nm-applet.enable = true;
 
-  modules = { };
+  modules = {
+    common = {
+      browsers = {
+        chrome.enable = true;
+      };
+      shell = {
+        git.enable = true;
+        tmux.enable = true;
+        utils.enable = true;
+        zsh.enable = true;
+      };
+      editors = {
+        neovim.enable = true;
+        vscode.enable = true;
+      };
+      terminal = {
+        kitty.enable = true;
+      };
+    };
+    linux = {
+      awesomewm.enable = true;
+      sound.enable = true;
+    };
+    fonts.enable = true;
+  };
 
   time.timeZone = "Europe/Moscow";
 
