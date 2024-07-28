@@ -1,9 +1,9 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.darwin.fonts;
+  cfg = config.modules.fonts;
 in
 {
-  options.modules.darwin.fonts = with types; {
+  options.modules.fonts = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;

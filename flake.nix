@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+      url = "github:NixOS/nixpkgs";
     };
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
@@ -21,7 +21,6 @@
     };
     hardware = {
       url = "github:nixos/nixos-hardware";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -98,11 +97,11 @@
       darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
       nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
 
-      templates = {
-        python = {
-          path = ./templates/python;
-          description = "A template for a Python project using poetry";
-        };
-      };
+      # templates = {
+      #   python = {
+      #     path = ./templates/python;
+      #     description = "A template for a Python project using poetry";
+      #   };
+      # };
     };
 }
