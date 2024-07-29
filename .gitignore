@@ -270,4 +270,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+### Nix ###
+# Remove result folder with build
+result/
+
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,visualstudiocode,intellij+all,git,windows,vim,emacs
