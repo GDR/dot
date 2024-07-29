@@ -23,10 +23,6 @@ in
             format = "ssh";
           };
 
-          user = {
-            signingkey = "/Users/dgarifullin/.ssh/mac_italy_id_rsa.pub";
-          };
-
           commit = {
             gpgsign = true;
             gpg.program = "gpg";

@@ -39,6 +39,11 @@
       terminal = {
         kitty.enable = true;
       };
+      utils = {
+        keepassxc.enable = true;
+      };
+      messenger = {
+      };
     };
     linux = {
       awesomewm.enable = true;
@@ -90,4 +95,11 @@
 
   # Podman
   boot.kernelModules = [ "kvm-intel" ];
+
+
+
+
+  home.programs.git.extraConfig.user = {
+    signingkey = "/home/dgarifullin/.ssh/germany_id_rsa.pub";
+  };
 }

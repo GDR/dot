@@ -34,6 +34,7 @@ in
     home.packages = with pkgs; [
       rofi
       picom
+      xclip
     ];
 
     # Keyboard layout
