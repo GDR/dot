@@ -24,6 +24,15 @@ in
       openssh.authorizedKeys.keyFiles = [
         authorizedKeysFile
       ];
+      home.programs.ssh = {
+        enable = true;
+	matchBlocks = {
+	  "github.com" = {
+	    user = "gdr";
+	    identityFile = "~/.ssh/germany_id_rsa";
+	  };
+	};
+      };
     };
     linux = {
       services.openssh = {
@@ -34,20 +43,7 @@ in
           AllowUsers dgarifullin
         '';
       };
-      home.programs.ssh = {
-        enable = true;
-      };
     };
-    darwin = {
-      home.file.".ssh/config".text = ''
-        Host *
-          AddKeysToAgent yes
-          UseKeychain yes
-
-        Host github.com
-          User gdr
-          IdentityFile ~/.ssh/mac_italy_id_rsa
-      '';
-    };
+    darwin = { };
   });
 }
