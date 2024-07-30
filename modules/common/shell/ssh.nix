@@ -8,7 +8,7 @@ let
   # Fetch the authorized keys file
   authorizedKeysFile = pkgs.fetchurl {
     url = "https://github.com/gdr.keys";
-    sha256 = "sha256:0zxxp8rww8a08adnvgda4cnxpfb1nl7sybx0i0cxdi7mhxdhkzbk";
+    sha256 = "sha256:VUm1uR2PWacLZFqw5XkzSg/R0TlIXHV4zJTs5gg5yIs=";
   };
 in
 {
@@ -36,12 +36,6 @@ in
       };
       home.programs.ssh = {
         enable = true;
-        matchBlocks = {
-          "*" = {
-            AddKeysToAgent = "yes";
-            UseKeychain = "yes";
-          };
-        };
       };
     };
     darwin = {
