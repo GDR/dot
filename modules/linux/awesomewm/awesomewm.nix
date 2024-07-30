@@ -25,10 +25,10 @@ in
 
         # Enable lightdm
         displayManager = {
-          defaultSession = "none+awesome";
           lightdm.enable = true;
         };
       };
+      displayManager.defaultSession = "none+awesome";
     };
 
     home.packages = with pkgs; [
