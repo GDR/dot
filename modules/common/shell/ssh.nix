@@ -8,7 +8,7 @@ let
   # Fetch the authorized keys file
   authorizedKeysFile = pkgs.fetchurl {
     url = "https://github.com/gdr.keys";
-    sha256 = "sha256:VUm1uR2PWacLZFqw5XkzSg/R0TlIXHV4zJTs5gg5yIs=";
+    sha256 = "sha256-VUm1uR2PWacLZFqw5XkzSg/R0TlIXHV4zJTs5gg5yIs=";
   };
 in
 {
@@ -26,12 +26,20 @@ in
       ];
       home.programs.ssh = {
         enable = true;
-	matchBlocks = {
-	  "github.com" = {
-	    user = "gdr";
-	    identityFile = "~/.ssh/germany_id_rsa";
-	  };
-	};
+        matchBlocks = {
+          "*" = {
+            # addKeysToAgent = "yes";
+            # useKeychain = "yes";
+          };
+          "github.com" = {
+            user = "gdr";
+            identityFile = "~/.ssh/germany_id_rsa";
+          };
+        };
+        extraConfig = ''
+          AddKeysToAgent yes
+          UseKeychain yes
+        '';
       };
     };
     linux = {

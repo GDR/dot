@@ -30,7 +30,7 @@
         git.enable = true;
         tmux.enable = true;
         utils.enable = true;
-	ssh.enable = true;
+        ssh.enable = true;
         zsh.enable = true;
       };
       editors = {

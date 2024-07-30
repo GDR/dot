@@ -61,4 +61,8 @@
   nixpkgs.config.allowUnfree = true;
 
   security.pam.enableSudoTouchIdAuth = true;
+
+  home.programs.git.extraConfig.user = {
+    signingkey = "/Users/dgarifullin/.ssh/mac_italy_id_rsa.pub";
+  };
 }
