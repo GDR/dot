@@ -32,9 +32,6 @@ in
             identityFile = "~/.ssh/germany_id_rsa";
           };
         };
-        extraConfig = ''
-          UseKeychain yes
-        '';
       };
     };
     linux = {
