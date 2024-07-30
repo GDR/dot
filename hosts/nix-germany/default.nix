@@ -42,8 +42,7 @@
       utils = {
         keepassxc.enable = true;
       };
-      messenger = {
-      };
+      messenger = { };
     };
     linux = {
       awesomewm.enable = true;

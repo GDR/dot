@@ -26,6 +26,14 @@ in
       ];
     };
     linux = {
+      services.openssh = {
+        enable = true;
+        permitRootLogin = "no";
+        passwordAuthentication = false;
+        extraConfig = ''
+          AllowUsers dgarifullin
+        '';
+      };
       home.programs.ssh = {
         enable = true;
         matchBlocks = {
