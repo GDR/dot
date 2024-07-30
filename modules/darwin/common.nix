@@ -4,13 +4,6 @@
     inputs.nix-homebrew.darwinModules.nix-homebrew
     inputs.nixvim.nixDarwinModules.nixvim
   ];
-  options = with types; {
-    openssh = mkOption {
-      type = attrs;
-      default = { };
-      description = "Packages defined in home-manager";
-    };
-  };
 
   config = {
     # Enable Home Manager applications in ~/Applications folder
@@ -38,7 +31,5 @@
       enable = true;
       user = "dgarifullin";
     };
-
-    users.users.dgarifullin.openssh = mkAliasDefinitions options.openssh;
   };
 }

@@ -41,6 +41,12 @@ with lib; {
         description = "Activation scripts";
       };
     };
+
+    openssh = mkOption {
+      type = attrs;
+      default = { };
+      description = "Packages defined in home-manager";
+    };
   };
   config = {
     nixpkgs.overlays = [
@@ -67,11 +73,14 @@ with lib; {
         home.activation = mkAliasDefinitions options.home.activation;
       };
     };
+
     users.users.dgarifullin = lib.mkMerge [
       {
         name = "dgarifullin";
         home = if isDarwin then "/Users/dgarifullin" else "/home/dgarifullin";
         uid = 1000;
+
+        openssh = mkAliasDefinitions options.openssh;
       }
     ];
 
