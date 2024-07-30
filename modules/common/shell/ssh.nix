@@ -27,17 +27,12 @@ in
       home.programs.ssh = {
         enable = true;
         matchBlocks = {
-          "*" = {
-            # addKeysToAgent = "yes";
-            # useKeychain = "yes";
-          };
           "github.com" = {
             user = "gdr";
             identityFile = "~/.ssh/germany_id_rsa";
           };
         };
         extraConfig = ''
-          AddKeysToAgent yes
           UseKeychain yes
         '';
       };
@@ -45,8 +40,10 @@ in
     linux = {
       services.openssh = {
         enable = true;
-        permitRootLogin = "no";
-        passwordAuthentication = false;
+        settings = {
+          PermitRootLogin = "no";
+          PasswordAuthentication = false;
+        };
         extraConfig = ''
           AllowUsers dgarifullin
         '';
