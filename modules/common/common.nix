@@ -9,6 +9,10 @@ with lib; {
       type = attrs;
     };
 
+    security-keys = mkOption {
+      type = attrs;
+    };
+
     home = {
       file = mkOption {
         type = attrs;

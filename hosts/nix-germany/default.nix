@@ -97,8 +97,7 @@
   # Podman
   boot.kernelModules = [ "kvm-intel" ];
 
-
-
+  security-keys.signingkey = "/home/dgarifullin/.ssh/germany_id_rsa";
 
   home.programs.git.extraConfig.user = {
     signingkey = "/home/dgarifullin/.ssh/germany_id_rsa.pub";

@@ -31,7 +31,7 @@ in
         matchBlocks = {
           "github.com" = {
             user = "gdr";
-            identityFile = "~/.ssh/germany_id_rsa";
+            identityFile = config.security-keys.signingkey;
           };
         };
       };

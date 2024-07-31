@@ -63,6 +63,8 @@
 
   security.pam.enableSudoTouchIdAuth = true;
 
+  security-keys.signingkey = "/Users/dgarifullin/.ssh/mac_italy_id_rsa";
+
   home.programs.git.extraConfig.user = {
     signingkey = "/Users/dgarifullin/.ssh/mac_italy_id_rsa.pub";
   };
