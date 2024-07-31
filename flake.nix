@@ -97,11 +97,11 @@
       darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
       nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
 
-      # templates = {
-      #   python = {
-      #     path = ./templates/python;
-      #     description = "A template for a Python project using poetry";
-      #   };
-      # };
+      templates = {
+        python = {
+          path = ./templates/python;
+          description = "A template for a Python project using poetry";
+        };
+      };
     };
 }
