@@ -29,9 +29,11 @@ in
       home.programs.ssh = {
         enable = true;
         matchBlocks = {
+          "*" = {
+            identityFile = config.security-keys.signingkey;
+          };
           "github.com" = {
             user = "gdr";
-            identityFile = config.security-keys.signingkey;
           };
         };
       };
