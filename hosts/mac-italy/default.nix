@@ -36,9 +36,10 @@
     };
     darwin = {
       utils = {
+        chatgpt.enable = true;
+        macfuse.enable = true;
         raycast.enable = true;
         yaak.enable = true;
-        chatgpt.enable = true;
       };
       vpn = {
         outline-client.enable = true;
