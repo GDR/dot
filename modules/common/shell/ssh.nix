@@ -1,9 +1,7 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
-  isLinux = system == "aarch64-linux" || system == "x86_64-linux";
   cfg = config.modules.common.shell.ssh;
-  mkModule = (conf: if isLinux then conf.common // conf.linux else conf.common // conf.darwin);
+  mkModule = lib.my.mkModule system;
 
   # Fetch the authorized keys file
   authorizedKeysFile = pkgs.fetchurl {
@@ -38,7 +36,7 @@ in
         };
       };
     };
-    linux = mkIf cfg.server.enable {
+    linux = {
       services.openssh = {
         enable = true;
         settings = {
@@ -50,6 +48,5 @@ in
         '';
       };
     };
-    darwin = { };
   });
 }

@@ -29,22 +29,13 @@
   filterPrefix = prefix: files:
     builtins.filter (file: builtins.hasPrefix prefix (builtins.basename file)) files;
 
-  mkModule = config: name: cfg:
+  mkModule = system: cfg:
     let
-      optionsVal = {
-        enable = mkOption {
-          default = false;
-          type = types.bool;
-        };
-      };
-      options = {
-        modules = setAttrByPath name optionsVal;
-      };
-      defaultEnabled = { enable = false; };
-      enabled = (attrByPath name defaultEnabled config.modules).enable;
+      isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+      isLinux = system == "aarch64-linux" || system == "x86_64-linux";
+
+      linuxConfig = if isLinux then (cfg.linux or { }) // (cfg.common or { }) else { };
+      darwinConfig = if isDarwin then (cfg.darwin or { }) // (cfg.common or { }) else { };
     in
-    {
-      inherit options;
-      config = mkIf enabled cfg.config;
-    };
+    linuxConfig // darwinConfig;
 }
