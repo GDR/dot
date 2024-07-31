@@ -17,6 +17,10 @@ in
       default = false;
       type = types.bool;
     };
+    server.enable = mkOption {
+      default = false;
+      type = types.bool;
+    };
   };
 
   config = mkIf cfg.enable (mkModule {
@@ -34,7 +38,7 @@ in
         };
       };
     };
-    linux = {
+    linux = mkIf cfg.server.enable {
       services.openssh = {
         enable = true;
         settings = {
