@@ -4,6 +4,7 @@ with lib;
   imports = [
     inputs.home-manager.nixosModules.home-manager
     inputs.nixvim.nixDarwinModules.nixvim
+    inputs.vscode-server.nixosModules.default
   ];
 
   options = with types; { };

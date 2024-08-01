@@ -37,6 +37,7 @@
       editors = {
         neovim.enable = true;
         vscode.enable = true;
+        vscode-server.enable = true;
       };
       terminal = {
         kitty.enable = true;

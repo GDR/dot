@@ -22,9 +22,13 @@
     hardware = {
       url = "github:nixos/nixos-hardware";
     };
+    vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, nixvim, hardware, ... }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, nixvim, hardware, vscode-server, ... }:
     let
       lib = nixpkgs.lib.extend (lib: _:
         let hm = inputs.home-manager.lib.hm; in {
@@ -48,7 +52,7 @@
         in
         nix-darwin.lib.darwinSystem {
           inherit system;
-          specialArgs = { inherit self inputs lib overlays system; };
+          specialArgs = { inherit self inputs lib overlays system vscode-server; };
           modules = [ host-config ]
             ++ mkConfigurationModules [
             ./modules/common
