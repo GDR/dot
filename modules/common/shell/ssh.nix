@@ -35,6 +35,9 @@ in
           "github.com" = {
             user = "gdr";
           };
+          "nix-germany" = {
+            host = "10.0.10.61";
+          };
         };
       };
     };
