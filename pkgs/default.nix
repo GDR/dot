@@ -3,13 +3,13 @@
 
 { pkgs ? (import ../nixpkgs.nix) { }, system, ... }:
 let
-  isDarwin = system == "x86_64-darwin" || system == "aarch64-darwin";
-  isLinux = system == "x86_64-linux";
+  mkModule = (import ../lib { lib = pkgs.lib; }).mkModule;
 in
-{
-  apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
+(mkModule system) {
+  common = {
+    apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
+  };
+  darwin = {
+    vfkit = pkgs.callPackage ./vfkit { };
+  };
 }
-// (if isDarwin then {
-  vfkit = pkgs.callPackage ./vfkit { };
-} else { })
-  // (if isLinux then { } else { })
