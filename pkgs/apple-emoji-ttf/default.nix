@@ -1,7 +1,7 @@
 { lib, stdenv, fetchurl }:
 let
   pname = "apple-emoji-ttf";
-  version = "v16.4";
+  version = "v17.4";
 in
 stdenv.mkDerivation {
   inherit pname;
