@@ -19,6 +19,9 @@ in
         extraConfig = {
           core.editor = "nvim";
 
+          # Auto setup remote branch if not exists
+          push = { autoSetupRemote = true; };
+
           gpg = {
             format = "ssh";
           };
