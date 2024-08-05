@@ -1,7 +1,7 @@
-{ config, options, lib, pkgs, ... }: with lib;
+{ config, options, pkgs, lib, system, ... }: with lib;
 let
   cfg = config.modules.common.virtualisation.docker;
-  isDarwin = pkgs.stdenv.isDarwin;
+  mkModule = lib.my.mkModule system;
 in
 {
   options.modules.common.virtualisation.docker = with types; {
@@ -11,9 +11,16 @@ in
     };
   };
 
-  config = mkIf (cfg.enable && isDarwin) {
-    home.packages = with pkgs; [
-      docker
-    ];
-  };
+  config = mkIf cfg.enable (mkModule {
+    darwin = {
+      home.packages = with pkgs; [
+        docker
+      ];
+    };
+
+    linux = {
+      virtualisation.docker.enable = true;
+      users.users.dgarifullin.extraGroups = [ "docker" ];
+    };
+  });
 }
