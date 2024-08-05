@@ -46,6 +46,9 @@
         keepassxc.enable = true;
       };
       messenger = { };
+      virtualisation = {
+        podman.enable = true;
+      };
     };
     linux = {
       awesomewm.enable = true;
