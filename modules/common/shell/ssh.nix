@@ -39,6 +39,9 @@ in
             host = "10.0.10.61";
           };
         };
+        extraConfig = ''
+          AddKeysToAgent yes
+        '';
       };
     };
     linux = {
@@ -50,6 +53,7 @@ in
         };
         extraConfig = ''
           AllowUsers dgarifullin
+          AddKeysToAgent yes
         '';
       };
     };
