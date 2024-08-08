@@ -44,6 +44,13 @@ in
         '';
       };
     };
+    darwin = {
+      home.programs.ssh = {
+        extraConfig = ''
+          UseKeychain yes
+        '';
+      };
+    };
     linux = {
       services.openssh = {
         enable = true;
