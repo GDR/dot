@@ -28,6 +28,7 @@ in
       ];
       home.programs.ssh = {
         enable = true;
+        addKeysToAgent = "yes";
         matchBlocks = {
           "*" = {
             identityFile = config.security-keys.signingkey;
@@ -39,9 +40,6 @@ in
             host = "10.0.10.61";
           };
         };
-        extraConfig = ''
-          AddKeysToAgent yes
-        '';
       };
     };
     darwin = {
@@ -60,7 +58,6 @@ in
         };
         extraConfig = ''
           AllowUsers dgarifullin
-          AddKeysToAgent yes
         '';
       };
     };
