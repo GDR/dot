@@ -94,6 +94,12 @@
               pre-commit
               direnv
             ];
+            shellHook = ''
+              if [ -f .envrc ]; then
+                direnv allow
+              fi
+              pre-commit install -f --hook-type pre-commit
+            '';
           };
         }
       );
