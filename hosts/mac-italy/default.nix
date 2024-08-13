@@ -46,6 +46,9 @@
         outline-client.enable = true;
         outline-manager.enable = true;
       };
+      ui = {
+        sketchybar.enable = true;
+      };
     };
     fonts.enable = true;
   };
