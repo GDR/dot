@@ -49,6 +49,9 @@
       ui = {
         sketchybar.enable = true;
       };
+      media = {
+        iina.enable = true;
+      };
     };
     fonts.enable = true;
   };
