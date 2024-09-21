@@ -18,6 +18,7 @@
       utils = {
         keepassxc.enable = true;
         qbittorrent.enable = true;
+        ollama.enable = true;
       };
       messenger = {
         telegram.enable = true;
