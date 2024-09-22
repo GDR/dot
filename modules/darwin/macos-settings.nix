@@ -27,7 +27,7 @@
     # Trackpad settings
     system.defaults.trackpad = {
       # Enable tap to click
-      Clicking = true;
+      Clicking = false;
 
       # Enable three finger drag
       TrackpadThreeFingerDrag = true;
