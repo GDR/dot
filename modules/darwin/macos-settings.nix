@@ -3,7 +3,7 @@
     # Global settings
     system.defaults.NSGlobalDomain = {
       # Set initial key repeat
-      InitialKeyRepeat = 10;
+      InitialKeyRepeat = 15;
       # Set key repeat
       KeyRepeat = 1;
       # Show all file extensions
