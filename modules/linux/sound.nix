@@ -12,7 +12,7 @@ in
 
   config = mkIf cfg.enable {
     # sound.enable = true;
-    hardware.pulseaudio.enable = true;
+    hardware.pulseaudio.enable = false;
     hardware.pulseaudio.support32Bit = true;
     hardware.pulseaudio.extraConfig = "load-module module-combine-sink";
     user.packages = with pkgs; [
