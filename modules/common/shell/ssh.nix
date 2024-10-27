@@ -40,9 +40,6 @@ in
             host = "10.0.10.61";
           };
         };
-        extraConfig = ''
-          UseKeychain yes
-        '';
       };
     };
     darwin = {
