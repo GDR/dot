@@ -21,7 +21,7 @@ in
     linux =
       let
         kubeMasterIP = "10.0.10.61";
-        kubeMasterHostname = "api.kube";
+        kubeMasterHostname = "localhost";
         kubeMasterAPIServerPort = 6443;
       in
       {
@@ -48,6 +48,8 @@ in
           # needed if you use swap
           kubelet.extraOpts = "--fail-swap-on=false";
         };
+
+        networking.firewall.allowedTCPPorts = [ kubeMasterAPIServerPort ];
       };
   });
 }
