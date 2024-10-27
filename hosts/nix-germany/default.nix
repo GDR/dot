@@ -48,6 +48,7 @@
       messenger = { };
       virtualisation = {
         podman.enable = true;
+        kubernetes.enable = true;
       };
     };
     linux = {
