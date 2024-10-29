@@ -48,6 +48,9 @@
         outline-client.enable = true;
         outline-manager.enable = true;
       };
+      ide = {
+        xcode.enable = true;
+      };
       ui = {
         sketchybar.enable = true;
       };
