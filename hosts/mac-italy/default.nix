@@ -40,7 +40,7 @@
       utils = {
         chatgpt.enable = true;
         macfuse.enable = true;
-        obsidian.enable = true;
+        # obsidian.enable = true;
         raycast.enable = true;
         yaak.enable = true;
       };

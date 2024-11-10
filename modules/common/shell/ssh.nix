@@ -37,6 +37,7 @@ in
             user = "gdr";
           };
           "nix-germany" = {
+            user = "dgarifullin";
             host = "10.0.10.61";
           };
         };
