@@ -16,6 +16,7 @@
         kitty.enable = true;
       };
       utils = {
+        java.enable = true;
         keepassxc.enable = true;
         qbittorrent.enable = true;
         ollama.enable = true;
