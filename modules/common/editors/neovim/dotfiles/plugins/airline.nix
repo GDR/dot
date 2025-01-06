@@ -8,7 +8,7 @@ in {
         settings = {
           theme = "catppuccin";
 
-          powerline_fonts = true;
+          powerline_fonts = 1;
         };
       };
     };
