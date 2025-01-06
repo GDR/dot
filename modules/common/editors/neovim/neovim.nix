@@ -13,6 +13,7 @@ in
     ./dotfiles/plugins/noice.nix
     ./dotfiles/plugins/telescope.nix
     ./dotfiles/plugins/which-key.nix
+    ./dotfiles/plugins/web-devicons.nix
   ];
 
   options.modules.common.editors.neovim = with types; {
