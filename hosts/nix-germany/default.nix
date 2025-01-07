@@ -7,7 +7,7 @@
     ./hardware-configuration.nix
   ];
 
-  services.xserver.videoDrivers = [ "intel" ];
+  services.xserver.videoDrivers = [ "modesetting" ];
   services.xserver.deviceSection = ''
     Option "TearFree" "true"
   '';

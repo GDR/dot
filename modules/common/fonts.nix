@@ -15,7 +15,7 @@ in
       packages = with pkgs; [
         hack-font
         pixel-code
-        fira-code-nerdfont
+        nerd-fonts.fira-code
       ];
     };
   };

@@ -55,6 +55,7 @@ with lib; {
   config = {
     nixpkgs.overlays = [
       overlays.${system}.additions
+      overlays.${system}.modifications
     ];
 
     home-manager = {

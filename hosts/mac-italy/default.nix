@@ -20,6 +20,7 @@
         keepassxc.enable = true;
         qbittorrent.enable = true;
         ollama.enable = true;
+        yandex-cloud.enable = true;
       };
       messenger = {
         telegram.enable = true;
