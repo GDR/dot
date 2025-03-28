@@ -40,6 +40,9 @@
         vlc.enable = true;
         spotify.enable = true;
       };
+      vpn = {
+        tailscale.enable = true;
+      };
     };
     darwin = {
       utils = {
