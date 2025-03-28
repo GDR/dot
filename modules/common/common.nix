@@ -70,7 +70,7 @@ with lib; {
       users.dgarifullin = {
         nixpkgs.config.allowUnfree = true;
         home = {
-          stateVersion = "24.05";
+          stateVersion = "24.11";
           file = mkAliasDefinitions options.home.file;
         };
         xdg = {

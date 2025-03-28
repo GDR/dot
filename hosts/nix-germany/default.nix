@@ -87,7 +87,7 @@
     options = "--delete-older-than 30d";
   };
 
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.11";
 
   services.logind = {
     lidSwitch = "ignore";
