@@ -13,6 +13,7 @@
         vscode.enable = true;
       };
       terminal = {
+        ghostty.enable = true;
         kitty.enable = true;
       };
       utils = {
@@ -29,6 +30,7 @@
         chrome.enable = true;
       };
       virtualisation = {
+        colima.enable = true;
         podman.enable = true;
         docker.enable = true;
         kubernetes.enable = true;
@@ -63,7 +65,7 @@
     fonts.enable = true;
   };
 
-  services.nix-daemon.enable = true;
+  nix.enable = true;
 
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -75,7 +77,7 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  security.pam.enableSudoTouchIdAuth = true;
+  security.pam.services.sudo_local.touchIdAuth = true;
 
   security-keys.signingkey = "/Users/dgarifullin/.ssh/mac_italy_id_rsa";
 
