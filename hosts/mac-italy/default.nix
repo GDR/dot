@@ -21,6 +21,7 @@
         keepassxc.enable = true;
         qbittorrent.enable = true;
         ollama.enable = true;
+        wireguard.enable = true;
         yandex-cloud.enable = true;
       };
       messenger = {
