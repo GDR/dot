@@ -44,6 +44,11 @@ with lib; {
         default = { };
         description = "Activation scripts";
       };
+      sessionVariables = mkOption {
+        type = attrs;
+        default = { };
+        description = "Session variables";
+      };
     };
 
     openssh = mkOption {

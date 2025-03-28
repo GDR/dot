@@ -105,6 +105,7 @@
       );
 
       darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
+      darwinConfigurations.mac-japan = mkDarwinConfiguration ./hosts/mac-japan;
       nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
 
       templates = {
