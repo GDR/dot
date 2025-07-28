@@ -12,6 +12,23 @@ in
   };
 
   config = mkIf cfg.enable (mkModule {
+    linux = {
+      # Allow forwarding
+      boot.kernel.sysctl = {
+        "net.ipv4.ip_forward" = 1; # IPv4 forwarding
+        "net.ipv6.conf.all.forwarding" = 1; # IPv6 forwarding
+      };
+      services.tailscale = {
+        enable = true;
+        useRoutingFeatures = "client";
+      };
+
+      networking.firewall.checkReversePath = "loose";
+
+      home.packages = with pkgs; [
+        tailscale-systray
+      ];
+    };
     darwin = {
       homebrew = {
         casks = [
