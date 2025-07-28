@@ -1,7 +1,8 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs";
+      url = "github:NixOS/nixpkgs/nixos-unstable";
+
     };
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
@@ -107,6 +108,7 @@
       darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
       darwinConfigurations.mac-japan = mkDarwinConfiguration ./hosts/mac-japan;
       nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
+      nixosConfigurations.nix-goldstar = mkNixosConfiguration ./hosts/nix-goldstar;
 
       templates = {
         python = {
