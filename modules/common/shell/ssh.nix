@@ -6,7 +6,7 @@ let
   # Fetch the authorized keys file
   authorizedKeysFile = pkgs.fetchurl {
     url = "https://github.com/gdr.keys";
-    sha256 = "sha256-15L1KA6Iu4lB//M+NYuyvPTTKg6Da8YQkstBI/Oc87A=";
+    sha256 = "sha256-DcE0zt+znkeNc+Jbq5EMmHS6QUcG9P88m7ZEnun2JTk=";
   };
 in
 {
