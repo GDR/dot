@@ -51,6 +51,15 @@ in
       };
     };
     linux = {
+      home.programs.ssh = {
+        enable = true;
+        matchBlocks = {
+          "*" = {
+            identityFile = config.security-keys.signingkey;
+          };
+        };
+      };
+
       services.openssh = {
         enable = true;
         settings = {
