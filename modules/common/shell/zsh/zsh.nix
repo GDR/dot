@@ -38,7 +38,7 @@ in
         ];
       };
 
-      initExtra = ''
+      initContent = ''
         source ~/.config/zsh/.p10k.zsh
         source ~/.config/zsh/common.zsh
         if [[ $(uname -m) == 'arm64' ]]; then
