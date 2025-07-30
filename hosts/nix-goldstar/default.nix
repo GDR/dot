@@ -33,6 +33,7 @@
       editors = {
         neovim.enable = true;
         vscode.enable = true;
+        cursor.enable = true;
       };
       terminal = {
         kitty.enable = true;
