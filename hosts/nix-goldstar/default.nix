@@ -61,9 +61,7 @@
 
   hardware = {
     graphics.enable = true;
-    opengl = {
-      enable = true;
-    };
+
     nvidia = {
       modesetting.enable = true;
       powerManagement.enable = false;
