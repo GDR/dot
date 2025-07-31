@@ -48,6 +48,7 @@
         kitty.enable = true;
       };
       utils = {
+        bitwarden.enable = true;
         keepassxc.enable = true;
       };
       vpn = {
