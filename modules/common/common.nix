@@ -81,6 +81,7 @@ with lib; {
         programs = mkAliasDefinitions options.home.programs;
         home.packages = mkAliasDefinitions options.home.packages;
         home.activation = mkAliasDefinitions options.home.activation;
+        home.sessionVariables = mkAliasDefinitions options.home.sessionVariables;
       };
     };
 

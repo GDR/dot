@@ -19,9 +19,18 @@
 
   programs.nm-applet.enable = true;
 
+  # X11 configuration for NVIDIA to prevent tearing
+  services.xserver.videoDrivers = [ "nvidia" ];
+  services.xserver.deviceSection = ''
+    Option "TearFree" "true"
+    Option "TripleBuffer" "true"
+    Option "UseEvents" "false"
+  '';
+
   modules = {
     common = {
       browsers = {
+        firefox.enable = true;
         chrome.enable = true;
       };
       shell = {
@@ -57,8 +66,6 @@
 
   time.timeZone = "Europe/Moscow";
 
-  services.xserver.videoDrivers = [ "nvidia" ];
-
   hardware = {
     graphics.enable = true;
 
@@ -69,6 +76,8 @@
       open = true;
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
+      # Force full composition pipeline to prevent tearing
+      forceFullCompositionPipeline = true;
     };
   };
 

@@ -29,11 +29,32 @@ in
         };
       };
       displayManager.defaultSession = "none+awesome";
+
+      # Enable picom compositor for tear-free rendering
+      picom = {
+        enable = true;
+        backend = "glx";
+        vSync = true;
+        settings = {
+          # Performance and tearing prevention
+          glx-no-stencil = true;
+          glx-no-rebind-pixmap = true;
+          use-damage = true;
+
+          # Prevent tearing
+          unredir-if-possible = false;
+
+          # NVIDIA specific optimizations
+          glx-swap-method = 2;
+
+          # Vsync method
+          vsync = true;
+        };
+      };
     };
 
     home.packages = with pkgs; [
       rofi
-      picom
       xclip
     ];
 
@@ -46,8 +67,7 @@ in
       };
     };
 
-    # Add config file for awesome wm and picom
+    # Add config file for awesome wm
     home.file.".config/awesome".source = ./dotfiles;
-    # home.file.".config/picom".source = ../../dotfiles/picom;
   };
 }
