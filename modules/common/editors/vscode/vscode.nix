@@ -13,7 +13,7 @@ in
   config = mkIf cfg.enable {
     home.programs.vscode = {
       enable = true;
-      extensions = with pkgs.vscode-extensions; [
+      profiles.default.extensions = with pkgs.vscode-extensions; [
         ms-azuretools.vscode-docker
         bbenoist.nix
         mkhl.direnv
@@ -27,7 +27,7 @@ in
 
         github.vscode-github-actions
       ];
-      userSettings = {
+      profiles.default.userSettings = {
         "editor.fontFamily" = "'FiraCode Nerd Font Mono'";
         "editor.fontLigatures" = true;
         "editor.fontWeight" = "300";
