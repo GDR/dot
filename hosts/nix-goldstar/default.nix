@@ -46,6 +46,7 @@
       };
       terminal = {
         kitty.enable = true;
+        ghostty.enable = true;
       };
       utils = {
         bitwarden.enable = true;

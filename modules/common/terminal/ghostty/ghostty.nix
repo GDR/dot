@@ -12,6 +12,12 @@ in
   };
 
   config = mkIf cfg.enable (mkModule {
+    linux = {
+      home.packages = with pkgs; [
+        ghostty
+      ];
+    };
+
     darwin = {
       homebrew = {
         casks = [
