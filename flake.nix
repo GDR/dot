@@ -79,8 +79,13 @@
       inherit lib;
 
       packages = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system};
-        in import ./pkgs { inherit pkgs lib system; }
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+        in
+        import ./pkgs { inherit pkgs lib system; }
       );
 
       devShells = forAllSystems (system:

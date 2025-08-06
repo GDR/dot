@@ -31,7 +31,6 @@ with lib;
       useGlobalPkgs = true;
 
       users.${config.user.name} = {
-        nixpkgs.config.allowUnfree = true;
         home = {
           stateVersion = "24.11";
           file = mkAliasDefinitions options.home.file;

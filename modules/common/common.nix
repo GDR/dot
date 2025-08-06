@@ -62,13 +62,13 @@ with lib; {
       overlays.${system}.additions
       overlays.${system}.modifications
     ];
+    nixpkgs.config.allowUnfree = true;
 
     home-manager = {
       useUserPackages = true;
       useGlobalPkgs = true;
 
       users.dgarifullin = {
-        nixpkgs.config.allowUnfree = true;
         home = {
           stateVersion = "24.11";
           file = mkAliasDefinitions options.home.file;

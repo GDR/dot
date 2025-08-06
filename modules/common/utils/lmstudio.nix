@@ -1,6 +1,6 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  moduleName = "ollama";
+  moduleName = "lmstudio";
   cfg = config.modules.common.utils.${moduleName};
   mkModule = lib.my.mkModule system;
 in
@@ -13,17 +13,10 @@ in
   };
 
   config = mkIf cfg.enable (mkModule {
-    darwin = {
-      homebrew.casks = [
-        "ollama"
-      ];
-    };
     linux = {
-      services.ollama = {
-        enable = true;
-        port = 11434;
-        host = "0.0.0.0";
-      };
+      environment.systemPackages = with pkgs; [
+        lmstudio
+      ];
     };
   });
 }

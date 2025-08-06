@@ -9,6 +9,9 @@ in
   common = {
     apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
   };
+  linux = {
+    lmstudio = pkgs.callPackage ./lmstudio { };
+  };
   darwin = {
     vfkit = pkgs.callPackage ./vfkit { };
   };
