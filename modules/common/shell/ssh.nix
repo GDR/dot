@@ -23,9 +23,6 @@ in
 
   config = mkIf cfg.enable (mkModule {
     common = {
-      # openssh.authorizedKeys.keyFiles = [
-      #   authorizedKeysFile
-      # ];
       home.packages = [
         pkgs.charon-key
       ];
@@ -63,11 +60,24 @@ in
         };
       };
 
+      # Create a wrapper script for charon-key in a secure location
+      environment.etc."ssh/charon-key-wrapper" = {
+        text = ''
+          #!/bin/sh
+          exec ${pkgs.charon-key}/bin/charon-key --usernames gdr --quiet "$@"
+        '';
+        mode = "0755";
+        user = "root";
+        group = "root";
+      };
+
       services.openssh = {
         enable = true;
         settings = {
           PermitRootLogin = "no";
-          PasswordAuthentication = false;
+          PasswordAuthentication = true;
+          AuthorizedKeysCommand = "/etc/ssh/charon-key-wrapper";
+          AuthorizedKeysCommandUser = "nobody";
         };
         extraConfig = ''
           AllowUsers dgarifullin
