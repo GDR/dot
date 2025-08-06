@@ -27,9 +27,13 @@
       url = "github:nix-community/nixos-vscode-server";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    charon-key = {
+      url = "github:GDR/charon-key";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, nixvim, hardware, vscode-server, ... }:
+  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nix-homebrew, nixvim, hardware, vscode-server, charon-key, ... }:
     let
       lib = nixpkgs.lib.extend (lib: _:
         let hm = inputs.home-manager.lib.hm; in {
@@ -84,8 +88,11 @@
             inherit system;
             config.allowUnfree = true;
           };
+          customPkgs = import ./pkgs { inherit pkgs lib system; };
         in
-        import ./pkgs { inherit pkgs lib system; }
+        customPkgs // {
+          charon-key = charon-key.packages.${system}.default;
+        }
       );
 
       devShells = forAllSystems (system:

@@ -23,8 +23,11 @@ in
 
   config = mkIf cfg.enable (mkModule {
     common = {
-      openssh.authorizedKeys.keyFiles = [
-        authorizedKeysFile
+      # openssh.authorizedKeys.keyFiles = [
+      #   authorizedKeysFile
+      # ];
+      home.packages = [
+        pkgs.charon-key
       ];
       home.programs.ssh = {
         enable = true;

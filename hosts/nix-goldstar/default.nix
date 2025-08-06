@@ -35,6 +35,7 @@
       };
       shell = {
         git.enable = true;
+        ssh.enable = true;
         tmux.enable = true;
         utils.enable = true;
         zsh.enable = true;
@@ -95,7 +96,7 @@
     signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
   };
 
-  security-keys.signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
+  security-keys.signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa";
 
 
   system.stateVersion = "25.05";
