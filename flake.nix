@@ -118,7 +118,7 @@
       );
 
       darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
-      darwinConfigurations.mac-japan = mkDarwinConfiguration ./hosts/mac-japan;
+      darwinConfigurations.mac-blackstar = mkDarwinConfiguration ./hosts/mac-blackstar;
       nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
       nixosConfigurations.nix-goldstar = mkNixosConfiguration ./hosts/nix-goldstar;
 

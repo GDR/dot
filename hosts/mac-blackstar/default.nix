@@ -40,7 +40,6 @@
     darwin = {
       utils = {
         chatgpt.enable = true;
-        colima.enable = true;
         macfuse.enable = true;
         # obsidian.enable = true;
         yaak.enable = true;
@@ -70,28 +69,23 @@
 
   security.pam.services.sudo_local.touchIdAuth = true;
 
-  security-keys.signingkey = "/Users/dgarifullin/.ssh/mac_japan_id_rsa";
+  security-keys.signingkey = "/Users/dgarifullin/.ssh/mac_blackstar_id_rsa";
 
   home.programs.git.extraConfig.user = {
-    signingkey = "/Users/dgarifullin/.ssh/mac_japan_id_rsa.pub";
+    signingkey = "/Users/dgarifullin/.ssh/mac_blackstar_id_rsa.pub";
   };
 
   environment.variables = {
     TERM = "xterm-256color";
   };
-  environment.etc = {
-    "resolver/consul" = {
-      text = ''
-        nameserver 2a02:6b8:2:d::3f1
-        port 53
-      '';
-    };
-  };
 
-  system.activationScripts.extraUserActivation.text = ''
+  # Set primary user for nix-darwin
+  system.primaryUser = "dgarifullin";
+
+  system.activationScripts.resolver.text = ''
     if [ ! -d /etc/resolver ]; then
-      sudo mkdir -p /etc/resolver
-      sudo chmod 755 /etc/resolver
+      mkdir -p /etc/resolver
+      chmod 755 /etc/resolver
     fi
   '';
 }
