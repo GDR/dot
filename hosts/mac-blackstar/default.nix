@@ -81,11 +81,4 @@
 
   # Set primary user for nix-darwin
   system.primaryUser = "dgarifullin";
-
-  system.activationScripts.resolver.text = ''
-    if [ ! -d /etc/resolver ]; then
-      mkdir -p /etc/resolver
-      chmod 755 /etc/resolver
-    fi
-  '';
 }
