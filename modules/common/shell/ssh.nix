@@ -41,6 +41,9 @@ in
             host = "10.0.10.61";
           };
         };
+        includes = [
+          "~/.ssh/config.d/*"
+        ];
       };
     };
     darwin = {
