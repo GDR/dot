@@ -93,8 +93,9 @@
       utils = {
         bitwarden.enable = true;
         keepassxc.enable = true;
-        ollama.enable = true;
         lmstudio.enable = true;
+        ollama.enable = true;
+        qbittorrent.enable = true;
       };
       vpn = {
         tailscale.enable = true;
