@@ -11,7 +11,7 @@
   boot.loader.efi.efiSysMountPoint = "/boot";
   boot.loader.grub.enable = true;
   boot.loader.grub.efiSupport = true;
-  # boot.loader.grub.useOSProber = true;
+  boot.loader.grub.useOSProber = true;
   boot.loader.grub.device = "nodev";
   boot.loader.grub.gfxmodeEfi = "1280x1024x32,auto";
 
