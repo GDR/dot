@@ -11,9 +11,17 @@
   boot.loader.efi.efiSysMountPoint = "/boot";
   boot.loader.grub.enable = true;
   boot.loader.grub.efiSupport = true;
-  boot.loader.grub.useOSProber = true;
+  boot.loader.grub.useOSProber = false;
   boot.loader.grub.device = "nodev";
   boot.loader.grub.gfxmodeEfi = "1280x1024x32,auto";
+  boot.loader.grub.extraEntries = ''
+    menuentry "Windows Boot Manager (on /dev/nvme0n1p1)" {
+      insmod part_gpt
+      insmod fat
+      search --no-floppy --fs-uuid --set=root A4F4-C19F
+      chainloader /efi/Microsoft/Boot/bootmgfw.efi
+    }
+  '';
 
   networking.hostName = "nix-goldstar";
   networking.networkmanager.enable = true;
