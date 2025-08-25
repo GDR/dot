@@ -39,43 +39,6 @@
     Option "UseEvents" "false"
   '';
 
-  # Monitor configuration using systemd service to run after X11 starts
-  systemd.services.configure-displays = {
-    description = "Configure dual monitor setup";
-    after = [ "display-manager.service" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.xorg.xrandr}/bin/xrandr --output DP-2  --pos 0x2160 --mode 3840x2160 --rate 170.00 --primary --output DP-0 --mode 3840x2160 --rate 60.00  --pos 0x0";
-      Environment = "DISPLAY=:0";
-      User = "dgarifullin";
-    };
-  };
-
-  # Alternative: Use xrandrHeads as fallback
-  services.xserver.xrandrHeads = [
-    {
-      output = "DP-2";
-      primary = true;
-      monitorConfig = ''
-        Option "PreferredMode" "3840x2160"
-        Option "Position" "0 2160"
-      '';
-    }
-    {
-      output = "DP-0";
-      monitorConfig = ''
-        Option "PreferredMode" "3840x2160"
-        Option "Position" "0 0"
-      '';
-    }
-  ];
-
-  # Additional X11 configuration
-  services.xserver.autoRepeatDelay = 200;
-  services.xserver.autoRepeatInterval = 30;
-
   modules = {
     common = {
       browsers = {
@@ -110,7 +73,8 @@
       };
     };
     linux = {
-      awesomewm.enable = true;
+      awesomewm.enable = false;
+      hyprland.enable = true;
       sound.enable = true;
       utils = {
         systemd-resolved.enable = true;
