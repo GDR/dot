@@ -98,7 +98,30 @@
       # Force full composition pipeline to prevent tearing
       forceFullCompositionPipeline = true;
     };
+
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+      settings = {
+        General = {
+          DiscoverableTimeout = 0;
+          Experimental = true;
+        };
+        Policy = {
+          AutoConnect = true;
+        };
+        Headset = {
+          Enable = true;
+          Policy = "a2dp-sink";
+        };
+        Audio = {
+          Enable = true;
+          Policy = "a2dp-sink";
+        };
+      };
+    };
   };
+  services.blueman.enable = true;
 
   nix.gc = {
     automatic = true;
