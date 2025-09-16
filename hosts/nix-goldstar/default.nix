@@ -6,7 +6,7 @@
     ./hardware-configuration.nix
   ];
 
-  boot.kernelPackages = pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.efi.efiSysMountPoint = "/boot";
   boot.loader.grub.enable = true;
@@ -23,6 +23,22 @@
     }
   '';
 
+  # Enable Bluetooth firmware and kernel modules
+  hardware.enableRedistributableFirmware = true;
+  boot.extraModulePackages = with config.boot.kernelPackages; [
+    # Add any additional modules if needed
+  ];
+  boot.kernelModules = [ "btusb" "btmtk" "mt7925_common" ];
+
+  # Enable MediaTek MT7925 Bluetooth support
+  boot.blacklistedKernelModules = [ ]; # Ensure no blocking modules
+  hardware.firmware = with pkgs; [
+    linux-firmware
+  ];
+
+  # Additional kernel parameters for MT7925
+  boot.kernelParams = [ "btusb.enable_autosuspend=0" ];
+
   networking.hostName = "nix-goldstar";
   networking.networkmanager.enable = true;
 
@@ -38,6 +54,9 @@
     Option "TripleBuffer" "true"
     Option "UseEvents" "false"
   '';
+
+  # Add user to bluetooth group for D-Bus access
+  users.users.dgarifullin.extraGroups = [ "bluetooth" "dialout" ];
 
   modules = {
     common = {
@@ -106,17 +125,6 @@
         General = {
           DiscoverableTimeout = 0;
           Experimental = true;
-        };
-        Policy = {
-          AutoConnect = true;
-        };
-        Headset = {
-          Enable = true;
-          Policy = "a2dp-sink";
-        };
-        Audio = {
-          Enable = true;
-          Policy = "a2dp-sink";
         };
       };
     };
