@@ -75,6 +75,7 @@
         neovim.enable = true;
         vscode.enable = true;
         cursor.enable = true;
+        idea.enable = true;
       };
       terminal = {
         kitty.enable = true;
@@ -143,6 +144,11 @@
 
   security-keys.signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa";
 
+  # Override fcitx5 package to fix Home Manager evaluation error
+  home-manager.users.dgarifullin.i18n.inputMethod = {
+    enabled = null;
+    fcitx5.fcitx5-with-addons = pkgs.kdePackages.fcitx5-with-addons;
+  };
 
   system.stateVersion = "25.05";
 }
