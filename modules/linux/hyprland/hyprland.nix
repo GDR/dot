@@ -81,7 +81,7 @@ in
       enable = lib.mkDefault false;
       xkb = {
         layout = "us,ru";
-        variant = "";
+        variant = ",mac";
         options = "grp:alt_space_toggle";
       };
     };
