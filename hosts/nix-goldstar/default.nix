@@ -98,6 +98,7 @@
       sound.enable = true;
       utils = {
         systemd-resolved.enable = true;
+        keychron.enable = true;
       };
     };
     fonts.enable = true;

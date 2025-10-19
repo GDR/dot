@@ -19,7 +19,7 @@ with lib;
       in
       {
         inherit name;
-        extraGroups = [ "wheel" "audio" "libvirtd" ];
+        extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
         isNormalUser = true;
         home = "/home/${name}";
         group = "users";
