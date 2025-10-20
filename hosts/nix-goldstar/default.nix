@@ -120,7 +120,19 @@
       # Force full composition pipeline to prevent tearing
       forceFullCompositionPipeline = true;
     };
+
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+      settings = {
+        General = {
+          DiscoverableTimeout = 0;
+          Experimental = true;
+        };
+      };
+    };
   };
+  services.blueman.enable = true;
   nix.gc = {
     automatic = true;
     dates = "weekly";
