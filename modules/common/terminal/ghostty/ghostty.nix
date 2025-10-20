@@ -16,6 +16,8 @@ in
       home.packages = with pkgs; [
         ghostty
       ];
+
+      home.file.".config/ghostty".source = ./dotfiles;
     };
 
     darwin = {

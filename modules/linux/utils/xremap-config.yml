@@ -1,0 +1,164 @@
+# xremap configuration for nixos-goldstar with Keychron keyboard
+# Simplified macOS-style key mappings that actually work
+#
+# Key names: https://github.com/emberian/evdev/blob/master/src/scancodes.rs#L26-L572
+# Aliases: https://github.com/k0kubun/xremap/blob/master/src/config/key.rs
+
+keypress_delay_ms: 50
+
+# # Application-specific mappings (order matters - first match wins)
+# keymap:
+#   # Firefox - using physical Cmd key (LEFTMETA) for shortcuts
+#   - name: Firefox
+#     application:
+#       only: ["firefox", "/firefox/", "/Firefox/"]
+#     remap:
+#       # Tab management
+#       KEY_LEFTMETA-KEY_T: KEY_LEFTCTRL-KEY_T      # New tab
+#       KEY_LEFTMETA-KEY_W: KEY_LEFTCTRL-KEY_W      # Close tab
+#       KEY_LEFTMETA-KEY_LEFTSHIFT-KEY_T: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_T # Reopen closed tab
+
+#       # Navigation
+#       KEY_LEFTMETA-KEY_R: KEY_LEFTCTRL-KEY_R      # Refresh
+#       KEY_LEFTMETA-KEY_L: KEY_LEFTCTRL-KEY_L      # Address bar
+#       KEY_LEFTMETA-KEY_D: KEY_LEFTCTRL-KEY_D      # Bookmark page
+#       KEY_LEFTMETA-KEY_F: KEY_LEFTCTRL-KEY_F      # Find
+#       KEY_LEFTMETA-KEY_G: KEY_LEFTCTRL-KEY_G      # Find next
+
+#       # Window management
+#       KEY_LEFTMETA-KEY_N: KEY_LEFTCTRL-KEY_N      # New window
+#       KEY_LEFTMETA-KEY_LEFTSHIFT-KEY_N: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_N # New private window
+#       KEY_LEFTMETA-KEY_Q: KEY_LEFTCTRL-KEY_Q      # Quit
+
+#       # Basic editing (these should work with Ctrl already)
+#       KEY_LEFTMETA-KEY_C: KEY_LEFTCTRL-KEY_C      # Copy
+#       KEY_LEFTMETA-KEY_V: KEY_LEFTCTRL-KEY_V      # Paste
+#       KEY_LEFTMETA-KEY_X: KEY_LEFTCTRL-KEY_X      # Cut
+#       KEY_LEFTMETA-KEY_A: KEY_LEFTCTRL-KEY_A      # Select all
+#       KEY_LEFTMETA-KEY_Z: KEY_LEFTCTRL-KEY_Z      # Undo
+#       KEY_LEFTMETA-KEY_S: KEY_LEFTCTRL-KEY_S      # Save
+
+#       # Zoom
+#       KEY_LEFTMETA-KEY_MINUS: KEY_LEFTCTRL-KEY_MINUS # Zoom out
+#       KEY_LEFTMETA-KEY_EQUAL: KEY_LEFTCTRL-KEY_EQUAL # Zoom in
+#       KEY_LEFTMETA-KEY_0: KEY_LEFTCTRL-KEY_0      # Reset zoom
+
+#       # Tab switching
+#       KEY_LEFTMETA-KEY_1: KEY_LEFTCTRL-KEY_1      # Tab 1
+#       KEY_LEFTMETA-KEY_2: KEY_LEFTCTRL-KEY_2      # Tab 2
+#       KEY_LEFTMETA-KEY_3: KEY_LEFTCTRL-KEY_3      # Tab 3
+#       KEY_LEFTMETA-KEY_4: KEY_LEFTCTRL-KEY_4      # Tab 4
+#       KEY_LEFTMETA-KEY_5: KEY_LEFTCTRL-KEY_5      # Tab 5
+#       KEY_LEFTMETA-KEY_6: KEY_LEFTCTRL-KEY_6      # Tab 6
+#       KEY_LEFTMETA-KEY_7: KEY_LEFTCTRL-KEY_7      # Tab 7
+#       KEY_LEFTMETA-KEY_8: KEY_LEFTCTRL-KEY_8      # Tab 8
+#       KEY_LEFTMETA-KEY_9: KEY_LEFTCTRL-KEY_9      # Tab 9
+
+#   # Chrome/Chromium-based applications
+#   - name: Chrome-based apps
+#     application:
+#       only: ["google-chrome", "chromium", "/chrome/", "/chromium/", "code", "cursor", "slack", "discord", "spotify"]
+#     remap:
+#       # Tab management
+#       KEY_LEFTMETA-KEY_T: KEY_LEFTCTRL-KEY_T      # New tab
+#       KEY_LEFTMETA-KEY_W: KEY_LEFTCTRL-KEY_W      # Close tab
+#       KEY_LEFTMETA-KEY_LEFTSHIFT-KEY_T: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_T # Reopen closed tab
+
+#       # Navigation
+#       KEY_LEFTMETA-KEY_R: KEY_LEFTCTRL-KEY_R      # Refresh
+#       KEY_LEFTMETA-KEY_L: KEY_LEFTCTRL-KEY_L      # Address bar
+#       KEY_LEFTMETA-KEY_F: KEY_LEFTCTRL-KEY_F      # Find
+#       KEY_LEFTMETA-KEY_G: KEY_LEFTCTRL-KEY_G      # Find next
+
+#       # Window management
+#       KEY_LEFTMETA-KEY_N: KEY_LEFTCTRL-KEY_N      # New window
+#       KEY_LEFTMETA-KEY_Q: KEY_LEFTCTRL-KEY_Q      # Quit
+
+#       # Basic editing
+#       KEY_LEFTMETA-KEY_C: KEY_LEFTCTRL-KEY_C      # Copy
+#       KEY_LEFTMETA-KEY_V: KEY_LEFTCTRL-KEY_V      # Paste
+#       KEY_LEFTMETA-KEY_X: KEY_LEFTCTRL-KEY_X      # Cut
+#       KEY_LEFTMETA-KEY_A: KEY_LEFTCTRL-KEY_A      # Select all
+#       KEY_LEFTMETA-KEY_Z: KEY_LEFTCTRL-KEY_Z      # Undo
+#       KEY_LEFTMETA-KEY_Y: KEY_LEFTCTRL-KEY_Y      # Redo
+#       KEY_LEFTMETA-KEY_S: KEY_LEFTCTRL-KEY_S      # Save
+#       KEY_LEFTMETA-KEY_O: KEY_LEFTCTRL-KEY_O      # Open
+
+#       # Zoom
+#       KEY_LEFTMETA-KEY_MINUS: KEY_LEFTCTRL-KEY_MINUS # Zoom out
+#       KEY_LEFTMETA-KEY_EQUAL: KEY_LEFTCTRL-KEY_EQUAL # Zoom in
+#       KEY_LEFTMETA-KEY_0: KEY_LEFTCTRL-KEY_0      # Reset zoom
+
+#       # Tab switching
+#       KEY_LEFTMETA-KEY_1: KEY_LEFTCTRL-KEY_1      # Tab 1
+#       KEY_LEFTMETA-KEY_2: KEY_LEFTCTRL-KEY_2      # Tab 2
+#       KEY_LEFTMETA-KEY_3: KEY_LEFTCTRL-KEY_3      # Tab 3
+#       KEY_LEFTMETA-KEY_4: KEY_LEFTCTRL-KEY_4      # Tab 4
+#       KEY_LEFTMETA-KEY_5: KEY_LEFTCTRL-KEY_5      # Tab 5
+#       KEY_LEFTMETA-KEY_6: KEY_LEFTCTRL-KEY_6      # Tab 6
+#       KEY_LEFTMETA-KEY_7: KEY_LEFTCTRL-KEY_7      # Tab 7
+#       KEY_LEFTMETA-KEY_8: KEY_LEFTCTRL-KEY_8      # Tab 8
+#       KEY_LEFTMETA-KEY_9: KEY_LEFTCTRL-KEY_9      # Tab 9
+
+#   # Terminal applications - different behavior
+#   - name: Terminal apps
+#     application:
+#       only: ["kitty", "ghostty", "alacritty", "gnome-terminal", "konsole", "xterm"]
+#     remap:
+#       # Terminal shortcuts (Cmd becomes Ctrl in terminal)
+#       KEY_LEFTMETA-KEY_C: KEY_LEFTCTRL-KEY_C      # Copy
+#       KEY_LEFTMETA-KEY_V: KEY_LEFTCTRL-KEY_V      # Paste
+#       KEY_LEFTMETA-KEY_T: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_T # New tab
+#       KEY_LEFTMETA-KEY_W: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_W # Close tab
+#       KEY_LEFTMETA-KEY_N: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_N # New window
+#       KEY_LEFTMETA-KEY_F: KEY_LEFTCTRL-KEY_LEFTSHIFT-KEY_F # Find
+#       KEY_LEFTMETA-KEY_MINUS: KEY_LEFTCTRL-KEY_MINUS # Zoom out
+#       KEY_LEFTMETA-KEY_EQUAL: KEY_LEFTCTRL-KEY_EQUAL # Zoom in
+#       KEY_LEFTMETA-KEY_0: KEY_LEFTCTRL-KEY_0      # Reset zoom
+
+#   # Global mappings for all other applications
+#   - name: Global macOS-style shortcuts
+#     remap:
+#       # Basic editing shortcuts
+#       KEY_LEFTMETA-KEY_C: KEY_LEFTCTRL-KEY_C      # Copy
+#       KEY_LEFTMETA-KEY_V: KEY_LEFTCTRL-KEY_V      # Paste
+#       KEY_LEFTMETA-KEY_X: KEY_LEFTCTRL-KEY_X      # Cut
+#       KEY_LEFTMETA-KEY_A: KEY_LEFTCTRL-KEY_A      # Select all
+#       KEY_LEFTMETA-KEY_Z: KEY_LEFTCTRL-KEY_Z      # Undo
+#       KEY_LEFTMETA-KEY_Y: KEY_LEFTCTRL-KEY_Y      # Redo
+#       KEY_LEFTMETA-KEY_S: KEY_LEFTCTRL-KEY_S      # Save
+#       KEY_LEFTMETA-KEY_O: KEY_LEFTCTRL-KEY_O      # Open
+#       KEY_LEFTMETA-KEY_N: KEY_LEFTCTRL-KEY_N      # New
+#       KEY_LEFTMETA-KEY_P: KEY_LEFTCTRL-KEY_P      # Print
+#       KEY_LEFTMETA-KEY_F: KEY_LEFTCTRL-KEY_F      # Find
+#       KEY_LEFTMETA-KEY_Q: KEY_LEFTALT-KEY_F4      # Quit (Alt+F4)
+#       KEY_LEFTMETA-KEY_W: KEY_LEFTCTRL-KEY_W      # Close
+#       KEY_LEFTMETA-KEY_M: KEY_LEFTALT-KEY_F9      # Minimize
+
+#       # Navigation shortcuts
+#       KEY_LEFTMETA-KEY_LEFT: KEY_HOME             # Beginning of line
+#       KEY_LEFTMETA-KEY_RIGHT: KEY_END             # End of line
+#       KEY_LEFTMETA-KEY_UP: KEY_LEFTCTRL-KEY_HOME  # Beginning of document
+#       KEY_LEFTMETA-KEY_DOWN: KEY_LEFTCTRL-KEY_END # End of document
+#       KEY_LEFTALT-KEY_LEFT: KEY_LEFTCTRL-KEY_LEFT # Word left
+#       KEY_LEFTALT-KEY_RIGHT: KEY_LEFTCTRL-KEY_RIGHT # Word right
+#       KEY_LEFTALT-KEY_UP: KEY_PAGEUP              # Page up
+#       KEY_LEFTALT-KEY_DOWN: KEY_PAGEDOWN          # Page down
+#       KEY_LEFTALT-KEY_BACKSPACE: KEY_LEFTCTRL-KEY_BACKSPACE # Delete word
+
+#       # System shortcuts
+#       KEY_LEFTMETA-KEY_SPACE: KEY_LEFTSUPER       # App launcher (keep as Super for Hyprland)
+#       KEY_LEFTMETA-KEY_TAB: KEY_LEFTALT-KEY_TAB   # App switcher
+
+#       # Screenshot shortcuts
+#       KEY_LEFTMETA-KEY_LEFTSHIFT-KEY_3: KEY_PRINT # Full screenshot
+#       KEY_LEFTMETA-KEY_LEFTSHIFT-KEY_4: KEY_LEFTSHIFT-KEY_PRINT # Area screenshot
+#       KEY_LEFTMETA-KEY_LEFTSHIFT-KEY_5: KEY_LEFTCTRL-KEY_PRINT # Window screenshot
+
+# Simple modmap example - swaps Alt and Cmd keys
+modmap:
+  - name: Global Alt/Cmd swap
+    remap:
+      KEY_LEFTALT: KEY_LEFTCTRL    # Alt becomes Cmd
+      KEY_LEFTMETA: KEY_LEFTALT    # Cmd becomes Alt
+      KEY_LEFTCTRL: KEY_LEFTMETA  # Right Ctrl becomes Right Alt (for keyboards without Right Alt)
