@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.linux.sound;
+  mod = lib.my.modulePath [ "linux" "sound" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.linux.sound = with types; {
     enable = mkOption {
       default = false;

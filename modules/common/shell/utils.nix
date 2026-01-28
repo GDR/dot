@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.shell.utils;
+  mod = lib.my.modulePath [ "common" "shell" "utils" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.shell.utils = with types; {
     enable = mkOption {
       default = false;

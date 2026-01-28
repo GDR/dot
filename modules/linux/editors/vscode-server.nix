@@ -1,6 +1,7 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.editors.vscode-server;
+  mod = lib.my.modulePath [ "common" "editors" "vscode-server" ] config;
+  cfg = mod.cfg;
 in
 {
   options.modules.common.editors.vscode-server = with types; {

@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.utils.bazel;
+  mod = lib.my.modulePath [ "common" "utils" "bazel" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.utils.bazel = with types; {
     enable = mkOption {
       default = false;

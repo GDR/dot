@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.editors.cursor;
+  mod = lib.my.modulePath [ "common" "editors" "cursor" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.editors.cursor = with types; {
     enable = mkOption {
       default = false;

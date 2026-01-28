@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.linux.utils.systemd-resolved;
+  mod = lib.my.modulePath [ "linux" "utils" "systemd-resolved" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.linux.utils.systemd-resolved = with types; {
     enable = mkOption {
       default = false;

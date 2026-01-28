@@ -1,8 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.darwin.ide.xcode;
+  mod = lib.my.modulePath [ "darwin" "ide" "xcode" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.ide.xcode = with types; {
     enable = mkOption {
       default = false;

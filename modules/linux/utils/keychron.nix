@@ -1,9 +1,11 @@
 { config, options, lib, pkgs, ... }:
 with lib;
 let
-  cfg = config.modules.linux.utils.keychron;
+  mod = lib.my.modulePath [ "linux" "utils" "keychron" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.linux.utils.keychron = with types; {
     enable = mkOption {
       default = false;

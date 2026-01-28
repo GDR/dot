@@ -1,11 +1,12 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  moduleName = "lmstudio";
-  cfg = config.modules.common.utils.${moduleName};
+  mod = lib.my.modulePath [ "common" "utils" "lmstudio" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
-  options.modules.common.utils.${moduleName} = with types; {
+
+  options.modules.common.utils.lmstudio = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;

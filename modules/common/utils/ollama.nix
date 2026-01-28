@@ -1,11 +1,12 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  moduleName = "ollama";
-  cfg = config.modules.common.utils.${moduleName};
+  mod = lib.my.modulePath [ "common" "utils" "ollama" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
-  options.modules.common.utils.${moduleName} = with types; {
+
+  options.modules.common.utils.ollama = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;

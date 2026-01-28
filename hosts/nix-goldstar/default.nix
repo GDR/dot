@@ -20,8 +20,15 @@
   services.xserver.videoDrivers = [ "nvidia" ];
 
   modules = {
+    tags = {
+      enable = [ 
+        "core" 
+        "media" 
+      ];
+    };
     common = {
       browsers = {
+        chrome.enable = true;
         firefox.enable = true;
       };
       shell = {
@@ -37,20 +44,30 @@
         ghostty.enable = true;
       };
       utils = {
-        bitwarden.enable = true;
+        # bitwarden.enable = true;
         keepassxc.enable = true;
         qbittorrent.enable = true;
       };
       vpn = {
         tailscale.enable = true;
+        # vless.enable = true; 
       };
     };
     linux = {
       hyprland.enable = true;
       sound.enable = true;
       utils = {
-        systemd-resolved.enable = true;
         keychron.enable = true;
+      };
+
+      games = {
+        steam.enable = true;
+        steam.enableGamescope = true;
+        steam.remotePlayOpenFirewall = true;
+        steam.dedicatedServerOpenFirewall = true;
+
+        lutris.enable = true;
+        lutris.enableGamescope = true;
       };
     };
     fonts.enable = true;
@@ -86,5 +103,5 @@
     signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
   };
 
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
 }

@@ -1,6 +1,7 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  cfg = config.modules.common.shell.ssh;
+  mod = lib.my.modulePath [ "common" "shell" "ssh" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 
   # Fetch the authorized keys file
@@ -10,6 +11,7 @@ let
   };
 in
 {
+
   options.modules.common.shell.ssh = with types; {
     enable = mkOption {
       default = false;

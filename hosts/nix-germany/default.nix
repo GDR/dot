@@ -48,7 +48,6 @@
       messenger = { };
       virtualisation = {
         podman.enable = true;
-        kubernetes.enable = true;
       };
     };
     linux = {
@@ -70,7 +69,7 @@
       extraPackages = with pkgs; [
         intel-media-driver
         libvdpau-va-gl
-        vaapiVdpau
+        libva-vdpau-driver
       ];
     };
   };

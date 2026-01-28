@@ -1,9 +1,11 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  cfg = config.modules.common.virtualisation.podman;
+  mod = lib.my.modulePath [ "common" "virtualisation" "podman" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
+
   options.modules.common.virtualisation.podman = with types; {
     enable = mkOption {
       default = false;

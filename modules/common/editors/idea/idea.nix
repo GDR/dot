@@ -1,6 +1,7 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.editors.idea;
+  mod = lib.my.modulePath [ "common" "editors" "idea" ] config;
+  cfg = mod.cfg;
 
   # Override IDEA Ultimate to use system JDK instead of problematic JCEF JDK
   idea-ultimate-fixed = pkgs.jetbrains.idea-ultimate.override {
@@ -8,6 +9,7 @@ let
   };
 in
 {
+
   options.modules.common.editors.idea = with types; {
     enable = mkOption {
       default = false;

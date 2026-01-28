@@ -1,8 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.darwin.utils.macfuse;
+  mod = lib.my.modulePath [ "darwin" "utils" "macfuse" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.utils.macfuse = with types; {
     enable = mkOption {
       default = false;

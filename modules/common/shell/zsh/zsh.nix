@@ -1,8 +1,15 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.shell.zsh;
+  mod = lib.my.modulePath [ "common" "shell" "zsh" ] config;
+  cfg = mod.cfg;
 in
 {
+  meta = lib.my.mkModuleMeta {
+    requires = [];
+    platforms = [ "linux" "darwin" ];
+    description = "Zsh shell configuration with oh-my-zsh and zplug";
+  };
+
   options.modules.common.shell.zsh = with types; {
     enable = mkOption {
       default = false;
@@ -32,9 +39,12 @@ in
       zplug = {
         enable = true;
         plugins = [
-          { name = "plugins/git"; tags = [ "from:oh-my-zsh" ]; }
-          { name = "romkatv/powerlevel10k"; tags = [ "as:theme" "depth:1" ]; }
-          { name = "chisui/zsh-nix-shell"; tags = [ "depth:1" ]; }
+          { name = "zsh-users/zsh-autosuggestions"; }
+          { name = "zsh-users/zsh-syntax-highlighting"; }
+          { name = "zsh-users/zsh-history-substring-search"; }
+          { name = "zsh-users/zsh-completions"; }
+          { name = "zsh-users/zsh-history-substring-search"; }
+          { name = "zsh-users/zsh-history-substring-search"; }
         ];
       };
 

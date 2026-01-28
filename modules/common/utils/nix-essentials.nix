@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.utils.nix-essentials;
+  mod = lib.my.modulePath [ "common" "utils" "nix-essentials" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.utils.nix-essentials = with types; {
     enable = mkOption {
       default = true;

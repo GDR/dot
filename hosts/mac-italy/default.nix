@@ -34,7 +34,6 @@
         colima.enable = true;
         podman.enable = true;
         docker.enable = true;
-        kubernetes.enable = true;
       };
       media = {
         vlc.enable = true;

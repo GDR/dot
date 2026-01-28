@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.editors.neovim;
+  mod = lib.my.modulePath [ "common" "editors" "neovim" ] config;
+  cfg = mod.cfg;
 in
 {
+
   imports = [
     ./dotfiles/colorschema.nix
     ./dotfiles/general.nix

@@ -1,9 +1,11 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  cfg = config.modules.common.virtualisation.docker;
+  mod = lib.my.modulePath [ "common" "virtualisation" "docker" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
+
   options.modules.common.virtualisation.docker = with types; {
     enable = mkOption {
       default = false;

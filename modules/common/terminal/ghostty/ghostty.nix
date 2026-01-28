@@ -1,9 +1,11 @@
 { config, options, lib, pkgs, system, ... }: with lib;
 let
-  cfg = config.modules.common.terminal.ghostty;
+  mod = lib.my.modulePath [ "common" "terminal" "ghostty" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
+
   options.modules.common.terminal.ghostty = with types; {
     enable = mkOption {
       default = false;

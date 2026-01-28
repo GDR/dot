@@ -1,9 +1,11 @@
 { config, options, lib, pkgs, ... }:
 with lib;
 let
-  cfg = config.modules.linux.utils.xremap;
+  mod = lib.my.modulePath [ "linux" "utils" "xremap" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.linux.utils.xremap = with types; {
     enable = mkOption {
       default = false;

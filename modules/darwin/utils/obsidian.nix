@@ -1,8 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.darwin.utils.obsidian;
+  mod = lib.my.modulePath [ "darwin" "utils" "obsidian" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.utils.obsidian = with types; {
     enable = mkOption {
       default = false;

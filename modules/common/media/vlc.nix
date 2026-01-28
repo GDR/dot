@@ -1,11 +1,12 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  moduleName = "vlc";
-  cfg = config.modules.common.media.${moduleName};
+  mod = lib.my.modulePath [ "common" "media" "vlc" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
-  options.modules.common.media.${moduleName} = with types; {
+
+  options.modules.common.media.vlc = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;

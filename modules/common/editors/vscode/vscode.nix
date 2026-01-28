@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.editors.vscode;
+  mod = lib.my.modulePath [ "common" "editors" "vscode" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.editors.vscode = with types; {
     enable = mkOption {
       default = false;

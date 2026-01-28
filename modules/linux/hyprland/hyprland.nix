@@ -106,6 +106,9 @@ in
     ];
 
     # Add Hyprland config files
-    home.file.".config/hypr".source = ./dotfiles;
+    home.file.".config/hypr" = {
+      source = ./dotfiles;
+      force = true;  # Allow overwriting existing file/directory
+    };
   };
 }

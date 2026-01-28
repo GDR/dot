@@ -1,8 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.darwin.ui.sketchybar;
+  mod = lib.my.modulePath [ "darwin" "ui" "sketchybar" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.ui.sketchybar = with types; {
     enable = mkOption {
       default = false;

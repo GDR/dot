@@ -1,10 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.media.spotify;
-  isLinux = pkgs.stdenv.isLinux;
-  isDarwin = pkgs.stdenv.isDarwin;
+  mod = lib.my.modulePath [ "common" "media" "spotify" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.media.spotify = with types; {
     enable = mkOption {
       default = false;

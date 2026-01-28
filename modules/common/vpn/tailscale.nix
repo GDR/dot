@@ -1,9 +1,11 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  cfg = config.modules.common.vpn.tailscale;
+  mod = lib.my.modulePath [ "common" "vpn" "tailscale" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
+
   options.modules.common.vpn.tailscale = with types; {
     enable = mkOption {
       default = false;

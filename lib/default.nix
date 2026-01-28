@@ -1,4 +1,62 @@
 { lib, ... }: with lib; with types; rec {
+  # Import module registry functions
+  moduleRegistry = import ./moduleRegistry.nix { inherit lib; };
+  
+  # Re-export module registry functions for convenience
+  resolveEnabledModules = moduleRegistry.resolveEnabledModules;
+  modulesByTags = moduleRegistry.modulesByTags;
+  pathToConfigParts = moduleRegistry.pathToConfigParts;
+  
+  # Build module registry from a directory
+  # This scans modules and extracts metadata, returning a registry structure
+  buildModuleRegistry = modulesDir: prefix:
+    let
+      moduleTree = recursiveDirs modulesDir;
+      moduleFiles = flattenModules moduleTree;
+      
+      # Filter out tags.nix and default.nix
+      moduleFilesFiltered = filter (path: 
+        ! hasSuffix "tags.nix" path && 
+        ! hasSuffix "default.nix" path
+      ) moduleFiles;
+      
+      # Try to extract metadata from modules
+      # Use the lib.my that's already available (passed from flake)
+      tryImportMeta = path:
+        let
+          # lib.my should already be available since this is called from lib.my context
+          libWithMy = lib // { inherit (lib) my; };
+          moduleResult = builtins.tryEval (import path {
+            config = {};
+            options = {};
+            pkgs = {};
+            lib = libWithMy;
+            system = "x86_64-linux";
+          });
+        in
+        if moduleResult.success then 
+          (moduleResult.value._meta or moduleResult.value.meta or null)
+        else null;
+      
+      modulesWithMeta = map (path:
+        let
+          relativePath = removePrefix "./" (removeSuffix ".nix" path);
+          fullPath = prefix + "." + (replaceStrings ["/"] ["."] relativePath);
+          meta = tryImportMeta path;
+        in
+        {
+          file = path;
+          path = fullPath;
+          meta = meta;
+        }
+      ) moduleFilesFiltered;
+      
+      modulesWithMetaList = filter (m: m.meta != null) modulesWithMeta;
+    in
+    {
+      modules = modulesWithMetaList;
+      allModules = modulesWithMeta;
+    };
   mkBoolOpt = default:
     mkOption {
       inherit default;
@@ -34,8 +92,102 @@
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
       isLinux = system == "aarch64-linux" || system == "x86_64-linux";
 
-      linuxConfig = if isLinux then (cfg.linux or { }) // (cfg.common or { }) else { };
-      darwinConfig = if isDarwin then (cfg.darwin or { }) // (cfg.common or { }) else { };
+      linuxConfig = if isLinux then (cfg.nixosSystems or { }) // (cfg.allSystems or { }) else { };
+      darwinConfig = if isDarwin then (cfg.darwinSystems or { }) // (cfg.allSystems or { }) else { };
     in
     linuxConfig // darwinConfig;
+
+  # Module metadata structure
+  mkModuleMeta = { 
+    requires ? [],       # List of module paths: ["common.shell.git", "common.utils.bazel"]
+    platforms ? [ "linux" "darwin" ],
+    tags ? [],           # List of tags: ["media", "ui", "desktop"]
+    description ? null
+  }: {
+    inherit requires platforms tags description;
+  };
+
+  # Helper to derive config accessor from module path
+  # Usage: 
+  #   let mod = lib.my.modulePath [ "common" "browsers" "firefox" ] config;
+  #   in { options.modules.common.browsers.firefox = ...; config = mkIf mod.cfg.enable ...; }
+  modulePath = pathParts: config:
+    let
+      cfgAccessor = foldl (acc: part: acc.${part}) config.modules pathParts;
+    in
+    {
+      cfg = cfgAccessor;
+    };
+
+  # Check if a module should be enabled based on its config, tags, and explicit enables
+  # Usage (inside config block):
+  #   shouldEnable = lib.my.shouldEnableModule {
+  #     inherit config;
+  #     modulePath = "common.media.vlc";
+  #     moduleTags = [ "media" ];
+  #   };
+  shouldEnableModule = { config, modulePath, moduleTags }:
+    let
+      pathParts = splitString "." modulePath;
+      cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
+      tags = config.modules.tags or { enable = []; explicit = []; };
+    in
+    cfg.enable 
+      || any (tag: elem tag tags.enable) moduleTags
+      || elem modulePath tags.explicit;
+
+  # Generate module options from path string
+  # Usage:
+  #   options = lib.my.mkModuleOptions "common.core.htop" {
+  #     enable = mkOption { default = false; type = types.bool; };
+  #   };
+  # Returns: { modules.common.core.htop = { enable = ...; }; }
+  mkModuleOptions = modulePath: opts:
+    let
+      pathParts = splitString "." modulePath;
+    in
+    { modules = setAttrByPath pathParts opts; };
+
+  # Complete module wrapper for modules_v2
+  # Usage:
+  #   lib.my.mkModuleV2 {
+  #     inherit config pkgs system _modulePath;
+  #     tags = [ "core" ];
+  #     description = "htop - interactive process viewer";
+  #     module = {
+  #       allSystems.home.packages = with pkgs; [ htop ];
+  #     };
+  #   }
+  # Module sections: allSystems, nixosSystems, darwinSystems
+  mkModuleV2 = {
+    config,
+    pkgs,
+    system,
+    _modulePath,
+    tags,
+    requires ? [],
+    platforms ? [ "linux" "darwin" ],
+    description ? null,
+    module
+  }:
+    let
+      modulePath = _modulePath;
+      moduleTags = tags;
+    in
+    {
+      meta = mkModuleMeta {
+        inherit requires platforms tags description;
+      };
+
+      options = mkModuleOptions modulePath {
+        enable = mkOption {
+          default = false;
+          type = bool;
+        };
+      };
+
+      config = let
+        shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
+      in mkIf shouldEnable (mkModule system module);
+    };
 }

@@ -1,11 +1,10 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  moduleName = "firefox";
-  cfg = config.modules.common.browsers.${moduleName};
+  cfg = config.modules.common.browsers.firefox;
   mkModule = lib.my.mkModule system;
 in
 {
-  options.modules.common.browsers.${moduleName} = with types; {
+  options.modules.common.browsers.firefox = with types; {
     enable = mkOption {
       default = false;
       type = types.bool;

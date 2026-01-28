@@ -1,8 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.darwin.utils.raycast;
+  mod = lib.my.modulePath [ "darwin" "utils" "raycast" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.utils.raycast = with types; {
     enable = mkOption {
       default = false;

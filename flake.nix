@@ -48,8 +48,57 @@
 
       overlays = forAllSystems (system: import ./overlays { inherit inputs lib system; });
 
+      # Helper to wrap a module file and filter out 'meta' attribute
+      # NixOS modules don't allow arbitrary top-level attributes
+      # Accept all possible module arguments and forward them
+      # computedModulePath is passed for modules_v2 modules
+      wrapModuleFile = filePath: computedModulePath: { config ? null, options ? null, pkgs ? null, lib ? null, system ? null, inputs ? null, overlays ? null, home-manager ? null, hardware ? null, nixpkgs ? null, ... }@args:
+        let
+          # Import the actual module with all arguments plus computed path
+          originalModule = import filePath (args // { _modulePath = computedModulePath; });
+          # Filter out meta - keep everything else
+          filtered = lib.filterAttrs (name: _: name != "meta") originalModule;
+        in
+        filtered;
+      
+      # Compute module path from file path for modules_v2
+      # e.g., "/path/to/modules_v2/common/core/htop.nix" -> "common.core.htop"
+      # e.g., "/path/to/modules_v2/common/core/htop/htop.nix" -> "common.core.htop" (dedup)
+      computeModulePath = filePath:
+        let
+          pathStr = toString filePath;
+          # Check if this is a modules_v2 module
+          isModulesV2 = lib.hasInfix "modules_v2/" pathStr;
+          # Extract path after modules_v2/
+          afterModulesV2 = lib.last (lib.splitString "modules_v2/" pathStr);
+          # Remove .nix and split into parts
+          withoutNix = lib.removeSuffix ".nix" afterModulesV2;
+          parts = lib.splitString "/" withoutNix;
+          # If last two parts are the same (e.g., htop/htop), deduplicate
+          fileName = lib.last parts;
+          parentDir = if lib.length parts >= 2 then lib.elemAt parts (lib.length parts - 2) else null;
+          dedupedParts = if parentDir == fileName 
+            then lib.init parts  # Remove last element
+            else parts;
+          modulePath = lib.concatStringsSep "." dedupedParts;
+        in
+        if isModulesV2 then modulePath else null;
+
       mkConfigurationModules = lib.concatMap
-        (module: (import module { inherit inputs lib overlays; }).modules);
+        (moduleDirPath:
+          let
+            moduleDir = import moduleDirPath { inherit inputs lib overlays; };
+            modules = moduleDir.modules or [];
+          in
+          # Wrap each module file to filter meta
+          map (filePath:
+            if builtins.isString filePath then
+              # Return a function that wraps the module
+              wrapModuleFile filePath (computeModulePath filePath)
+            else
+              filePath
+          ) modules
+        );
 
       mkDarwinConfiguration = host-config:
         let
@@ -68,14 +117,24 @@
       mkNixosConfiguration = host-config:
         let
           system = "x86_64-linux";
+          # Build registry during import time (not module evaluation time)
+          modulesV2Registry = (import ./lib/modules_v2/registry.nix { inherit lib; }).moduleRegistry or { modules = []; };
         in
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit self inputs lib overlays system hardware; };
+          specialArgs = { 
+            inherit self inputs lib overlays system hardware;
+            modulesV2Registry = modulesV2Registry;
+          };
           modules = [ host-config ]
             ++ mkConfigurationModules [
             ./modules/common
             ./modules/linux
+            ./modules_v2/common
+          ]
+            ++ [
+            # Import tags.nix separately to avoid circular dependency
+            ./lib/modules_v2/tags.nix
           ];
         };
     in

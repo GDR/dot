@@ -1,8 +1,10 @@
 { config, options, lib, ... }: with lib;
 let
-  cfg = config.modules.common.terminal.kitty;
+  mod = lib.my.modulePath [ "common" "terminal" "kitty" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.terminal.kitty = with types; {
     enable = mkOption {
       default = false;

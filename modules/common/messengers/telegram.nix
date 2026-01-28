@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.common.messenger.telegram;
+  mod = lib.my.modulePath [ "common" "messenger" "telegram" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.common.messenger.telegram = with types; {
     enable = mkOption {
       default = false;

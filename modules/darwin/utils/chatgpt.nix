@@ -1,8 +1,10 @@
 { config, options, lib, pkgs, ... }: with lib;
 let
-  cfg = config.modules.darwin.utils.chatgpt;
+  mod = lib.my.modulePath [ "darwin" "utils" "chatgpt" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.utils.chatgpt = with types; {
     enable = mkOption {
       default = false;

@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.darwin.vpn;
+  mod = lib.my.modulePath [ "darwin" "vpn" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.darwin.vpn.outline-client = with types; {
     enable = mkOption {
       default = false;

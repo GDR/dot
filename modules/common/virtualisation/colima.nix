@@ -1,9 +1,11 @@
 { config, options, pkgs, lib, system, ... }: with lib;
 let
-  cfg = config.modules.common.virtualisation.colima;
+  mod = lib.my.modulePath [ "common" "virtualisation" "colima" ] config;
+  cfg = mod.cfg;
   mkModule = lib.my.mkModule system;
 in
 {
+
   options.modules.common.virtualisation.colima = with types; {
     enable = mkOption {
       default = false;

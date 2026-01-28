@@ -1,8 +1,10 @@
 { config, options, pkgs, lib, ... }: with lib;
 let
-  cfg = config.modules.fonts;
+  mod = lib.my.modulePath [ "fonts" ] config;
+  cfg = mod.cfg;
 in
 {
+
   options.modules.fonts = with types; {
     enable = mkOption {
       default = false;
