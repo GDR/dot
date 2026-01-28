@@ -32,7 +32,12 @@
         firefox.enable = true;
       };
       shell = {
-        git.enable = true;
+        git = {
+          enable = true;
+          userName = "Damir Garifullin";
+          userEmail = "gosugdr@gmail.com";
+          signingKey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
+        };
         zsh.enable = true;
         ssh.enable = true;
       };
@@ -98,10 +103,6 @@
 
 
   security-keys.signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa";
-
-  home.programs.git.extraConfig.user = {
-    signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
-  };
 
   system.stateVersion = "25.11";
 }
