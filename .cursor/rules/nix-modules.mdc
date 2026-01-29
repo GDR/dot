@@ -156,8 +156,9 @@ lib.my.mkModuleV2 args {
 | `description` | No | Module description |
 | `platforms` | No | Default: `["linux" "darwin"]` |
 | `requires` | No | Module dependencies |
-| `module` | No | Platform-specific config (see below) |
+| `module` | No | Platform config (attrset or `cfg -> attrset` function) |
 | `dotfiles` | No | `{ path, source }` for live-editable configs |
+| `extraOptions` | No | Additional module options (merged with `enable`) |
 
 ### Module Sections
 
@@ -173,6 +174,33 @@ module = {
     home.packages = [ ... ];      # Both platforms
   };
 };
+```
+
+### With Custom Options
+
+```nix
+{ lib, pkgs, ... }@args:
+
+lib.my.mkModuleV2 args {
+  tags = [ "shells" ];
+  description = "Zsh shell";
+
+  extraOptions = {
+    showHostname = lib.mkOption {
+      default = true;
+      type = lib.types.bool;
+      description = "Show hostname in prompt";
+    };
+  };
+
+  # module as function to access cfg (option values)
+  module = cfg: {
+    nixosSystems = {
+      home.packages = [ pkgs.zsh ];
+      # Access custom option: cfg.showHostname
+    };
+  };
+}
 ```
 
 ### Enabling via Tags in Host Config

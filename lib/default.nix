@@ -297,6 +297,11 @@
   #       path = "ghostty";
   #       source = "modules_v2/common/terminal/ghostty/dotfiles";
   #     };
+  #     extraOptions = {
+  #       showHostname = mkOption { default = true; type = types.bool; };
+  #     };
+  #     # module can be attrset OR function (cfg -> attrset) to access options
+  #     module = cfg: { ... };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
   # home.* config is automatically routed to all enabled hostUsers
@@ -307,19 +312,28 @@
     , description ? null
     , module ? { }
     , dotfiles ? null
+    , extraOptions ? { }
     }:
     let
       inherit (args) config pkgs system _modulePath;
+      inherit (args) lib;
       self = args.self or null;
       modulePath = _modulePath;
       moduleTags = tags;
 
+      # Get module config (for accessing options)
+      pathParts = splitString "." modulePath;
+      cfg = foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
+
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
       isLinux = system == "aarch64-linux" || system == "x86_64-linux";
 
+      # module can be attrset or function (cfg -> attrset)
+      resolvedModule = if isFunction module then module cfg else module;
+
       rawConfig =
-        if isLinux then (module.nixosSystems or { }) // (module.allSystems or { })
-        else if isDarwin then (module.darwinSystems or { }) // (module.allSystems or { })
+        if isLinux then (resolvedModule.nixosSystems or { }) // (resolvedModule.allSystems or { })
+        else if isDarwin then (resolvedModule.darwinSystems or { }) // (resolvedModule.allSystems or { })
         else { };
 
       # Home-manager user-level attributes (routed to home-manager.users.*)
@@ -340,12 +354,12 @@
         inherit requires platforms tags description;
       };
 
-      options = mkModuleOptions modulePath {
+      options = mkModuleOptions modulePath ({
         enable = mkOption {
           default = false;
           type = bool;
         };
-      };
+      } // extraOptions);
 
       config =
         let
