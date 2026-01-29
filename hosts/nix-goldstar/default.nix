@@ -30,6 +30,7 @@ in
       "editors-ui"
       "games"
       "media"
+      "messengers"
       "security"
       "shells"
       "terminal"
