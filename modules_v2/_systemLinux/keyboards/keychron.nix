@@ -1,46 +1,34 @@
-{ config, options, lib, pkgs, ... }:
-with lib;
+# Keychron keyboard udev rules - Linux system module
+{ config, pkgs, lib, ... }: with lib;
 let
-  mod = lib.my.modulePath [ "linux" "utils" "keychron" ] config;
-  cfg = mod.cfg;
+  cfg = config.systemLinux.keyboards.keychron;
 in
 {
+  options.systemLinux.keyboards.keychron = {
+    enable = mkEnableOption "Keychron keyboard udev rules";
 
-  options.modules.linux.utils.keychron = with types; {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-
-    # Common Keychron device IDs - users can override these
     devices = mkOption {
-      type = listOf (submodule {
+      type = types.listOf (types.submodule {
         options = {
           idVendor = mkOption {
-            type = str;
+            type = types.str;
             description = "USB Vendor ID for the Keychron device";
           };
           idProduct = mkOption {
-            type = str;
+            type = types.str;
             description = "USB Product ID for the Keychron device";
           };
           name = mkOption {
-            type = str;
+            type = types.str;
             description = "Device name for identification";
           };
         };
       });
       default = [
-        # Common Keychron devices - add more as needed
         { idVendor = "3434"; idProduct = "0e80"; name = "Keychron K8 HE"; }
         { idVendor = "3434"; idProduct = "d030"; name = "Keychron Link"; }
       ];
       description = "List of Keychron devices to configure udev rules for";
-    };
-
-    enableAppImageSupport = mkOption {
-      default = true;
-      type = types.bool;
     };
   };
 

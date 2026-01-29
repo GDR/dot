@@ -6,6 +6,7 @@
     ./networking/networkmanager.nix
     ./networking/tailscale.nix
     ./graphics/nvidia.nix
+    ./keyboards/keychron.nix
     ./sound.nix
   ];
 }

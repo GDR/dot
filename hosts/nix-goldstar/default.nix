@@ -23,6 +23,7 @@ in
     tags.enable = [
       "browsers"
       "core"
+      "editors-terminal"
       "editors-ui"
       "media"
       "shells"
@@ -51,6 +52,7 @@ in
       enable = true;
       open = true;
     };
+    keyboards.keychron.enable = true;
     sound.enable = true;
   };
 
@@ -59,9 +61,7 @@ in
     common = {
       # zsh moved to modules_v2 with "shells" tag
       # cursor moved to modules_v2 with "editors-ui" tag
-      editors = {
-        neovim.enable = true;
-      };
+      # neovim moved to modules_v2 with "editors-terminal" tag
       utils = {
         # bitwarden.enable = true;
         keepassxc.enable = true;
@@ -71,9 +71,7 @@ in
     linux = {
       hyprland.enable = true;
       # sound moved to systemLinux.sound
-      utils = {
-        keychron.enable = true;
-      };
+      # keychron moved to modules.common.keyboards.keychron
 
       games = {
         steam.enable = true;
