@@ -3,6 +3,7 @@
 { ... }:
 {
   imports = [
+    ./desktop/awesomewm/awesomewm.nix
     ./desktop/hyprland/hyprland.nix
     ./graphics/nvidia.nix
     ./keyboards/keychron.nix
