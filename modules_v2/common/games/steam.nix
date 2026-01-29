@@ -1,7 +1,6 @@
-# Steam gaming platform - Linux only
+# Steam gaming platform - Linux only (system-wide when any user enables "games" tag)
 { config, pkgs, lib, system, _modulePath, ... }: with lib;
 let
-  mkModule = lib.my.mkModule system;
   modulePath = _modulePath;
   moduleTags = [ "games" ];
 
@@ -13,6 +12,7 @@ in
     tags = moduleTags;
     platforms = [ "linux" ];
     description = "Steam gaming platform with Gamescope support";
+    requires = [ "systemLinux.graphics.nvidia" ]; # Better gaming with proper GPU drivers
   };
 
   options = lib.my.mkModuleOptions modulePath {
@@ -41,48 +41,47 @@ in
     };
   };
 
+  # Steam uses NixOS system-level options (not home-manager)
   config =
     let
       shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
     in
-    mkIf shouldEnable (mkModule {
-      nixosSystems = {
-        # Enable the Steam program itself
-        programs.steam = {
-          enable = true;
-          remotePlay.openFirewall = cfg.remotePlayOpenFirewall;
-          dedicatedServer.openFirewall = cfg.dedicatedServerOpenFirewall;
-          gamescopeSession.enable = cfg.enableGamescope;
-          extraPackages = with pkgs; optionals cfg.enableGamescope [
-            gamescope
-            xorg.libXcursor
-            xorg.libXi
-            xorg.libXinerama
-            xorg.libXScrnSaver
-            libpng
-            libpulseaudio
-            libvorbis
-            libkrb5
-            keyutils
-          ];
-        };
-
-        # Enable Gamescope as a system program
-        programs.gamescope = mkIf cfg.enableGamescope {
-          enable = true;
-          capSysNice = mkForce false;
-        };
-
-        # Hardware-specific support
-        hardware.steam-hardware.enable = true;
-
-        # Allow unfree packages for Steam
-        nixpkgs.config.allowUnfreePredicate = pkg:
-          builtins.elem (getName pkg) [
-            "steam"
-            "steam-original"
-            "steam-run"
-          ];
+    mkIf shouldEnable {
+      # Enable the Steam program itself (system-level)
+      programs.steam = {
+        enable = true;
+        remotePlay.openFirewall = cfg.remotePlayOpenFirewall;
+        dedicatedServer.openFirewall = cfg.dedicatedServerOpenFirewall;
+        gamescopeSession.enable = cfg.enableGamescope;
+        extraPackages = with pkgs; optionals cfg.enableGamescope [
+          gamescope
+          xorg.libXcursor
+          xorg.libXi
+          xorg.libXinerama
+          xorg.libXScrnSaver
+          libpng
+          libpulseaudio
+          libvorbis
+          libkrb5
+          keyutils
+        ];
       };
-    });
+
+      # Enable Gamescope as a system program
+      programs.gamescope = mkIf cfg.enableGamescope {
+        enable = true;
+        capSysNice = mkForce false;
+      };
+
+      # Hardware-specific support
+      hardware.steam-hardware.enable = true;
+
+      # Allow unfree packages for Steam
+      nixpkgs.config.allowUnfreePredicate = pkg:
+        builtins.elem (getName pkg) [
+          "steam"
+          "steam-original"
+          "steam-run"
+        ];
+    };
 }

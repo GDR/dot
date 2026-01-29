@@ -3,9 +3,9 @@
 
 { pkgs ? (import ../nixpkgs.nix) { }, system, ... }:
 let
-  mkModule = (import ../lib { lib = pkgs.lib; }).mkModule;
-in
-(mkModule system) {
+  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+  isLinux = system == "aarch64-linux" || system == "x86_64-linux";
+
   common = {
     apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
   };
@@ -15,4 +15,5 @@ in
   darwin = {
     vfkit = pkgs.callPackage ./vfkit { };
   };
-}
+in
+common // (if isLinux then linux else { }) // (if isDarwin then darwin else { })

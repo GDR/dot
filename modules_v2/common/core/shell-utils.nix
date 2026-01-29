@@ -1,9 +1,9 @@
-# Cursor theme and settings
+# Essential shell utilities
 { config, pkgs, lib, system, _modulePath, ... }: with lib;
 let
   mkModule = lib.my.mkModule system config;
   modulePath = _modulePath;
-  moduleTags = [ "desktop-utils" ];
+  moduleTags = [ "core" ];
 
   pathParts = splitString "." modulePath;
   cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
@@ -11,8 +11,8 @@ in
 {
   meta = lib.my.mkModuleMeta {
     tags = moduleTags;
-    platforms = [ "linux" ];
-    description = "Cursor theme (WhiteSur) and dconf settings utility";
+    platforms = [ "linux" "darwin" ];
+    description = "Essential shell utilities (bat, fzf, wget, direnv)";
   };
 
   options = lib.my.mkModuleOptions modulePath {
@@ -27,9 +27,17 @@ in
       shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
     in
     mkIf shouldEnable (mkModule {
-      nixosSystems.home.packages = with pkgs; [
-        whitesur-cursors
-        dconf
-      ];
+      allSystems = {
+        home.packages = with pkgs; [
+          bat
+          fzf
+          neofetch
+          wget
+        ];
+        programs.direnv = {
+          enable = true;
+          nix-direnv.enable = true;
+        };
+      };
     });
 }

@@ -1,7 +1,7 @@
 # Ghostty terminal emulator
 { config, pkgs, lib, system, _modulePath, self, ... }: with lib;
 let
-  mkModule = lib.my.mkModule system;
+  mkModule = lib.my.mkModule system config;
   modulePath = _modulePath;
   moduleTags = [ "terminal" ];
 

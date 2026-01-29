@@ -2,7 +2,7 @@
 # Only enabled when Wayland compositor (hyprland) is active
 { config, pkgs, lib, system, _modulePath, ... }: with lib;
 let
-  mkModule = lib.my.mkModule system;
+  mkModule = lib.my.mkModule system config;
   modulePath = _modulePath;
   moduleTags = [ "desktop-utils-wayland" ];
 

@@ -91,15 +91,42 @@
   filterPrefix = prefix: files:
     builtins.filter (file: builtins.hasPrefix prefix (builtins.basename file)) files;
 
-  mkModule = system: cfg:
+  # mkModule: Creates platform-aware config that routes user config to home-manager.users
+  # Usage in modules:
+  #   let mkModule = lib.my.mkModule system config; in
+  #   mkIf shouldEnable (mkModule {
+  #     nixosSystems.home.packages = [ pkgs.htop ];     # → home-manager.users.*.home.packages
+  #     nixosSystems.programs.chromium.enable = true;  # → home-manager.users.*.programs.chromium
+  #     nixosSystems.services.foo.enable = true;       # System-level config (stays as-is)
+  #     darwinSystems.homebrew.casks = [ "htop" ];
+  #   })
+  # Home-manager attrs (home, programs, xdg, services, etc.) are routed to all enabled users
+  mkModule = system: config: cfg:
     let
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
       isLinux = system == "aarch64-linux" || system == "x86_64-linux";
 
-      linuxConfig = if isLinux then (cfg.nixosSystems or { }) // (cfg.allSystems or { }) else { };
-      darwinConfig = if isDarwin then (cfg.darwinSystems or { }) // (cfg.allSystems or { }) else { };
+      rawConfig =
+        if isLinux then (cfg.nixosSystems or { }) // (cfg.allSystems or { })
+        else if isDarwin then (cfg.darwinSystems or { }) // (cfg.allSystems or { })
+        else { };
+
+      # Home-manager user-level attributes (routed to home-manager.users.*)
+      hmUserAttrs = [ "home" "programs" "xdg" "services" "systemd" "gtk" "qt" "dconf" "accounts" "fonts" "manual" "news" "nix" "targets" "wayland" "xresources" "xsession" ];
+
+      # Extract home-manager attrs from config
+      userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
+      hasUserConfig = userConfig != { };
+
+      # Remove home-manager attrs from system config
+      systemConfig = filterAttrs (name: _: !(elem name hmUserAttrs)) rawConfig;
+
+      # Get enabled users for home config routing
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
     in
-    linuxConfig // darwinConfig;
+    systemConfig // (optionalAttrs hasUserConfig {
+      home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
+    });
 
   # Module metadata structure
   mkModuleMeta =
@@ -218,6 +245,7 @@
   #     };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
+  # home.* config is automatically routed to all enabled hostUsers
   mkModuleV2 =
     { config
     , pkgs
@@ -232,6 +260,27 @@
     let
       modulePath = _modulePath;
       moduleTags = tags;
+
+      isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+      isLinux = system == "aarch64-linux" || system == "x86_64-linux";
+
+      rawConfig =
+        if isLinux then (module.nixosSystems or { }) // (module.allSystems or { })
+        else if isDarwin then (module.darwinSystems or { }) // (module.allSystems or { })
+        else { };
+
+      # Home-manager user-level attributes (routed to home-manager.users.*)
+      hmUserAttrs = [ "home" "programs" "xdg" "services" "systemd" "gtk" "qt" "dconf" "accounts" "fonts" "manual" "news" "nix" "targets" "wayland" "xresources" "xsession" ];
+
+      # Extract home-manager attrs from config
+      userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
+      hasUserConfig = userConfig != { };
+
+      # Remove home-manager attrs from system config
+      systemConfig = filterAttrs (name: _: !(elem name hmUserAttrs)) rawConfig;
+
+      # Get enabled users for home config routing
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
     in
     {
       meta = mkModuleMeta {
@@ -249,6 +298,10 @@
         let
           shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
         in
-        mkIf shouldEnable (mkModule system module);
+        mkIf shouldEnable (
+          systemConfig // (optionalAttrs hasUserConfig {
+            home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
+          })
+        );
     };
 }

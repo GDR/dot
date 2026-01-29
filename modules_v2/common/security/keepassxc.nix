@@ -1,7 +1,7 @@
 # KeePassXC password manager
 { config, pkgs, lib, system, _modulePath, ... }: with lib;
 let
-  mkModule = lib.my.mkModule system;
+  mkModule = lib.my.mkModule system config;
   modulePath = _modulePath;
   moduleTags = [ "security" ];
 

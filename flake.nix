@@ -129,9 +129,13 @@
             modulesV2Registry = modulesV2Registry;
           };
           modules = [ host-config ]
+            ++ [
+            # Core NixOS modules from inputs
+            home-manager.nixosModules.home-manager
+            nixvim.nixosModules.nixvim
+            vscode-server.nixosModules.default
+          ]
             ++ mkConfigurationModules [
-            ./modules/common
-            ./modules/linux
             ./modules_v2/common
           ]
             ++ [
