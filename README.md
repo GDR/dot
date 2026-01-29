@@ -24,6 +24,7 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
 - 🖥️ **Multi-platform** — Same structure for NixOS and macOS (nix-darwin)
 - 👥 **Multi-user ready** — Each user can have different tags/modules enabled
 - 🏷️ **Tag-based modules** — Enable packages per-user with simple tags like `"editors-ui"`, `"games"`
+- ⚙️ **Per-user module config** — Fine-grained control with `hostUsers.<name>.modules.<path>.enable`
 - ✏️ **Live-editable dotfiles** — Config files are symlinked to this repo, edit in place without rebuild
 - 🔍 **Auto-discovery** — Drop a `.nix` file in any module directory, it's automatically imported
 
@@ -38,6 +39,7 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
 - [Guides](#-guides)
   - [Create a New Host](#create-a-new-host)
   - [Create a New User](#create-a-new-user)
+  - [Per-User Module Configuration](#per-user-module-configuration)
   - [Create a New Module](#create-a-new-module)
 - [Host Configuration](#-host-configuration)
 - [Tags Reference](#-tags-reference)
@@ -120,7 +122,7 @@ darwin-rebuild switch --flake .#<hostname>
 | **System (All)** | `_systemAll/` | `systemAll.<name>.enable` | System-wide, cross-platform |
 | **System (Linux)** | `_systemLinux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
 | **System (Darwin)** | `_systemDarwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
-| **User** | `common/` | `hostUsers.<user>.tags.enable` | Per-user via tags |
+| **User** | `common/` | `hostUsers.<user>.tags.enable` or `hostUsers.<user>.modules.<path>.enable` | Per-user via tags or explicit config |
 
 ---
 
@@ -160,6 +162,11 @@ in
       "editors-terminal"
       # Add more tags as needed
     ];
+    # Optional: Per-user module configuration
+    # modules = {
+    #   common.media.vlc.enable = true;
+    #   common.editors.neovim.enable = true;
+    # };
   };
 
   networking.hostName = "my-new-host";
@@ -229,8 +236,43 @@ hostUsers.newuser = importUser "newuser" // {
     isDefault = true;
   }];
   tags.enable = [ "core" "shells" ];
+  # Per-user module configuration (alternative to tags)
+  modules = {
+    common.media.vlc.enable = true;
+    common.editors.neovim.enable = true;
+  };
 };
 ```
+
+---
+
+### Per-User Module Configuration
+
+In addition to tag-based enabling, you can explicitly configure modules per-user using the `modules` option:
+
+```nix
+hostUsers.dgarifullin = importUser "dgarifullin" // {
+  enable = true;
+
+  # Option 1: Enable via tags (enables all modules with matching tags)
+  tags.enable = [ "media" "editors-terminal" ];
+
+  # Option 2: Enable specific modules explicitly
+  modules = {
+    common.media.vlc.enable = true;
+    common.editors.neovim.enable = true;
+    common.browsers.chromium.enable = true;
+  };
+
+  # Both methods work together - modules are enabled if either condition is met
+};
+```
+
+**When to use tags vs modules:**
+- **Tags**: Enable multiple related modules at once (e.g., `"media"` enables vlc, spotify, etc.)
+- **Modules**: Enable specific modules or override tag-based behavior for fine-grained control
+
+Module paths follow the directory structure: `common.<category>.<module-name>`
 
 ---
 

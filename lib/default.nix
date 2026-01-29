@@ -155,7 +155,7 @@
     };
 
   # Check if a module should be enabled based on its config, tags, and explicit enables
-  # Also checks per-user tags in hostUsers.<name>.tags
+  # Also checks per-user tags in hostUsers.<name>.tags and per-user module options
   # Usage (inside config block):
   #   shouldEnable = lib.my.shouldEnableModule {
   #     inherit config;
@@ -165,7 +165,7 @@
   shouldEnableModule = { config, modulePath, moduleTags }:
     let
       pathParts = splitString "." modulePath;
-      cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
+      cfg = foldl (acc: part: acc.${part} or { }) config.modules pathParts;
 
       # Global tags (modules.tags)
       globalTags = config.modules.tags or { enable = [ ]; explicit = [ ]; };
@@ -177,12 +177,38 @@
       # Check if any user has this module's tag enabled
       anyUserHasTag = any (userTags: any (tag: elem tag (userTags.enable or [ ])) moduleTags) userTagsLists;
       anyUserHasExplicit = any (userTags: elem modulePath (userTags.explicit or [ ])) userTagsLists;
+
+      # Check if any user has this module enabled via hostUsers.<name>.modules.<module_path>.enable
+      # Traverse the nested path in each user's modules configuration
+      checkUserModulePath = userModules: pathParts:
+        if pathParts == [ ] then
+        # At the end of the path, check for .enable
+          if isAttrs userModules then userModules.enable or false
+          else false
+        else
+          let
+            firstPart = head pathParts;
+            restParts = tail pathParts;
+            userModulePart = if isAttrs userModules then userModules.${firstPart} or null else null;
+          in
+          if userModulePart == null || !(isAttrs userModulePart) then false
+          else checkUserModulePath userModulePart restParts;
+
+      anyUserHasModuleEnabled = any
+        (ucfg:
+          let
+            userModules = ucfg.modules or { };
+          in
+          checkUserModulePath userModules pathParts
+        )
+        (attrValues enabledUsers);
     in
-    cfg.enable
+    cfg.enable or false
     || any (tag: elem tag globalTags.enable) moduleTags
     || elem modulePath globalTags.explicit
     || anyUserHasTag
-    || anyUserHasExplicit;
+    || anyUserHasExplicit
+    || anyUserHasModuleEnabled;
 
   # Get list of users who have a module enabled via tags
   # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath moduleTags; };

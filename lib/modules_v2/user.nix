@@ -1,6 +1,6 @@
 # Core user module - defines hostUsers options
 # This is a foundational module, not a typical package module
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, modulesV2Registry ? null, ... }:
 
 with lib;
 
@@ -11,6 +11,14 @@ let
 
   # Get enabled users
   enabledUsers = filterAttrs (name: cfg: cfg.enable) config.hostUsers;
+
+  # Build module options structure from registry
+  # Creates options like hostUsers.<name>.modules.<module_path>.enable
+  # Uses attrs to allow nested paths like common.media.vlc.enable = true
+  buildModuleOptions = registry:
+    # Use attrs to allow any nested structure
+    # We'll check for .enable in shouldEnableModule by traversing the path
+    types.attrs;
 
   # SSH key submodule
   keyModule = types.submodule {
@@ -92,11 +100,21 @@ let
         };
       };
 
-      # Per-user explicit module configuration (for future use)
+      # Per-user explicit module configuration
+      # Allows configuring modules like: modules.common.media.vlc.enable = true
       modules = mkOption {
-        type = types.attrs;
+        type = buildModuleOptions modulesV2Registry;
         default = { };
-        description = "Explicit module configuration for this user";
+        description = ''
+          Explicit module configuration for this user.
+          Example: modules.common.media.vlc.enable = true;
+        '';
+        example = literalExpression ''
+          {
+            common.media.vlc.enable = true;
+            common.editors.neovim.enable = true;
+          }
+        '';
       };
     };
   });
@@ -124,6 +142,11 @@ in
             isDefault = true;
           }];
           tags.enable = [ "core" "media" ];
+          # Per-user module configuration
+          modules = {
+            common.media.vlc.enable = true;
+            common.editors.neovim.enable = true;
+          };
         };
       }
     '';
