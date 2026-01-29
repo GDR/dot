@@ -27,7 +27,7 @@ in
       shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
     in
     mkIf shouldEnable (mkModule {
-      nixosSystems.home.packages = [ pkgs.code-cursor ];
+      nixosSystems.home.packages = [ pkgs.code-cursor pkgs.cursor-cli ];
       darwinSystems.homebrew.casks = [ "cursor" ];
     });
 }

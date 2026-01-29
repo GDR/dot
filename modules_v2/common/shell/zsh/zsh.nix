@@ -118,6 +118,7 @@ in
                 shellAliases = {
                   "vim" = "nvim";
                   "vi" = "nvim";
+                  "c" = "cursor";
                   "ls" = "eza -l --group-directories-first";
                   "dotfiles" = "cd ~/Workspaces/gdr/dot";
                 };
