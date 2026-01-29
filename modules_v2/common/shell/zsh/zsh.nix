@@ -38,7 +38,7 @@ in
         # Enable zsh at system level (required for users to use zsh as shell)
         programs.zsh.enable = true;
 
-        environment.systemPackages = with pkgs; [ eza ];
+        environment.systemPackages = with pkgs; [ eza fzf ];
 
         # Set user's default shell to zsh
         users.users = builtins.listToAttrs (map
@@ -77,6 +77,30 @@ in
                   # Source p10k config if it exists
                   [[ -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
                   source ~/.config/zsh/common.zsh
+
+                  # FZF history search (Ctrl+R)
+                  fzf-history-widget() {
+                    local selected
+                    selected=$(fc -rl 1 | awk '{$1=""; print substr($0,2)}' | awk '!seen[$0]++' | fzf --height 40% --reverse +s)
+                    if [[ -n "$selected" ]]; then
+                      BUFFER="$selected"
+                      CURSOR=''${#BUFFER}
+                    fi
+                    zle reset-prompt
+                  }
+                  zle -N fzf-history-widget
+                  bindkey '\C-r' fzf-history-widget
+
+                  # Ctrl+E edits command line in nvim (last cmd if empty)
+                  export EDITOR=nvim
+                  autoload -U edit-command-line
+                  zle -N edit-command-line
+                  edit-last-or-current() {
+                    [[ -z "$BUFFER" ]] && BUFFER=$(fc -ln -1 | sed 's/^[[:space:]]*//')
+                    zle edit-command-line
+                  }
+                  zle -N edit-last-or-current
+                  bindkey "\C-e" edit-last-or-current
                 '' + optionalString (!cfg.showHostname) ''
                   # Hide hostname in prompt (set by modules.common.shell.zsh.showHostname = false)
                   typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%n'
