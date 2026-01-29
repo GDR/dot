@@ -133,8 +133,9 @@
             ./modules_v2/common
           ]
             ++ [
-            # Import tags.nix separately to avoid circular dependency
+            # Import foundational modules separately (not package modules)
             ./lib/modules_v2/tags.nix
+            ./lib/modules_v2/user.nix
           ];
         };
     in
@@ -176,9 +177,10 @@
         }
       );
 
-      darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
-      darwinConfigurations.mac-blackstar = mkDarwinConfiguration ./hosts/mac-blackstar;
-      nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
+      # Temporarily disabled for testing - will re-enable after migration
+      # darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
+      # darwinConfigurations.mac-blackstar = mkDarwinConfiguration ./hosts/mac-blackstar;
+      # nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
       nixosConfigurations.nix-goldstar = mkNixosConfiguration ./hosts/nix-goldstar;
 
       templates = {
