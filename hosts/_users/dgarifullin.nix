@@ -1,13 +1,11 @@
 # Default values for dgarifullin user
-# This file provides defaults that can be overridden via hostUsers.dgarifullin.<option>
+# Import in hosts and merge with host-specific overrides:
+#   hostUsers.dgarifullin = userDefaults // { enable = true; keys = [...]; };
 { lib, ... }:
 
 {
-  fullName = lib.mkDefault "Damir Garifullin";
-  email = lib.mkDefault "gosugdr@gmail.com";
-  github = lib.mkDefault "gdr";
-  extraGroups = lib.mkDefault [ "wheel" "audio" "libvirtd" "input" ];
-  
-  # Keys will be set per-host since each host has different key names
-  # keys = lib.mkDefault [];
+  fullName = "Damir Garifullin";
+  email = "gosugdr@gmail.com";
+  github = "gdr";
+  extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
 }

@@ -1,18 +1,22 @@
-{ inputs, lib, config, pkgs, home-manager, hardware, ... }: {
-
+{ inputs, lib, config, pkgs, home-manager, hardware, ... }:
+let
+  # Import user defaults by name
+  importUser = name: import ../_users/${name}.nix { inherit lib; };
+in
+{
   # Enable user via hostUsers (new system)
-  hostUsers.dgarifullin = {
+  # Defaults from hosts/_users/<name>.nix, host-specific overrides here
+  hostUsers.dgarifullin = importUser "dgarifullin" // {
     enable = true;
-    fullName = "Damir Garifullin";
-    email = "gosugdr@gmail.com";
-    github = "gdr";
-    extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
+    # Host-specific: SSH key for this machine
     keys = [{
       name = "goldstar";
       type = "rsa";
-      purpose = "both";
+      purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
+    # Per-user tags (enables user-scope modules for this user)
+    tags.enable = [ "core" "media" ];
   };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -35,12 +39,7 @@
   services.xserver.videoDrivers = [ "nvidia" ];
 
   modules = {
-    tags = {
-      enable = [ 
-        "core" 
-        "media" 
-      ];
-    };
+    # Global tags removed - using per-user tags instead (hostUsers.*.tags)
     common = {
       browsers = {
         chrome.enable = true;

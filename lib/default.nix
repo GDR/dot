@@ -120,6 +120,7 @@
     };
 
   # Check if a module should be enabled based on its config, tags, and explicit enables
+  # Also checks per-user tags in hostUsers.<name>.tags
   # Usage (inside config block):
   #   shouldEnable = lib.my.shouldEnableModule {
   #     inherit config;
@@ -130,11 +131,37 @@
     let
       pathParts = splitString "." modulePath;
       cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-      tags = config.modules.tags or { enable = []; explicit = []; };
+      
+      # Global tags (modules.tags)
+      globalTags = config.modules.tags or { enable = []; explicit = []; };
+      
+      # Per-user tags (hostUsers.<name>.tags)
+      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or {});
+      userTagsLists = mapAttrsToList (name: ucfg: ucfg.tags or { enable = []; explicit = []; }) enabledUsers;
+      
+      # Check if any user has this module's tag enabled
+      anyUserHasTag = any (userTags: any (tag: elem tag (userTags.enable or [])) moduleTags) userTagsLists;
+      anyUserHasExplicit = any (userTags: elem modulePath (userTags.explicit or [])) userTagsLists;
     in
     cfg.enable 
-      || any (tag: elem tag tags.enable) moduleTags
-      || elem modulePath tags.explicit;
+      || any (tag: elem tag globalTags.enable) moduleTags
+      || elem modulePath globalTags.explicit
+      || anyUserHasTag
+      || anyUserHasExplicit;
+  
+  # Get list of users who have a module enabled via tags
+  # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath moduleTags; };
+  getUsersWithModule = { config, modulePath, moduleTags }:
+    let
+      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or {});
+    in
+    filterAttrs (name: ucfg: 
+      let 
+        userTags = ucfg.tags or { enable = []; explicit = []; };
+      in
+      any (tag: elem tag (userTags.enable or [])) moduleTags
+      || elem modulePath (userTags.explicit or [])
+    ) enabledUsers;
 
   # Generate module options from path string
   # Usage:

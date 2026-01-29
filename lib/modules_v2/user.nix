@@ -25,9 +25,10 @@ let
         description = "SSH key type";
       };
       purpose = mkOption {
-        type = types.enum [ "git" "ssh" "both" ];
-        default = "both";
+        type = types.listOf (types.enum [ "git" "ssh" ]);
+        default = [ "git" "ssh" ];
         description = "What this key is used for";
+        example = [ "git" "ssh" ];
       };
       isDefault = mkOption {
         type = types.bool;
@@ -119,7 +120,7 @@ in
           keys = [{
             name = "goldstar";
             type = "rsa";
-            purpose = "both";
+            purpose = [ "git" "ssh" ];
             isDefault = true;
           }];
           tags.enable = [ "core" "media" ];
