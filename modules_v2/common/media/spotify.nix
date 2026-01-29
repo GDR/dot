@@ -1,0 +1,33 @@
+# Spotify music streaming
+{ config, pkgs, lib, system, _modulePath, ... }: with lib;
+let
+  mkModule = lib.my.mkModule system;
+  modulePath = _modulePath;
+  moduleTags = [ "media" ];
+
+  pathParts = splitString "." modulePath;
+  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
+in
+{
+  meta = lib.my.mkModuleMeta {
+    tags = moduleTags;
+    platforms = [ "linux" "darwin" ];
+    description = "Spotify music streaming client";
+  };
+
+  options = lib.my.mkModuleOptions modulePath {
+    enable = mkOption {
+      default = false;
+      type = types.bool;
+    };
+  };
+
+  config =
+    let
+      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
+    in
+    mkIf shouldEnable (mkModule {
+      nixosSystems.home.packages = [ pkgs.spotify ];
+      darwinSystems.homebrew.casks = [ "spotify" ];
+    });
+}
