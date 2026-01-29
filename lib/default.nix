@@ -128,6 +128,27 @@
       home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
     });
 
+  # mkModuleConfig: Combines mkModule + optional dotfiles symlink
+  # Usage:
+  #   config = mkIf shouldEnable (lib.my.mkModuleConfig {
+  #     inherit system config self;
+  #     module = {
+  #       nixosSystems.home.packages = [ pkgs.ghostty ];
+  #       darwinSystems.homebrew.casks = [ "ghostty" ];
+  #     };
+  #     dotfiles = { path = "ghostty"; source = "modules_v2/.../dotfiles"; };
+  #   });
+  mkModuleConfig = { system, config, self ? null, module, dotfiles ? null }:
+    mkMerge [
+      (mkModule system config module)
+      (optionalAttrs (dotfiles != null && self != null) {
+        home-manager.users = mkDotfilesSymlink {
+          inherit config self;
+          inherit (dotfiles) path source;
+        };
+      })
+    ];
+
   # Module metadata structure
   mkModuleMeta =
     { requires ? [ ]
@@ -262,29 +283,34 @@
     { modules = setAttrByPath pathParts opts; };
 
   # Complete module wrapper for modules_v2
+  # Returns { meta, options, config } - the entire module structure
   # Usage:
-  #   lib.my.mkModuleV2 {
-  #     inherit config pkgs system _modulePath;
-  #     tags = [ "core" ];
-  #     description = "htop - interactive process viewer";
+  #   { lib, pkgs, ... }@args:
+  #   lib.my.mkModuleV2 args {
+  #     tags = [ "terminal" ];
+  #     description = "Ghostty terminal emulator";
   #     module = {
-  #       allSystems.home.packages = with pkgs; [ htop ];
+  #       nixosSystems.home.packages = [ pkgs.ghostty ];
+  #       darwinSystems.homebrew.casks = [ "ghostty" ];
+  #     };
+  #     dotfiles = {
+  #       path = "ghostty";
+  #       source = "modules_v2/common/terminal/ghostty/dotfiles";
   #     };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
   # home.* config is automatically routed to all enabled hostUsers
-  mkModuleV2 =
-    { config
-    , pkgs
-    , system
-    , _modulePath
-    , tags
+  mkModuleV2 = args:
+    { tags
     , requires ? [ ]
     , platforms ? [ "linux" "darwin" ]
     , description ? null
-    , module
+    , module ? { }
+    , dotfiles ? null
     }:
     let
+      inherit (args) config pkgs system _modulePath;
+      self = args.self or null;
       modulePath = _modulePath;
       moduleTags = tags;
 
@@ -325,10 +351,16 @@
         let
           shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
         in
-        mkIf shouldEnable (
-          systemConfig // (optionalAttrs hasUserConfig {
+        mkIf shouldEnable (mkMerge [
+          (systemConfig // (optionalAttrs hasUserConfig {
             home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
+          }))
+          (optionalAttrs (dotfiles != null && self != null) {
+            home-manager.users = mkDotfilesSymlink {
+              inherit config self;
+              inherit (dotfiles) path source;
+            };
           })
-        );
+        ]);
     };
 }

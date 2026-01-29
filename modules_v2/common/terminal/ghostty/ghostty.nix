@@ -1,44 +1,15 @@
 # Ghostty terminal emulator
-{ config, pkgs, lib, system, _modulePath, self, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system config;
-  modulePath = _modulePath;
-  moduleTags = [ "terminal" ];
+{ lib, pkgs, ... }@args:
 
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    description = "Ghostty terminal emulator";
+lib.my.mkModuleV2 args {
+  tags = [ "terminal" ];
+  description = "Ghostty terminal emulator";
+  module = {
+    nixosSystems.home.packages = [ pkgs.ghostty ];
+    darwinSystems.homebrew.casks = [ "ghostty" ];
   };
-
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
+  dotfiles = {
+    path = "ghostty";
+    source = "modules_v2/common/terminal/ghostty/dotfiles";
   };
-
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable (mkMerge [
-      # Package installation (via mkModule alias system)
-      (mkModule {
-        nixosSystems.home.packages = [ pkgs.ghostty ];
-        darwinSystems.homebrew.casks = [ "ghostty" ];
-      })
-
-      # Dotfiles symlink (linked to repo for live editing without rebuild)
-      {
-        home-manager.users = lib.my.mkDotfilesSymlink {
-          inherit config self;
-          path = "ghostty";
-          source = "modules_v2/common/terminal/ghostty/dotfiles";
-        };
-      }
-    ]);
 }

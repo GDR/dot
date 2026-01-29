@@ -1,17 +1,10 @@
-{ config, pkgs, lib, system, _modulePath, ... }:
+{ lib, pkgs, ... }@args:
 
-lib.my.mkModuleV2 {
-  inherit config pkgs system _modulePath;
+lib.my.mkModuleV2 args {
   tags = [ "media" ];
   description = "VLC media player";
-
   module = {
-    darwinSystems.homebrew.casks = [
-      "vlc"
-    ];
-
-    nixosSystems.home.packages = with pkgs; [
-      vlc
-    ];
+    nixosSystems.home.packages = [ pkgs.vlc ];
+    darwinSystems.homebrew.casks = [ "vlc" ];
   };
 }

@@ -1,13 +1,9 @@
-{ config, pkgs, lib, system, _modulePath, ... }:
+{ lib, pkgs, ... }@args:
 
-lib.my.mkModuleV2 {
-  inherit config pkgs system _modulePath;
+lib.my.mkModuleV2 args {
   tags = [ "core" ];
   description = "htop - interactive process viewer";
-
   module = {
-    allSystems.home.packages = with pkgs; [
-      htop
-    ];
+    allSystems.home.packages = [ pkgs.htop ];
   };
 }
