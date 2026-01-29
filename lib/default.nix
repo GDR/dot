@@ -102,9 +102,10 @@
     requires ? [],       # List of module paths: ["common.shell.git", "common.utils.bazel"]
     platforms ? [ "linux" "darwin" ],
     tags ? [],           # List of tags: ["media", "ui", "desktop"]
+    scope ? "user",      # "system" = system services/drivers, "user" = home.packages
     description ? null
   }: {
-    inherit requires platforms tags description;
+    inherit requires platforms tags scope description;
   };
 
   # Helper to derive config accessor from module path

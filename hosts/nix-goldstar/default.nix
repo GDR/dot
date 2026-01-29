@@ -30,9 +30,12 @@ in
   boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nix-goldstar";
-  networking.networkmanager.enable = true;
 
-  programs.nm-applet.enable = true;
+  # System-scope modules (top-level, not in modules.*)
+  systemLinux.networking = {
+    networkmanager.enable = true;
+    tailscale.enable = true;
+  };
 
   # X11 configuration for NVIDIA
   services.xserver.enable = true;
@@ -68,7 +71,6 @@ in
         qbittorrent.enable = true;
       };
       vpn = {
-        tailscale.enable = true;
         # vless.enable = true; 
       };
     };

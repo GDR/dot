@@ -133,6 +133,9 @@
             ./modules_v2/common
           ]
             ++ [
+            ./systemLinux
+          ]
+            ++ [
             # Import foundational modules separately (not package modules)
             ./lib/modules_v2/tags.nix
             ./lib/modules_v2/user.nix
