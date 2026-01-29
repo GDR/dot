@@ -32,14 +32,16 @@ in
     shell.ssh.enable = true;
   };
 
-  systemLinux.networking = {
-    networkmanager.enable = true;
-    tailscale.enable = true;
+  systemLinux = {
+    networking = {
+      networkmanager.enable = true;
+      tailscale.enable = true;
+    };
+    graphics.nvidia = {
+      enable = true;
+      open = true;
+    };
   };
-
-  # X11 configuration for NVIDIA
-  services.xserver.enable = true;
-  services.xserver.videoDrivers = [ "nvidia" ];
 
   modules = {
     # Global tags removed - using per-user tags instead (hostUsers.*.tags)
@@ -94,21 +96,4 @@ in
   };
 
   time.timeZone = "Europe/Moscow";
-
-  hardware = {
-    graphics.enable = true;
-
-    nvidia = {
-      modesetting.enable = true;
-      powerManagement.enable = false;
-      powerManagement.finegrained = false;
-      open = true;
-      nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
-      # Force full composition pipeline to prevent tearing
-      forceFullCompositionPipeline = true;
-    };
-  };
-
-  system.stateVersion = "25.11";
 }

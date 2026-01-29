@@ -5,5 +5,6 @@
   imports = [
     ./networking/networkmanager.nix
     ./networking/tailscale.nix
+    ./graphics/nvidia.nix
   ];
 }
