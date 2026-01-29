@@ -382,6 +382,7 @@ hostUsers.myuser.tags.enable = [ "core" "shells" "editors-ui" ];
 | `games` | steam, gamescope |
 | `security` | keepassxc, bitwarden |
 | `downloads` | qbittorrent |
+| `oci-containers` | docker |
 
 ---
 
