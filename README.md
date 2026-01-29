@@ -380,7 +380,7 @@ hostUsers.myuser.tags.enable = [ "core" "shells" "editors-ui" ];
 | `media` | vlc, spotify |
 | `messengers` | telegram |
 | `games` | steam, gamescope |
-| `security` | keepassxc |
+| `security` | keepassxc, bitwarden |
 | `downloads` | qbittorrent |
 
 ---
