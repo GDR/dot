@@ -145,5 +145,20 @@ in
       trusted-users = [ "root" ] ++ (attrNames enabledUsers);
       allowed-users = [ "root" ] ++ (attrNames enabledUsers);
     };
+
+    # Configure home-manager for each enabled user
+    home-manager = {
+      useUserPackages = true;
+      useGlobalPkgs = true;
+
+      users = mapAttrs (name: cfg: {
+        home = {
+          stateVersion = "24.11";
+          username = name;
+          homeDirectory = if isDarwin then "/Users/${name}" else "/home/${name}";
+        };
+        # Programs and packages will be configured by modules via per-user tags (Deliverable 5)
+      }) enabledUsers;
+    };
   };
 }
