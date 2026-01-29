@@ -240,4 +240,124 @@ hostUsers.username = importUser "username" // {
 3. **Create module file** using templates above
 4. **For system modules**: Add import to `_system*/default.nix`
 5. **For user modules**: Auto-discovered, just add tag to host config
-6. **Test**: Run `nix flake check`
+6. **Stage new files**: `git add` before `nix flake check` (Nix needs staged files)
+7. **Test**: Run `nix flake check`
+
+## SSH Keys Configuration
+
+Keys are defined per-host in `hostUsers.<user>.keys`:
+
+```nix
+keys = [{
+  name = "goldstar";      # Key identifier
+  type = "rsa";           # Key type (rsa, ed25519)
+  purpose = [ "git" "ssh" ];  # Array: "git" for signing, "ssh" for auth
+  isDefault = true;       # Default key for this host
+}];
+```
+
+**Key path convention**: `~/.ssh/<name>_id_<type>` (e.g., `~/.ssh/goldstar_id_rsa`)
+
+The SSH and Git modules in `_systemAll/shell/` read these keys automatically.
+
+## Important Patterns & Gotchas
+
+### System vs User Module Differences
+
+| Aspect | System Module | User Module |
+|--------|---------------|-------------|
+| Location | `_system*` | `modules_v2/common/` |
+| Enable | `systemLinux.*.enable = true` | Via tags |
+| Uses `meta` | No | Yes |
+| Uses `mkModule` | No (direct config) | Yes |
+| Auto-discovered | No (needs import) | Yes |
+
+### Conditional Module Enablement
+
+For modules that depend on system config (e.g., Wayland utils needing Hyprland):
+
+```nix
+let
+  waylandEnabled = config.systemLinux.desktop.hyprland.enable or false;
+in
+mkIf (shouldEnable && waylandEnabled) (mkModule { ... });
+```
+
+### Desktop Entries for App Launchers (Rofi)
+
+If an app doesn't appear in Rofi/app launchers, add a desktop entry:
+
+```nix
+home-manager.users.username.xdg.desktopEntries.appname = {
+  name = "App Name";
+  exec = "${pkgs.appname}/bin/appname";
+  icon = "appname";
+  type = "Application";
+  categories = [ "Category" ];
+};
+```
+
+### Avoiding Package Conflicts
+
+Don't combine `programs.X` with `home.packages = [ pkgs.X ]` - they conflict:
+
+```nix
+# BAD - conflicts
+programs.chromium.enable = true;
+home.packages = [ pkgs.chromium ];
+
+# GOOD - use one or the other
+programs.chromium.enable = true;
+```
+
+### Hardware Configuration
+
+Boot and hardware settings go in `hardware-configuration.nix`, NOT host `default.nix`:
+
+```nix
+# hosts/hostname/hardware-configuration.nix
+boot.kernelPackages = pkgs.linuxPackages_latest;
+boot.loader.systemd-boot.enable = true;
+boot.loader.efi.canTouchEfiVariables = true;
+```
+
+### Home Manager Option Paths
+
+Common path mistakes:
+- `home.xdg.desktopEntries` ❌ → `xdg.desktopEntries` ✓
+- `home.programs.zsh` ❌ → `programs.zsh` ✓ (inside home-manager context)
+
+### Deprecation Warnings
+
+Check for deprecation warnings in build output. Common fixes:
+- `programs.ssh.addKeysToAgent` → `programs.ssh.matchBlocks.*.addKeysToAgent`
+- `programs.git.userEmail` → `programs.git.settings.user.email`
+
+### Theme/Config Files in Dotfiles
+
+For apps like Ghostty that need theme files, include them in the dotfiles folder:
+
+```
+modules_v2/common/terminal/ghostty/
+├── ghostty.nix
+└── dotfiles/
+    ├── config
+    └── themes/
+        └── catppuccin-mocha  # Theme file
+```
+
+## File Organization Guidelines
+
+- **Drivers/WM/DE** → `_systemLinux` (system-wide, not user-specific)
+- **Keyboards/udev** → `_systemLinux` (system-level hardware config)
+- **Network services** → `_systemLinux/networking/` or `_systemAll/`
+- **User apps** → `modules_v2/common/` with appropriate tags
+- **Cross-platform system** → `_systemAll/` (fonts, nix settings, git, ssh)
+
+## Don't
+
+- Don't use grep across monorepo root (user preference)
+- Don't put boot config in host default.nix
+- Don't mix `programs.X` and `home.packages = [X]`
+- Don't forget to `git add` new files before `nix flake check`
+- Don't use `meta` in system modules (causes errors)

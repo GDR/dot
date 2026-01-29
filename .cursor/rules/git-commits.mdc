@@ -1,0 +1,61 @@
+# Git Commit Conventions
+
+This project uses commit messages following the ZeroMQ C4 standard with type prefixes.
+
+## Format
+
+```
+<type>: <short description>
+
+- Detail 1
+- Detail 2
+```
+
+## Types
+
+| Type | Description |
+|------|-------------|
+| `feat:` | New feature or functionality |
+| `fix:` | Bug fix |
+| `refactor:` | Code restructuring without changing behavior |
+| `docs:` | Documentation changes |
+| `chore:` | Maintenance, dependencies, tooling |
+| `style:` | Formatting, whitespace (no code change) |
+
+## Examples
+
+```
+feat: migrate zsh to modules_v2 with shells tag
+
+- Create modules_v2/common/shell/zsh with tag-based enablement
+- Use mkDotfilesSymlink for live-editable config
+- Apply zsh config to all enabled hostUsers automatically
+- Remove old modules/common/shell/zsh
+- Enable "shells" tag in nix-goldstar user config
+```
+
+```
+refactor: split desktop utils into individual modules
+
+- Create separate modules under modules_v2/common/desktop/
+  - launcher.nix (rofi)
+  - audio.nix (pamixer, pavucontrol)
+  - notifications.nix (dunst)
+- All share "desktop-utils" tag for unified enablement
+```
+
+```
+chore: move boot settings to hardware-configuration.nix
+
+- Move boot.kernelPackages to hardware-configuration.nix
+- Move boot.loader settings to hardware-configuration.nix
+- Keep host default.nix focused on module enablement
+```
+
+## Guidelines
+
+- First line: type + concise description (imperative mood)
+- Blank line after first line
+- Body: bullet points with specific changes
+- Keep first line under 72 characters
+- Be specific about what was added/removed/changed

@@ -1,0 +1,141 @@
+# Host Configuration Guide
+
+How to configure hosts and users in this NixOS dotfiles repository.
+
+## Host File Structure
+
+```
+hosts/
+├── _users/
+│   └── dgarifullin.nix    # User defaults (shared across hosts)
+├── nix-goldstar/
+│   ├── default.nix        # Host configuration
+│   └── hardware-configuration.nix  # Hardware-specific settings
+└── mac-blackstar/
+    └── default.nix
+```
+
+## Host Configuration Template
+
+```nix
+# hosts/hostname/default.nix
+{ inputs, lib, config, pkgs, home-manager, hardware, ... }:
+let
+  importUser = name: import ../_users/${name}.nix { inherit lib; };
+in
+{
+  imports = [
+    ./hardware-configuration.nix
+  ];
+
+  # User configuration
+  hostUsers.username = importUser "username" // {
+    enable = true;
+    keys = [{
+      name = "hostname";
+      type = "rsa";
+      purpose = [ "git" "ssh" ];
+      isDefault = true;
+    }];
+    tags.enable = [
+      "browsers"
+      "core"
+      "shells"
+      "terminal"
+    ];
+  };
+
+  networking.hostName = "hostname";
+
+  # System modules (cross-platform)
+  systemAll = {
+    fonts.enable = true;
+    nix-settings.enable = true;
+    nix-gc.enable = true;
+    shell = {
+      ssh.enable = true;
+      git.enable = true;
+    };
+  };
+
+  # Linux-specific system modules
+  systemLinux = {
+    desktop.hyprland.enable = true;
+    sound.enable = true;
+    # ...
+  };
+
+  time.timeZone = "Europe/Moscow";
+}
+```
+
+## User Defaults File
+
+```nix
+# hosts/_users/username.nix
+{ lib, ... }: {
+  fullName = lib.mkDefault "Full Name";
+  email = lib.mkDefault "email@example.com";
+  github = lib.mkDefault "github-username";
+  extraGroups = lib.mkDefault [ "wheel" "networkmanager" "docker" ];
+  # Note: keys are NOT in defaults - they're host-specific
+}
+```
+
+## Hardware Configuration
+
+Put hardware-specific and boot settings here:
+
+```nix
+# hosts/hostname/hardware-configuration.nix
+{ config, lib, pkgs, modulesPath, ... }:
+{
+  imports = [
+    (modulesPath + "/installer/scan/not-detected.nix")
+  ];
+
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # Filesystem mounts, hardware modules, etc.
+  fileSystems."/" = { ... };
+
+  hardware.cpu.intel.updateMicrocode = true;
+}
+```
+
+## What Goes Where
+
+| Setting | Location |
+|---------|----------|
+| User tags/keys | `default.nix` → `hostUsers` |
+| System modules | `default.nix` → `systemAll`/`systemLinux` |
+| Hostname | `default.nix` → `networking.hostName` |
+| Timezone | `default.nix` → `time.timeZone` |
+| Boot loader | `hardware-configuration.nix` |
+| Kernel | `hardware-configuration.nix` |
+| Filesystems | `hardware-configuration.nix` |
+| Hardware drivers | `hardware-configuration.nix` or `systemLinux` modules |
+
+## Adding a New Host
+
+1. Create `hosts/new-hostname/default.nix`
+2. Create `hosts/new-hostname/hardware-configuration.nix`
+3. Add to `flake.nix`:
+   ```nix
+   nixosConfigurations.new-hostname = mkNixosConfiguration ./hosts/new-hostname;
+   ```
+4. Generate hardware config: `nixos-generate-config --show-hardware-config`
+
+## Adding a New User
+
+1. Create `hosts/_users/newuser.nix` with defaults
+2. In host config:
+   ```nix
+   hostUsers.newuser = importUser "newuser" // {
+     enable = true;
+     keys = [{ ... }];
+     tags.enable = [ ... ];
+   };
+   ```

@@ -1,0 +1,113 @@
+# Project Structure
+
+Overview of the NixOS dotfiles repository structure.
+
+## Top-Level Directories
+
+```
+dot/
+├── .cursor/rules/      # Cursor AI rules (this documentation)
+├── flake.nix           # Main flake entry point
+├── flake.lock          # Locked dependencies
+├── hosts/              # Host configurations
+├── lib/                # Helper functions and core modules
+├── modules/            # OLD modules (being migrated)
+├── modules_v2/         # NEW module system
+├── overlays/           # Nixpkgs overlays
+├── pkgs/               # Custom packages
+└── templates/          # Flake templates
+```
+
+## Key Files
+
+### `flake.nix`
+- Defines inputs (nixpkgs, home-manager, etc.)
+- Creates `mkNixosConfiguration` and `mkDarwinConfiguration`
+- Exports nixosConfigurations, darwinConfigurations
+- Imports all module systems
+
+### `lib/default.nix`
+- Helper functions: `mkModule`, `shouldEnableModule`, `mkDotfilesSymlink`
+- Module path utilities
+- Platform detection
+
+### `lib/modules_v2/user.nix`
+- Defines `hostUsers` option structure
+- Creates `users.users` and `home-manager.users` from `hostUsers`
+- SSH key and Git config integration
+
+## modules_v2 Structure
+
+```
+modules_v2/
+├── _systemAll/         # Cross-platform system modules
+│   ├── default.nix     # Imports all modules (MANUAL)
+│   ├── fonts.nix
+│   ├── nix-gc.nix
+│   ├── nix-settings.nix
+│   └── shell/
+│       ├── git.nix
+│       └── ssh.nix
+├── _systemLinux/       # Linux-only system modules
+│   ├── default.nix     # Imports all modules (MANUAL)
+│   ├── sound.nix
+│   ├── desktop/
+│   │   └── hyprland/
+│   ├── graphics/
+│   │   └── nvidia.nix
+│   ├── keyboards/
+│   │   └── keychron.nix
+│   └── networking/
+│       ├── networkmanager.nix
+│       └── tailscale.nix
+├── _systemDarwin/      # Darwin-only system modules
+│   └── default.nix
+└── common/             # User modules (AUTO-DISCOVERED)
+    ├── browsers/
+    │   └── chromium.nix
+    ├── core/
+    │   └── htop.nix
+    ├── desktop/
+    │   ├── audio.nix
+    │   ├── brightness.nix
+    │   ├── cursor.nix
+    │   ├── launcher.nix
+    │   ├── network-applet.nix
+    │   ├── notifications.nix
+    │   └── wayland-utils.nix
+    ├── downloads/
+    │   └── qbittorrent.nix
+    ├── editors/
+    │   ├── cursor/
+    │   └── neovim/
+    ├── games/
+    │   └── steam.nix
+    ├── media/
+    │   └── vlc.nix
+    ├── security/
+    │   └── keepassxc.nix
+    ├── shell/
+    │   └── zsh/
+    └── terminal/
+        └── ghostty/
+```
+
+## Module Discovery
+
+- **System modules** (`_system*`): Must be manually imported in `default.nix`
+- **User modules** (`common/`): Auto-discovered via `lib.my.recursiveDirs`
+
+## Naming Conventions
+
+- **System module dirs**: Prefixed with `_` (e.g., `_systemLinux`)
+- **Module files**: `modulename.nix` or `modulename/modulename.nix` for complex modules
+- **Dotfiles**: `modulename/dotfiles/` for live-editable configs
+- **Host dirs**: `hostname/` matching `networking.hostName`
+- **User defaults**: `_users/username.nix`
+
+## Migration Status
+
+The `modules/` directory contains old-style modules being migrated to `modules_v2/`.
+- Check both when looking for existing functionality
+- New modules should ALWAYS go in `modules_v2/`
+- Delete from `modules/` after migrating
