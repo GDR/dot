@@ -7,6 +7,26 @@
 
 Personal NixOS & nix-darwin configuration with a modular, tag-based architecture.
 
+### Why Nix?
+
+> *"Works on my machine"* → *"Works on every machine"*
+
+Nix is a purely functional package manager that treats system configuration as code. The same configuration always produces the same system — whether you're setting up a fresh laptop or rebuilding after a disaster. Made a mistake? Just boot into a previous generation and you're back to a working state in seconds.
+
+Everything is declarative: packages, services, dotfiles, even your desktop environment. No more scattered configs or forgotten setup steps. Your entire system lives in version-controlled `.nix` files that work across all your machines — Linux desktops, macOS laptops, headless servers.
+
+Updates are atomic (they fully apply or don't touch anything), and different package versions coexist peacefully. No dependency hell, no "I updated X and now Y is broken". Just reproducible, reliable systems.
+
+---
+
+## ✨ Features
+
+- 🖥️ **Multi-platform** — Same structure for NixOS and macOS (nix-darwin)
+- 👥 **Multi-user ready** — Each user can have different tags/modules enabled
+- 🏷️ **Tag-based modules** — Enable packages per-user with simple tags like `"editors-ui"`, `"games"`
+- ✏️ **Live-editable dotfiles** — Config files are symlinked to this repo, edit in place without rebuild
+- 🔍 **Auto-discovery** — Drop a `.nix` file in any module directory, it's automatically imported
+
 ---
 
 ## 📑 Table of Contents
@@ -283,16 +303,49 @@ in
 }
 ```
 
-#### Don't forget to import!
+#### Auto-discovery
 
-Add to `modules_v2/common/default.nix` or `modules_v2/_systemLinux/default.nix`:
+Modules are **auto-discovered** recursively! Just create your `.nix` file in the right directory and it's automatically imported. No manual import lists needed.
+
+---
+
+### Live-Editable Dotfiles
+
+Store config files in the repo and symlink them so you can **edit without rebuilding**:
+
+```
+modules_v2/common/terminal/ghostty/
+├── ghostty.nix
+└── dotfiles/
+    ├── config
+    └── themes/
+        └── catppuccin-mocha
+```
+
+In your module, use `mkDotfilesSymlink`:
 
 ```nix
-imports = [
-  # ... existing imports
-  ./tools/my-tool.nix
-];
+{ config, pkgs, lib, self, ... }:
+{
+  config = mkIf cfg.enable (mkMerge [
+    # Install the package
+    (mkModule { allSystems.home.packages = [ pkgs.ghostty ]; })
+
+    # Symlink dotfiles to ~/.config/ghostty (editable without rebuild!)
+    {
+      home-manager.users = lib.my.mkDotfilesSymlink {
+        inherit config self;
+        path = "ghostty";                                      # ~/.config/ghostty
+        source = "modules_v2/common/terminal/ghostty/dotfiles"; # repo path
+      };
+    }
+  ]);
+}
 ```
+
+Now `~/.config/ghostty` → `/path/to/repo/modules_v2/common/terminal/ghostty/dotfiles`
+
+Edit the files directly, changes apply immediately (no `nixos-rebuild` needed)!
 
 ---
 
