@@ -101,45 +101,78 @@ systemLinux = {
 
 User modules install packages for specific users based on tags. They:
 - Live in `modules_v2/common/`
-- Use the `shouldEnableModule` helper to check tags
+- Use `mkModuleV2` helper which handles everything (meta, options, config, shouldEnable)
 - Are enabled when a user has the module's tag in `hostUsers.<user>.tags.enable`
 
-### Creating a User Module
+### Creating a User Module (Simple)
 
 ```nix
 # modules_v2/common/category/example.nix
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system;
-  modulePath = _modulePath;
-  moduleTags = [ "example-tag" ];  # Tag(s) that enable this module
+{ lib, pkgs, ... }@args:
 
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    platforms = [ "linux" "darwin" ];  # or just [ "linux" ]
-    description = "Example module description";
-  };
-
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
+lib.my.mkModuleV2 args {
+  tags = [ "example-tag" ];
+  description = "Example module description";
+  module = {
+    nixosSystems = {
+      home.packages = [ pkgs.example ];
+    };
+    darwinSystems = {
+      homebrew.casks = [ "example" ];
     };
   };
-
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable (mkModule {
-      nixosSystems.home.packages = [ pkgs.example ];
-      darwinSystems.homebrew.casks = [ "example" ];  # For macOS
-    });
 }
+```
+
+### With Live-Editable Dotfiles
+
+```nix
+# modules_v2/common/terminal/ghostty/ghostty.nix
+{ lib, pkgs, ... }@args:
+
+lib.my.mkModuleV2 args {
+  tags = [ "terminal" ];
+  description = "Ghostty terminal emulator";
+  module = {
+    nixosSystems = {
+      home.packages = [ pkgs.ghostty ];
+    };
+    darwinSystems = {
+      homebrew.casks = [ "ghostty" ];
+    };
+  };
+  dotfiles = {
+    path = "ghostty";  # ~/.config/ghostty
+    source = "modules_v2/common/terminal/ghostty/dotfiles";
+  };
+}
+```
+
+### mkModuleV2 Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `tags` | Yes | Tags that enable this module |
+| `description` | No | Module description |
+| `platforms` | No | Default: `["linux" "darwin"]` |
+| `requires` | No | Module dependencies |
+| `module` | No | Platform-specific config (see below) |
+| `dotfiles` | No | `{ path, source }` for live-editable configs |
+
+### Module Sections
+
+```nix
+module = {
+  nixosSystems = {
+    home.packages = [ ... ];      # Linux home-manager
+  };
+  darwinSystems = {
+    homebrew.casks = [ ... ];     # macOS homebrew
+  };
+  allSystems = {
+    home.packages = [ ... ];      # Both platforms
+  };
+};
 ```
 
 ### Enabling via Tags in Host Config
@@ -160,24 +193,29 @@ hostUsers.dgarifullin = importUser "dgarifullin" // {
 
 ## Live-Editable Dotfiles
 
-For modules with config files that should be editable without rebuilding:
+For modules with config files that should be editable without rebuilding, use the `dotfiles` parameter in `mkModuleV2`:
 
 ```nix
-# Use mkDotfilesSymlink helper
-config = mkIf shouldEnable (mkMerge [
-  (mkModule {
-    nixosSystems.home.packages = [ pkgs.example ];
-  })
+lib.my.mkModuleV2 args {
+  tags = [ "terminal" ];
+  module = { ... };
+  dotfiles = {
+    path = "example";  # ~/.config/example
+    source = "modules_v2/common/category/example/dotfiles";
+  };
+}
+```
 
-  # Creates symlink: ~/.config/example -> repo/modules_v2/common/.../dotfiles
-  {
-    home-manager.users = lib.my.mkDotfilesSymlink {
-      inherit config self;
-      path = "example";  # ~/.config/example
-      source = "modules_v2/common/category/example/dotfiles";
-    };
-  }
-]);
+This creates a symlink: `~/.config/example` → `repo/modules_v2/common/.../dotfiles`
+
+For advanced cases (manual module structure), use `mkDotfilesSymlink` directly:
+
+```nix
+home-manager.users = lib.my.mkDotfilesSymlink {
+  inherit config self;
+  path = "example";
+  source = "modules_v2/common/category/example/dotfiles";
+};
 ```
 
 ## Host Users System
@@ -227,7 +265,9 @@ hostUsers.username = importUser "username" // {
 
 ## Key Helper Functions
 
-- `lib.my.mkModule system` - Creates platform-aware module config
+- `lib.my.mkModuleV2 args { tags, module, dotfiles?, ... }` - **Preferred** - Complete module generator
+- `lib.my.mkModule system config cfg` - Creates platform-aware config (for manual modules)
+- `lib.my.mkModuleConfig { system, config, self, module, dotfiles? }` - Combines mkModule + dotfiles
 - `lib.my.shouldEnableModule { config, modulePath, moduleTags }` - Checks if module should be enabled
 - `lib.my.mkModuleOptions modulePath options` - Creates module options at correct path
 - `lib.my.mkModuleMeta { tags, platforms, description }` - Module metadata
@@ -268,8 +308,8 @@ The SSH and Git modules in `_systemAll/shell/` read these keys automatically.
 |--------|---------------|-------------|
 | Location | `_system*` | `modules_v2/common/` |
 | Enable | `systemLinux.*.enable = true` | Via tags |
-| Uses `meta` | No | Yes |
-| Uses `mkModule` | No (direct config) | Yes |
+| Pattern | Manual `{ options, config }` | `mkModuleV2 args { ... }` |
+| Uses `meta` | No | Yes (auto-generated) |
 | Auto-discovered | No (needs import) | Yes |
 
 ### Conditional Module Enablement
