@@ -49,6 +49,7 @@ in
       enable = true;
       open = true;
     };
+    sound.enable = true;
   };
 
   modules = {
@@ -67,13 +68,10 @@ in
         keepassxc.enable = true;
         qbittorrent.enable = true;
       };
-      vpn = {
-        # vless.enable = true;
-      };
     };
     linux = {
       hyprland.enable = true;
-      sound.enable = true;
+      # sound moved to systemLinux.sound
       utils = {
         keychron.enable = true;
       };
@@ -83,9 +81,6 @@ in
         steam.enableGamescope = true;
         steam.remotePlayOpenFirewall = true;
         steam.dedicatedServerOpenFirewall = true;
-
-        lutris.enable = true;
-        lutris.enableGamescope = true;
       };
     };
     fonts.enable = true;
