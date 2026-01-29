@@ -32,6 +32,8 @@ in
   networking.hostName = "nix-goldstar";
 
   # System-scope modules (top-level, not in modules.*)
+  systemAll.shell.ssh.enable = true;
+  
   systemLinux.networking = {
     networkmanager.enable = true;
     tailscale.enable = true;
@@ -56,7 +58,6 @@ in
           signingKey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
         };
         zsh.enable = true;
-        # ssh.enable via "core" tag - reads keys from hostUsers
       };
       editors = {
         neovim.enable = true;
@@ -116,9 +117,6 @@ in
     dates = "weekly";
     options = "--delete-older-than 30d";
   };
-
-
-  security-keys.signingkey = "/home/dgarifullin/.ssh/goldstar_id_rsa";
 
   system.stateVersion = "25.11";
 }

@@ -1,15 +1,11 @@
 # SSH client configuration - reads keys from hostUsers
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
+# Cross-platform system module (Linux + Darwin)
+{ config, pkgs, lib, ... }: with lib;
 let
-  mkModule = lib.my.mkModule system;
-  modulePath = _modulePath;
-  moduleTags = [ "shell" "core" ];
-  
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-
-  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+  isDarwin = pkgs.stdenv.isDarwin;
   homeDir = if isDarwin then "/Users" else "/home";
+
+  cfg = config.systemAll.shell.ssh;
 
   # Get enabled users
   enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
@@ -32,14 +28,10 @@ let
       defaultKey = findFirst (k: k.isDefault or false) null keys;
     in if defaultKey != null then defaultKey else (if keys != [] then head keys else null);
 
-  # Check if key is for SSH (purpose contains "ssh")
-  isSSHKey = key: elem "ssh" (key.purpose or [ "git" "ssh" ]);
-
   # Build SSH config for a user
   mkUserSSHConfig = userName: userCfg:
     let
       defaultKey = getDefaultKey userCfg;
-      sshKeys = filter isSSHKey (userCfg.keys or []);
     in {
       programs.ssh = {
         enable = true;
@@ -65,17 +57,14 @@ let
     };
 in
 {
-  options.modules.common.shell.ssh = {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-      description = "Enable SSH client configuration";
-    };
+  options.systemAll.shell.ssh = {
+    enable = mkEnableOption "SSH client configuration (reads keys from hostUsers)";
   };
 
-  config = let
-    shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-  in mkIf shouldEnable {
+  config = mkIf cfg.enable {
+    # Start SSH agent system-wide (Linux only, Darwin uses Keychain)
+    programs.ssh.startAgent = !isDarwin;
+    
     # Configure SSH for each enabled user
     home-manager.users = mapAttrs (userName: userCfg: 
       mkUserSSHConfig userName userCfg
