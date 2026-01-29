@@ -15,7 +15,7 @@ in
       "net.ipv4.ip_forward" = 1;
       "net.ipv6.conf.all.forwarding" = 1;
     };
-    
+
     # Tailscale service
     services.tailscale = {
       enable = true;
@@ -26,8 +26,10 @@ in
     networking.firewall.checkReversePath = "loose";
 
     # Systray app (for first enabled hostUser)
-    home-manager.users = mapAttrs (name: _: {
-      home.packages = [ pkgs.tailscale-systray ];
-    }) (filterAttrs (_: u: u.enable) config.hostUsers);
+    home-manager.users = mapAttrs
+      (name: _: {
+        home.packages = [ pkgs.tailscale-systray ];
+      })
+      (filterAttrs (_: u: u.enable) config.hostUsers);
   };
 }

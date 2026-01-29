@@ -4,7 +4,7 @@ lib.my.mkModuleV2 {
   inherit config pkgs system _modulePath;
   tags = [ "media" ];
   description = "VLC media player";
-  
+
   module = {
     darwinSystems.homebrew.casks = [
       "vlc"

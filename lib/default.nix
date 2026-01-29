@@ -1,25 +1,27 @@
 { lib, ... }: with lib; with types; rec {
   # Import module registry functions
   moduleRegistry = import ./moduleRegistry.nix { inherit lib; };
-  
+
   # Re-export module registry functions for convenience
   resolveEnabledModules = moduleRegistry.resolveEnabledModules;
   modulesByTags = moduleRegistry.modulesByTags;
   pathToConfigParts = moduleRegistry.pathToConfigParts;
-  
+
   # Build module registry from a directory
   # This scans modules and extracts metadata, returning a registry structure
   buildModuleRegistry = modulesDir: prefix:
     let
       moduleTree = recursiveDirs modulesDir;
       moduleFiles = flattenModules moduleTree;
-      
+
       # Filter out tags.nix and default.nix
-      moduleFilesFiltered = filter (path: 
-        ! hasSuffix "tags.nix" path && 
-        ! hasSuffix "default.nix" path
-      ) moduleFiles;
-      
+      moduleFilesFiltered = filter
+        (path:
+          ! hasSuffix "tags.nix" path &&
+          ! hasSuffix "default.nix" path
+        )
+        moduleFiles;
+
       # Try to extract metadata from modules
       # Use the lib.my that's already available (passed from flake)
       tryImportMeta = path:
@@ -27,30 +29,32 @@
           # lib.my should already be available since this is called from lib.my context
           libWithMy = lib // { inherit (lib) my; };
           moduleResult = builtins.tryEval (import path {
-            config = {};
-            options = {};
-            pkgs = {};
+            config = { };
+            options = { };
+            pkgs = { };
             lib = libWithMy;
             system = "x86_64-linux";
           });
         in
-        if moduleResult.success then 
+        if moduleResult.success then
           (moduleResult.value._meta or moduleResult.value.meta or null)
         else null;
-      
-      modulesWithMeta = map (path:
-        let
-          relativePath = removePrefix "./" (removeSuffix ".nix" path);
-          fullPath = prefix + "." + (replaceStrings ["/"] ["."] relativePath);
-          meta = tryImportMeta path;
-        in
-        {
-          file = path;
-          path = fullPath;
-          meta = meta;
-        }
-      ) moduleFilesFiltered;
-      
+
+      modulesWithMeta = map
+        (path:
+          let
+            relativePath = removePrefix "./" (removeSuffix ".nix" path);
+            fullPath = prefix + "." + (replaceStrings [ "/" ] [ "." ] relativePath);
+            meta = tryImportMeta path;
+          in
+          {
+            file = path;
+            path = fullPath;
+            meta = meta;
+          }
+        )
+        moduleFilesFiltered;
+
       modulesWithMetaList = filter (m: m.meta != null) modulesWithMeta;
     in
     {
@@ -98,15 +102,18 @@
     linuxConfig // darwinConfig;
 
   # Module metadata structure
-  mkModuleMeta = { 
-    requires ? [],       # List of module paths: ["common.shell.git", "common.utils.bazel"]
-    platforms ? [ "linux" "darwin" ],
-    tags ? [],           # List of tags: ["media", "ui", "desktop"]
-    scope ? "user",      # "system" = system services/drivers, "user" = home.packages
-    description ? null
-  }: {
-    inherit requires platforms tags scope description;
-  };
+  mkModuleMeta =
+    { requires ? [ ]
+    , # List of module paths: ["common.shell.git", "common.utils.bazel"]
+      platforms ? [ "linux" "darwin" ]
+    , tags ? [ ]
+    , # List of tags: ["media", "ui", "desktop"]
+      scope ? "user"
+    , # "system" = system services/drivers, "user" = home.packages
+      description ? null
+    }: {
+      inherit requires platforms tags scope description;
+    };
 
   # Helper to derive config accessor from module path
   # Usage: 
@@ -132,37 +139,39 @@
     let
       pathParts = splitString "." modulePath;
       cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-      
+
       # Global tags (modules.tags)
-      globalTags = config.modules.tags or { enable = []; explicit = []; };
-      
+      globalTags = config.modules.tags or { enable = [ ]; explicit = [ ]; };
+
       # Per-user tags (hostUsers.<name>.tags)
-      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or {});
-      userTagsLists = mapAttrsToList (name: ucfg: ucfg.tags or { enable = []; explicit = []; }) enabledUsers;
-      
+      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or { });
+      userTagsLists = mapAttrsToList (name: ucfg: ucfg.tags or { enable = [ ]; explicit = [ ]; }) enabledUsers;
+
       # Check if any user has this module's tag enabled
-      anyUserHasTag = any (userTags: any (tag: elem tag (userTags.enable or [])) moduleTags) userTagsLists;
-      anyUserHasExplicit = any (userTags: elem modulePath (userTags.explicit or [])) userTagsLists;
+      anyUserHasTag = any (userTags: any (tag: elem tag (userTags.enable or [ ])) moduleTags) userTagsLists;
+      anyUserHasExplicit = any (userTags: elem modulePath (userTags.explicit or [ ])) userTagsLists;
     in
-    cfg.enable 
-      || any (tag: elem tag globalTags.enable) moduleTags
-      || elem modulePath globalTags.explicit
-      || anyUserHasTag
-      || anyUserHasExplicit;
-  
+    cfg.enable
+    || any (tag: elem tag globalTags.enable) moduleTags
+    || elem modulePath globalTags.explicit
+    || anyUserHasTag
+    || anyUserHasExplicit;
+
   # Get list of users who have a module enabled via tags
   # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath moduleTags; };
   getUsersWithModule = { config, modulePath, moduleTags }:
     let
-      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or {});
+      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or { });
     in
-    filterAttrs (name: ucfg: 
-      let 
-        userTags = ucfg.tags or { enable = []; explicit = []; };
-      in
-      any (tag: elem tag (userTags.enable or [])) moduleTags
-      || elem modulePath (userTags.explicit or [])
-    ) enabledUsers;
+    filterAttrs
+      (name: ucfg:
+        let
+          userTags = ucfg.tags or { enable = [ ]; explicit = [ ]; };
+        in
+        any (tag: elem tag (userTags.enable or [ ])) moduleTags
+        || elem modulePath (userTags.explicit or [ ])
+      )
+      enabledUsers;
 
   # Generate module options from path string
   # Usage:
@@ -187,17 +196,17 @@
   #     };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
-  mkModuleV2 = {
-    config,
-    pkgs,
-    system,
-    _modulePath,
-    tags,
-    requires ? [],
-    platforms ? [ "linux" "darwin" ],
-    description ? null,
-    module
-  }:
+  mkModuleV2 =
+    { config
+    , pkgs
+    , system
+    , _modulePath
+    , tags
+    , requires ? [ ]
+    , platforms ? [ "linux" "darwin" ]
+    , description ? null
+    , module
+    }:
     let
       modulePath = _modulePath;
       moduleTags = tags;
@@ -214,8 +223,10 @@
         };
       };
 
-      config = let
-        shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
-      in mkIf shouldEnable (mkModule system module);
+      config =
+        let
+          shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
+        in
+        mkIf shouldEnable (mkModule system module);
     };
 }

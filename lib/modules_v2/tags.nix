@@ -5,18 +5,18 @@
   options.modules.tags = {
     enable = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [];
+      default = [ ];
       description = "Enable all modules with these tags (e.g., [\"media\" \"ui\"])";
       example = [ "media" "desktop" ];
     };
-    
+
     explicit = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [];
+      default = [ ];
       description = "Explicitly enable these modules by path";
       example = [ "common.media.vlc" ];
     };
   };
-  
+
   # No config block - modules check tags themselves to avoid circular dependency
 }

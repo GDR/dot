@@ -108,7 +108,7 @@ in
     # Add Hyprland config files
     home.file.".config/hypr" = {
       source = ./dotfiles;
-      force = true;  # Allow overwriting existing file/directory
+      force = true; # Allow overwriting existing file/directory
     };
   };
 }

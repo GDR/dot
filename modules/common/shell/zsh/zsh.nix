@@ -5,7 +5,7 @@ let
 in
 {
   meta = lib.my.mkModuleMeta {
-    requires = [];
+    requires = [ ];
     platforms = [ "linux" "darwin" ];
     description = "Zsh shell configuration with oh-my-zsh and zplug";
   };

@@ -7,7 +7,7 @@ in
 {
   options.systemAll.nix-gc = {
     enable = mkEnableOption "automatic Nix garbage collection";
-    
+
     olderThan = mkOption {
       type = types.str;
       default = "30d";

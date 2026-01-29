@@ -36,7 +36,7 @@ in
     shell.ssh.enable = true;
     nix-gc.enable = true;
   };
-  
+
   systemLinux.networking = {
     networkmanager.enable = true;
     tailscale.enable = true;
@@ -64,7 +64,7 @@ in
       };
       editors = {
         neovim.enable = true;
-	cursor.enable = true;
+        cursor.enable = true;
       };
       terminal = {
         ghostty.enable = true;

@@ -18,14 +18,14 @@ in
     common = {
       home.packages = with pkgs; [
         throne
-        xray  # Nekoray uses xray as backend for VLESS support
+        xray # Nekoray uses xray as backend for VLESS support
       ];
     };
     linux = {
-        programs.throne = {
-            enable = true;
-            tunMode.enable = true;
-        };
+      programs.throne = {
+        enable = true;
+        tunMode.enable = true;
+      };
     };
     darwin = {
       homebrew = {

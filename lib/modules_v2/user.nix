@@ -65,7 +65,7 @@ let
       # SSH keys
       keys = mkOption {
         type = types.listOf keyModule;
-        default = [];
+        default = [ ];
         description = "SSH keys for this user";
       };
 
@@ -80,13 +80,13 @@ let
       tags = {
         enable = mkOption {
           type = types.listOf types.str;
-          default = [];
+          default = [ ];
           description = "Enable user modules with these tags";
           example = [ "core" "media" "editors" ];
         };
         explicit = mkOption {
           type = types.listOf types.str;
-          default = [];
+          default = [ ];
           description = "Explicitly enable these user modules by path";
           example = [ "editors.neovim" "media.vlc" ];
         };
@@ -95,7 +95,7 @@ let
       # Per-user explicit module configuration (for future use)
       modules = mkOption {
         type = types.attrs;
-        default = {};
+        default = { };
         description = "Explicit module configuration for this user";
       };
     };
@@ -105,7 +105,7 @@ in
 {
   options.hostUsers = mkOption {
     type = types.attrsOf userModule;
-    default = {};
+    default = { };
     description = ''
       Users to configure on this host.
       Each user can have their own set of modules enabled via tags.
@@ -130,16 +130,18 @@ in
   };
 
   # Create system users from enabled hostUsers
-  config = mkIf (enabledUsers != {}) {
+  config = mkIf (enabledUsers != { }) {
     # Create users.users entries for each enabled hostUser
-    users.users = mapAttrs (name: cfg: {
-      name = name;
-      isNormalUser = true;
-      home = if isDarwin then "/Users/${name}" else "/home/${name}";
-      group = if isLinux then "users" else "staff";
-      uid = 1000;  # TODO: support multiple users with different UIDs
-      extraGroups = mkIf isLinux cfg.extraGroups;
-    }) enabledUsers;
+    users.users = mapAttrs
+      (name: cfg: {
+        name = name;
+        isNormalUser = true;
+        home = if isDarwin then "/Users/${name}" else "/home/${name}";
+        group = if isLinux then "users" else "staff";
+        uid = 1000; # TODO: support multiple users with different UIDs
+        extraGroups = mkIf isLinux cfg.extraGroups;
+      })
+      enabledUsers;
 
     # Add users to nix trusted/allowed users
     nix.settings = {
@@ -152,14 +154,16 @@ in
       useUserPackages = true;
       useGlobalPkgs = true;
 
-      users = mapAttrs (name: cfg: {
-        home = {
-          stateVersion = "24.11";
-          username = name;
-          homeDirectory = if isDarwin then "/Users/${name}" else "/home/${name}";
-        };
-        # Programs and packages will be configured by modules via per-user tags (Deliverable 5)
-      }) enabledUsers;
+      users = mapAttrs
+        (name: cfg: {
+          home = {
+            stateVersion = "24.11";
+            username = name;
+            homeDirectory = if isDarwin then "/Users/${name}" else "/home/${name}";
+          };
+          # Programs and packages will be configured by modules via per-user tags (Deliverable 5)
+        })
+        enabledUsers;
     };
   };
 }

@@ -60,7 +60,7 @@
           filtered = lib.filterAttrs (name: _: name != "meta") originalModule;
         in
         filtered;
-      
+
       # Compute module path from file path for modules_v2
       # e.g., "/path/to/modules_v2/common/core/htop.nix" -> "common.core.htop"
       # e.g., "/path/to/modules_v2/common/core/htop/htop.nix" -> "common.core.htop" (dedup)
@@ -77,7 +77,8 @@
           # If last two parts are the same (e.g., htop/htop), deduplicate
           fileName = lib.last parts;
           parentDir = if lib.length parts >= 2 then lib.elemAt parts (lib.length parts - 2) else null;
-          dedupedParts = if parentDir == fileName 
+          dedupedParts =
+            if parentDir == fileName
             then lib.init parts  # Remove last element
             else parts;
           modulePath = lib.concatStringsSep "." dedupedParts;
@@ -88,16 +89,18 @@
         (moduleDirPath:
           let
             moduleDir = import moduleDirPath { inherit inputs lib overlays; };
-            modules = moduleDir.modules or [];
+            modules = moduleDir.modules or [ ];
           in
           # Wrap each module file to filter meta
-          map (filePath:
-            if builtins.isString filePath then
+          map
+            (filePath:
+              if builtins.isString filePath then
               # Return a function that wraps the module
-              wrapModuleFile filePath (computeModulePath filePath)
-            else
-              filePath
-          ) modules
+                wrapModuleFile filePath (computeModulePath filePath)
+              else
+                filePath
+            )
+            modules
         );
 
       mkDarwinConfiguration = host-config:
@@ -118,11 +121,11 @@
         let
           system = "x86_64-linux";
           # Build registry during import time (not module evaluation time)
-          modulesV2Registry = (import ./lib/modules_v2/registry.nix { inherit lib; }).moduleRegistry or { modules = []; };
+          modulesV2Registry = (import ./lib/modules_v2/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
         in
         nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { 
+          specialArgs = {
             inherit self inputs lib overlays system hardware;
             modulesV2Registry = modulesV2Registry;
           };

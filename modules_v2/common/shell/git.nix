@@ -3,7 +3,7 @@ let
   mkModule = lib.my.mkModule system;
   modulePath = _modulePath;
   moduleTags = [ "shell" "core" ];
-  
+
   pathParts = splitString "." modulePath;
   cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
 in
@@ -33,26 +33,28 @@ in
     };
   };
 
-  config = let
-    shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-  in mkIf shouldEnable (mkModule {
-    allSystems.home.programs.git = {
-      enable = true;
-      settings = {
-        user = {
-          name = cfg.userName;
-          email = cfg.userEmail;
-        } // optionalAttrs (cfg.signingKey != null) {
-          signingkey = cfg.signingKey;
-        };
-        core.editor = "nvim";
-        push.autoSetupRemote = true;
-        gpg.format = "ssh";
-        commit = {
-          gpgsign = true;
-          gpg.program = "gpg";
+  config =
+    let
+      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
+    in
+    mkIf shouldEnable (mkModule {
+      allSystems.home.programs.git = {
+        enable = true;
+        settings = {
+          user = {
+            name = cfg.userName;
+            email = cfg.userEmail;
+          } // optionalAttrs (cfg.signingKey != null) {
+            signingkey = cfg.signingKey;
+          };
+          core.editor = "nvim";
+          push.autoSetupRemote = true;
+          gpg.format = "ssh";
+          commit = {
+            gpgsign = true;
+            gpg.program = "gpg";
+          };
         };
       };
-    };
-  });
+    });
 }
