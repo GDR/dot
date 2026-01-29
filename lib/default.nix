@@ -238,6 +238,7 @@
     let
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
       # Use self.outPath to get actual repo path (not nix store)
+      # In flakes, self.outPath should point to the source directory
       repoPath = self.outPath;
       fullPath = "${repoPath}/${source}";
     in

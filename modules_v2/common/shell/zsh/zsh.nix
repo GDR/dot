@@ -17,6 +17,11 @@ in
       default = false;
       type = types.bool;
     };
+    showHostname = mkOption {
+      default = true;
+      type = types.bool;
+      description = "Show hostname in the prompt (Powerlevel10k)";
+    };
   };
 
   config =
@@ -24,6 +29,8 @@ in
       shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
       enabledUsers = lib.filterAttrs (n: v: v.enable) config.hostUsers;
       enabledUsernames = builtins.attrNames enabledUsers;
+      pathParts = splitString "." modulePath;
+      cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
     in
     mkIf shouldEnable (mkMerge [
       # System-level config (NixOS programs.zsh, users.users)
@@ -58,6 +65,7 @@ in
                 zplug = {
                   enable = true;
                   plugins = [
+                    { name = "romkatv/powerlevel10k"; tags = [ "as:theme" "depth:1" ]; }
                     { name = "zsh-users/zsh-autosuggestions"; }
                     { name = "zsh-users/zsh-syntax-highlighting"; }
                     { name = "zsh-users/zsh-history-substring-search"; }
@@ -66,8 +74,13 @@ in
                 };
 
                 initContent = ''
-                  source ~/.config/zsh/.p10k.zsh
+                  # Source p10k config if it exists
+                  [[ -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
                   source ~/.config/zsh/common.zsh
+                '' + optionalString (!cfg.showHostname) ''
+                  # Hide hostname in prompt (set by modules.common.shell.zsh.showHostname = false)
+                  typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%n'
+                  typeset -g POWERLEVEL9K_CONTEXT_ROOT_TEMPLATE='%n'
                 '' + optionalString isDarwin ''
                   if [[ $(uname -m) == 'arm64' ]]; then
                     eval "$(/opt/homebrew/bin/brew shellenv)"
