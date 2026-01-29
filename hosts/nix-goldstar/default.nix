@@ -4,6 +4,10 @@ let
   importUser = name: import ../_users/${name}.nix { inherit lib; };
 in
 {
+  imports = [
+    ./hardware-configuration.nix
+  ];
+
   # Enable user via hostUsers (new system)
   # Defaults from hosts/_users/<name>.nix, host-specific overrides here
   hostUsers.dgarifullin = importUser "dgarifullin" // {
@@ -19,22 +23,13 @@ in
     tags.enable = [ "browsers" "core" "media" ];
   };
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
-  imports = [
-    ./hardware-configuration.nix
-  ];
-
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
   networking.hostName = "nix-goldstar";
 
   # System-scope modules (top-level, not in modules.*)
   systemAll = {
-    shell.ssh.enable = true;
+    nix-settings.enable = true;
     nix-gc.enable = true;
+    shell.ssh.enable = true;
   };
 
   systemLinux.networking = {
