@@ -1,5 +1,20 @@
 { inputs, lib, config, pkgs, home-manager, hardware, ... }: {
 
+  # Enable user via hostUsers (new system)
+  hostUsers.dgarifullin = {
+    enable = true;
+    fullName = "Damir Garifullin";
+    email = "gosugdr@gmail.com";
+    github = "gdr";
+    extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
+    keys = [{
+      name = "goldstar";
+      type = "rsa";
+      purpose = "both";
+      isDefault = true;
+    }];
+  };
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   imports = [

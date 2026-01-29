@@ -5,6 +5,13 @@
 with lib;
 
 let
+  # Platform detection
+  isDarwin = pkgs.stdenv.isDarwin;
+  isLinux = pkgs.stdenv.isLinux;
+
+  # Get enabled users
+  enabledUsers = filterAttrs (name: cfg: cfg.enable) config.hostUsers;
+
   # SSH key submodule
   keyModule = types.submodule {
     options = {
@@ -121,9 +128,22 @@ in
     '';
   };
 
-  # Config will be added in Deliverable 3
-  # For now, just defining options
-  config = {
-    # Placeholder - no effect yet
+  # Create system users from enabled hostUsers
+  config = mkIf (enabledUsers != {}) {
+    # Create users.users entries for each enabled hostUser
+    users.users = mapAttrs (name: cfg: {
+      name = name;
+      isNormalUser = true;
+      home = if isDarwin then "/Users/${name}" else "/home/${name}";
+      group = if isLinux then "users" else "staff";
+      uid = 1000;  # TODO: support multiple users with different UIDs
+      extraGroups = mkIf isLinux cfg.extraGroups;
+    }) enabledUsers;
+
+    # Add users to nix trusted/allowed users
+    nix.settings = {
+      trusted-users = [ "root" ] ++ (attrNames enabledUsers);
+      allowed-users = [ "root" ] ++ (attrNames enabledUsers);
+    };
   };
 }
