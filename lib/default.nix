@@ -173,6 +173,24 @@
       )
       enabledUsers;
 
+  # Create XDG config symlink to repo dotfiles for all enabled users
+  # This allows editing config files without rebuild
+  # Usage:
+  #   config.home-manager.users = lib.my.mkDotfilesSymlink {
+  #     inherit config;
+  #     path = "ghostty";           # ~/.config/ghostty
+  #     source = ./dotfiles;        # path in repo
+  #   };
+  mkDotfilesSymlink = { config, path, source }:
+    let
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or {});
+    in
+    mapAttrs (name: _: {
+      xdg.configFile.${path}.source =
+        config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink
+          (toString source);
+    }) enabledUsers;
+
   # Generate module options from path string
   # Usage:
   #   options = lib.my.mkModuleOptions "common.core.htop" {
