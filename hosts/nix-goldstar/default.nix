@@ -32,7 +32,10 @@ in
   networking.hostName = "nix-goldstar";
 
   # System-scope modules (top-level, not in modules.*)
-  systemAll.shell.ssh.enable = true;
+  systemAll = {
+    shell.ssh.enable = true;
+    nix-gc.enable = true;
+  };
   
   systemLinux.networking = {
     networkmanager.enable = true;
@@ -110,12 +113,6 @@ in
       # Force full composition pipeline to prevent tearing
       forceFullCompositionPipeline = true;
     };
-  };
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
   };
 
   system.stateVersion = "25.11";
