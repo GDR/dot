@@ -1,7 +1,7 @@
 { lib, stdenv, fetchurl }:
 let
   pname = "apple-emoji-ttf";
-  version = "v17.4";
+  version = "v18.4";
 in
 stdenv.mkDerivation {
   inherit pname;
@@ -9,7 +9,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://github.com/samuelngs/apple-emoji-linux/releases/download/${version}/AppleColorEmoji.ttf";
-    sha256 = "sha256-goY9lWBtOnOUotitjVfe96zdmjYTPT6PVOnZ0MEWh0U=";
+    sha256 = "sha256-pP0He9EUN7SUDYzwj0CE4e39SuNZ+SVz7FdmUviF6r0=";
   };
 
   dontUnpack = true;
