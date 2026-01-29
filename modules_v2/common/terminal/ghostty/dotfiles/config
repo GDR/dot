@@ -1,6 +1,7 @@
 theme = catppuccin-mocha
 
 font-family = "FiraCode Nerd Font Mono Med"
+font-family = "Apple Color Emoji"
 
 keybind = ctrl+t=new_tab
 
