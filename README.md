@@ -1,70 +1,337 @@
-Personal Nix Configuration for macOS
-=====================================
+# 🏠 Nix Configuration
 
-[![NixOS Version](https://img.shields.io/badge/nixos-25.05-blue)](https://nixos.org/)
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/gdr/dot/master?cacheSeconds=5&link=https%3A%2F%2Fgithub.com%2FGDR%2Fdot%2Fsettings%2Factions)
+[![NixOS](https://img.shields.io/badge/NixOS-25.11-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org/)
+[![nix-darwin](https://img.shields.io/badge/nix--darwin-aarch64-000000?style=flat-square&logo=apple&logoColor=white)](https://github.com/LnL7/nix-darwin)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/check-runs/gdr/dot/master?style=flat-square&label=CI)](https://github.com/GDR/dot/actions)
 
-Overview
---------
+Personal NixOS & nix-darwin configuration with a modular, tag-based architecture.
 
-This repository contains my personal Nix configuration for managing packages, system configurations, and development environments on macOS using Nix and NixOS.
+---
 
-Table of Contents
------------------
+## 📑 Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [Folder Structure](#folder-structure)
-3. [Usage](#usage)
-4. [Customization](#customization)
-5. [Contributing](#contributing)
-6. [License](#license)
+- [Quick Start](#-quick-start)
+- [Architecture](#-architecture)
+  - [Directory Structure](#directory-structure)
+  - [Module Types](#module-types)
+- [Guides](#-guides)
+  - [Create a New Host](#create-a-new-host)
+  - [Create a New User](#create-a-new-user)
+  - [Create a New Module](#create-a-new-module)
+- [Host Configuration](#-host-configuration)
+- [Tags Reference](#-tags-reference)
+- [License](#-license)
 
-Getting Started
----------------
+---
 
-To use this configuration, you'll need to have Nix installed on your macOS system. If you haven't already installed Nix, you can do so by following the instructions in the [Nix documentation](https://nixos.org/download.html).
-
-Clone this repository to your local machine:
-
-```bash
-git clone https://github.com/gdr/dot.git
-```
-
-Folder Structure
-----------------
-flakes/: Contains the Nix flakes used for managing system configurations, packages, and environments.
-config/: Stores various configuration files used by NixOS and other tools.
-scripts/: Optional directory for storing any custom scripts used for managing or automating tasks related to Nix.
-
-Usage
------
-### System Configuration
-To apply system configurations, run:
+## 🚀 Quick Start
 
 ```bash
-nixos-rebuild switch --flake .#mac-italy
+# Clone the repository
+git clone https://github.com/gdr/dot.git ~/Workspaces/gdr/dot
+cd ~/Workspaces/gdr/dot
+
+# Apply configuration
+# NixOS:
+sudo nixos-rebuild switch --flake .#<hostname>
+
+# macOS:
+darwin-rebuild switch --flake .#<hostname>
 ```
-### Package Installation
-To install packages, use the nix command with flakes:
+
+---
+
+## 🏗 Architecture
+
+### Directory Structure
+
+```
+.
+├── flake.nix                 # Entry point - defines hosts and imports
+├── hosts/
+│   ├── _users/               # User defaults (imported by hosts)
+│   │   └── dgarifullin.nix
+│   ├── nix-goldstar/         # NixOS host
+│   │   ├── default.nix
+│   │   └── hardware-configuration.nix
+│   └── mac-italy/            # Darwin host
+│       └── default.nix
+├── lib/
+│   ├── default.nix           # Helper functions (mkModule, mkDotfilesSymlink)
+│   └── modules_v2/
+│       ├── tags.nix          # Tag system options
+│       └── user.nix          # hostUsers options & home-manager setup
+├── modules_v2/
+│   ├── _systemAll/           # Cross-platform system modules
+│   │   ├── fonts.nix
+│   │   ├── nix-gc.nix
+│   │   ├── nix-settings.nix
+│   │   └── shell/
+│   │       ├── git.nix
+│   │       └── ssh.nix
+│   ├── _systemLinux/         # Linux-only system modules
+│   │   ├── desktop/
+│   │   │   ├── awesomewm/
+│   │   │   └── hyprland/
+│   │   ├── graphics/
+│   │   ├── keyboards/
+│   │   ├── networking/
+│   │   └── sound.nix
+│   ├── _systemDarwin/        # macOS-only system modules
+│   └── common/               # User-level modules (enabled via tags)
+│       ├── browsers/
+│       ├── core/
+│       ├── desktop/
+│       ├── editors/
+│       ├── games/
+│       ├── media/
+│       ├── messengers/
+│       ├── security/
+│       ├── shell/
+│       └── terminal/
+└── pkgs/                     # Custom packages
+```
+
+### Module Types
+
+| Type | Location | Enabled via | Scope |
+|------|----------|-------------|-------|
+| **System (All)** | `_systemAll/` | `systemAll.<name>.enable` | System-wide, cross-platform |
+| **System (Linux)** | `_systemLinux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
+| **System (Darwin)** | `_systemDarwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
+| **User** | `common/` | `hostUsers.<user>.tags.enable` | Per-user via tags |
+
+---
+
+## 📖 Guides
+
+### Create a New Host
+
+1. **Create host directory:**
 
 ```bash
-nix develop github:gdr/dot#packages
+mkdir -p hosts/my-new-host
 ```
-### Development Environment
-To set up a development environment, use flakes:
+
+2. **Create `default.nix`:**
+
+```nix
+# hosts/my-new-host/default.nix
+{ config, lib, pkgs, ... }:
+let
+  importUser = name: import ../_users/${name}.nix { inherit lib; };
+in
+{
+  imports = [ ./hardware-configuration.nix ];
+
+  # User configuration
+  hostUsers.dgarifullin = importUser "dgarifullin" // {
+    enable = true;
+    keys = [{
+      name = "my-new-host";
+      type = "rsa";
+      purpose = [ "git" "ssh" ];
+      isDefault = true;
+    }];
+    tags.enable = [
+      "core"
+      "shells"
+      "editors-terminal"
+      # Add more tags as needed
+    ];
+  };
+
+  networking.hostName = "my-new-host";
+
+  # System modules
+  systemAll = {
+    fonts.enable = true;
+    nix-settings.enable = true;
+    nix-gc.enable = true;
+    shell.ssh.enable = true;
+    shell.git.enable = true;
+  };
+
+  # Linux-specific (remove for Darwin)
+  systemLinux = {
+    desktop.hyprland.enable = true;
+    networking.networkmanager.enable = true;
+    sound.enable = true;
+  };
+
+  time.timeZone = "Europe/Moscow";
+}
+```
+
+3. **Generate hardware config (NixOS):**
 
 ```bash
-nix develop github:gdr/dot#development
+nixos-generate-config --show-hardware-config > hosts/my-new-host/hardware-configuration.nix
 ```
-Customization
--------------
-Feel free to customize any aspect of this configuration to suit your needs. You can modify the configuration files, add or remove packages, or adjust system settings as required.
 
-Contributing
-------------
-Contributions are welcome! If you have any improvements or suggestions, please feel free to open an issue or submit a pull request.
+4. **Add to `flake.nix`:**
 
-License
--------------
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/GDR/dot/blob/mac-italy/LICENSE) file for details.
+```nix
+nixosConfigurations.my-new-host = mkNixosConfiguration ./hosts/my-new-host;
+# or for Darwin:
+darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/my-new-host;
+```
+
+---
+
+### Create a New User
+
+1. **Create user defaults:**
+
+```nix
+# hosts/_users/newuser.nix
+{ lib, ... }:
+{
+  enable = lib.mkDefault false;
+  fullName = lib.mkDefault "New User";
+  email = lib.mkDefault "newuser@example.com";
+  github = lib.mkDefault "newuser";
+  extraGroups = lib.mkDefault [ "wheel" "audio" "video" ];
+}
+```
+
+2. **Enable in host config:**
+
+```nix
+# hosts/my-host/default.nix
+hostUsers.newuser = importUser "newuser" // {
+  enable = true;
+  keys = [{
+    name = "my-host";
+    type = "rsa";
+    purpose = [ "git" "ssh" ];
+    isDefault = true;
+  }];
+  tags.enable = [ "core" "shells" ];
+};
+```
+
+---
+
+### Create a New Module
+
+#### User Module (tag-based)
+
+```nix
+# modules_v2/common/tools/my-tool.nix
+{ config, pkgs, lib, system, _modulePath, ... }: with lib;
+let
+  mkModule = lib.my.mkModule system config;
+  modulePath = _modulePath;
+  moduleTags = [ "tools" ];  # Tag for enabling
+in
+{
+  meta = lib.my.mkModuleMeta {
+    tags = moduleTags;
+    platforms = [ "linux" "darwin" ];
+    description = "My awesome tool";
+  };
+
+  options = lib.my.mkModuleOptions modulePath {
+    enable = mkOption {
+      default = false;
+      type = types.bool;
+    };
+  };
+
+  config =
+    let
+      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
+    in
+    mkIf shouldEnable (mkModule {
+      # User packages (goes to home-manager.users.*)
+      allSystems.home.packages = [ pkgs.my-tool ];
+
+      # Darwin-specific
+      darwinSystems.homebrew.casks = [ "my-tool" ];
+
+      # Programs config (home-manager)
+      nixosSystems.programs.my-tool.enable = true;
+    });
+}
+```
+
+#### System Module (Linux)
+
+```nix
+# modules_v2/_systemLinux/services/my-service.nix
+{ config, pkgs, lib, ... }: with lib;
+let
+  cfg = config.systemLinux.services.my-service;
+  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
+in
+{
+  options.systemLinux.services.my-service = {
+    enable = mkEnableOption "My service";
+  };
+
+  config = mkIf cfg.enable {
+    # System-level NixOS options
+    services.my-service.enable = true;
+
+    # User packages via home-manager
+    home-manager.users = mapAttrs (name: _: {
+      home.packages = [ pkgs.my-tool-client ];
+    }) enabledUsers;
+  };
+}
+```
+
+#### Don't forget to import!
+
+Add to `modules_v2/common/default.nix` or `modules_v2/_systemLinux/default.nix`:
+
+```nix
+imports = [
+  # ... existing imports
+  ./tools/my-tool.nix
+];
+```
+
+---
+
+## 🖥 Host Configuration
+
+| Host | Platform | Description |
+|------|----------|-------------|
+| `nix-goldstar` | NixOS | Desktop workstation with Hyprland |
+| `mac-italy` | Darwin | MacBook Pro |
+| `mac-blackstar` | Darwin | Mac Mini |
+
+---
+
+## 🏷 Tags Reference
+
+Enable tags per-user in host config:
+
+```nix
+hostUsers.myuser.tags.enable = [ "core" "shells" "editors-ui" ];
+```
+
+| Tag | Modules |
+|-----|---------|
+| `core` | htop, shell-utils (bat, fzf, wget, direnv) |
+| `shells` | zsh with oh-my-zsh, zplug |
+| `terminal` | ghostty |
+| `browsers` | chromium |
+| `editors-ui` | cursor |
+| `editors-terminal` | neovim (nixvim) |
+| `desktop-utils` | rofi, dunst, brightnessctl, pamixer |
+| `desktop-utils-wayland` | grim, slurp, wl-clipboard, waybar |
+| `media` | vlc, spotify |
+| `messengers` | telegram |
+| `games` | steam, gamescope |
+| `security` | keepassxc |
+| `downloads` | qbittorrent |
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
