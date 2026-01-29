@@ -370,7 +370,7 @@ hostUsers.myuser.tags.enable = [ "core" "shells" "editors-ui" ];
 | Tag | Modules |
 |-----|---------|
 | `core` | htop, shell-utils (bat, fzf, wget, direnv) |
-| `shells` | zsh with oh-my-zsh, zplug |
+| `shells` | zsh with oh-my-zsh, zplug, tmux |
 | `terminal` | ghostty |
 | `browsers` | chromium |
 | `editors-ui` | cursor |
