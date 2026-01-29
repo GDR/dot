@@ -20,7 +20,11 @@ in
       isDefault = true;
     }];
     # Per-user tags (enables user-scope modules for this user)
-    tags.enable = [ "browsers" "core" "media" ];
+    tags.enable = [ 
+      "browsers" 
+      "core" 
+      "media" 
+    ];
   };
 
   networking.hostName = "nix-goldstar";

@@ -38,12 +38,15 @@ let
     {
       programs.ssh = {
         enable = true;
+        # Disable deprecated default config
+        enableDefaultConfig = false;
 
         matchBlocks = {
-          # Default identity for all hosts
-          "*" = mkIf (defaultKey != null) {
-            identityFile = keyPath userName defaultKey;
+          # Default settings for all hosts (replaces deprecated defaults)
+          "*" = {
             extraOptions.AddKeysToAgent = "yes";
+          } // optionalAttrs (defaultKey != null) {
+            identityFile = keyPath userName defaultKey;
           };
           # GitHub config
           "github.com" = {
