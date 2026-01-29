@@ -25,10 +25,12 @@ in
       "core"
       "desktop-utils"
       "desktop-utils-wayland"
+      "downloads"
       "editors-terminal"
       "editors-ui"
       "games"
       "media"
+      "security"
       "shells"
       "terminal"
     ];
@@ -59,27 +61,6 @@ in
     };
     keyboards.keychron.enable = true;
     sound.enable = true;
-  };
-
-  modules = {
-    # Global tags removed - using per-user tags instead (hostUsers.*.tags)
-    common = {
-      # zsh moved to modules_v2 with "shells" tag
-      # cursor moved to modules_v2 with "editors-ui" tag
-      # neovim moved to modules_v2 with "editors-terminal" tag
-      utils = {
-        # bitwarden.enable = true;
-        keepassxc.enable = true;
-        qbittorrent.enable = true;
-      };
-    };
-    linux = {
-      # hyprland moved to systemLinux.desktop.hyprland
-      # sound moved to systemLinux.sound
-      # keychron moved to systemLinux.keyboards.keychron
-      # steam moved to modules_v2 with "games" tag
-    };
-    # fonts moved to systemAll.fonts
   };
 
   time.timeZone = "Europe/Moscow";
