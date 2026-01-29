@@ -25,6 +25,7 @@ in
       "core"
       "editors-terminal"
       "editors-ui"
+      "games"
       "media"
       "shells"
       "terminal"
@@ -71,14 +72,8 @@ in
     linux = {
       hyprland.enable = true;
       # sound moved to systemLinux.sound
-      # keychron moved to modules.common.keyboards.keychron
-
-      games = {
-        steam.enable = true;
-        steam.enableGamescope = true;
-        steam.remotePlayOpenFirewall = true;
-        steam.dedicatedServerOpenFirewall = true;
-      };
+      # keychron moved to systemLinux.keyboards.keychron
+      # steam moved to modules_v2 with "games" tag
     };
     fonts.enable = true;
   };
