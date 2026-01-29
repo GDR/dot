@@ -20,10 +20,11 @@ in
       isDefault = true;
     }];
     # Per-user tags (enables user-scope modules for this user)
-    tags.enable = [ 
-      "browsers" 
-      "core" 
-      "media" 
+    tags.enable = [
+      "browsers"
+      "core"
+      "media"
+      "terminal"
     ];
   };
 
@@ -53,10 +54,6 @@ in
   modules = {
     # Global tags removed - using per-user tags instead (hostUsers.*.tags)
     common = {
-      browsers = {
-        # chrome.enable = true;
-        firefox.enable = true;
-      };
       shell = {
         # git moved to systemAll.shell.git (reads from hostUsers)
         zsh.enable = true;
@@ -65,16 +62,13 @@ in
         neovim.enable = true;
         cursor.enable = true;
       };
-      terminal = {
-        ghostty.enable = true;
-      };
       utils = {
         # bitwarden.enable = true;
         keepassxc.enable = true;
         qbittorrent.enable = true;
       };
       vpn = {
-        # vless.enable = true; 
+        # vless.enable = true;
       };
     };
     linux = {

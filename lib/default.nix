@@ -116,7 +116,7 @@
     };
 
   # Helper to derive config accessor from module path
-  # Usage: 
+  # Usage:
   #   let mod = lib.my.modulePath [ "common" "browsers" "firefox" ] config;
   #   in { options.modules.common.browsers.firefox = ...; config = mkIf mod.cfg.enable ...; }
   modulePath = pathParts: config:
@@ -177,19 +177,23 @@
   # This allows editing config files without rebuild
   # Usage:
   #   config.home-manager.users = lib.my.mkDotfilesSymlink {
-  #     inherit config;
-  #     path = "ghostty";           # ~/.config/ghostty
-  #     source = ./dotfiles;        # path in repo
+  #     inherit config self;
+  #     path = "ghostty";                                    # ~/.config/ghostty
+  #     source = "modules_v2/common/terminal/ghostty/dotfiles";  # relative path in repo
   #   };
-  mkDotfilesSymlink = { config, path, source }:
+  mkDotfilesSymlink = { config, self, path, source }:
     let
-      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or {});
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
+      # Use self.outPath to get actual repo path (not nix store)
+      repoPath = self.outPath;
+      fullPath = "${repoPath}/${source}";
     in
-    mapAttrs (name: _: {
-      xdg.configFile.${path}.source =
-        config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink
-          (toString source);
-    }) enabledUsers;
+    mapAttrs
+      (name: _: {
+        xdg.configFile.${path}.source =
+          config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink fullPath;
+      })
+      enabledUsers;
 
   # Generate module options from path string
   # Usage:

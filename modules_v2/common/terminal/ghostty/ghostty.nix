@@ -1,5 +1,5 @@
 # Ghostty terminal emulator
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
+{ config, pkgs, lib, system, _modulePath, self, ... }: with lib;
 let
   mkModule = lib.my.mkModule system;
   modulePath = _modulePath;
@@ -21,22 +21,24 @@ in
     };
   };
 
-  config = let
-    shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-  in mkIf shouldEnable (mkMerge [
-    # Package installation (via mkModule alias system)
-    (mkModule {
-      nixosSystems.home.packages = [ pkgs.ghostty ];
-      darwinSystems.homebrew.casks = [ "ghostty" ];
-    })
+  config =
+    let
+      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
+    in
+    mkIf shouldEnable (mkMerge [
+      # Package installation (via mkModule alias system)
+      (mkModule {
+        nixosSystems.home.packages = [ pkgs.ghostty ];
+        darwinSystems.homebrew.casks = [ "ghostty" ];
+      })
 
-    # Dotfiles symlink (linked to repo for live editing without rebuild)
-    {
-      home-manager.users = lib.my.mkDotfilesSymlink {
-        inherit config;
-        path = "ghostty";
-        source = ./dotfiles;
-      };
-    }
-  ]);
+      # Dotfiles symlink (linked to repo for live editing without rebuild)
+      {
+        home-manager.users = lib.my.mkDotfilesSymlink {
+          inherit config self;
+          path = "ghostty";
+          source = "modules_v2/common/terminal/ghostty/dotfiles";
+        };
+      }
+    ]);
 }

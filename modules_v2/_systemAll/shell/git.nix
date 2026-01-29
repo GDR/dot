@@ -24,13 +24,13 @@ let
   # Get default git signing key for a user (key with "git" in purpose)
   getGitKey = user:
     let
-      keys = user.keys or [];
+      keys = user.keys or [ ];
       # First try to find a key with "git" purpose that's default
-      gitKeys = filter (k: elem "git" (k.purpose or [])) keys;
+      gitKeys = filter (k: elem "git" (k.purpose or [ ])) keys;
       defaultGitKey = findFirst (k: k.isDefault or false) null gitKeys;
     in
     if defaultGitKey != null then defaultGitKey
-    else if gitKeys != [] then head gitKeys
+    else if gitKeys != [ ] then head gitKeys
     else null;
 
   # Build Git config for a user
@@ -74,8 +74,10 @@ in
 
   config = mkIf cfg.enable {
     # Configure Git for each enabled user
-    home-manager.users = mapAttrs (userName: userCfg:
-      mkUserGitConfig userName userCfg
-    ) enabledUsers;
+    home-manager.users = mapAttrs
+      (userName: userCfg:
+        mkUserGitConfig userName userCfg
+      )
+      enabledUsers;
   };
 }
