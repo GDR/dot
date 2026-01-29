@@ -4,6 +4,7 @@
 {
   imports = [
     ./shell/ssh.nix
+    ./shell/git.nix
     ./nix-gc.nix
     ./nix-settings.nix
   ];

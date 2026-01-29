@@ -33,7 +33,10 @@ in
   systemAll = {
     nix-settings.enable = true;
     nix-gc.enable = true;
-    shell.ssh.enable = true;
+    shell = {
+      ssh.enable = true;
+      git.enable = true;
+    };
   };
 
   systemLinux = {
@@ -55,12 +58,7 @@ in
         firefox.enable = true;
       };
       shell = {
-        git = {
-          enable = true;
-          userName = "Damir Garifullin";
-          userEmail = "gosugdr@gmail.com";
-          signingKey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
-        };
+        # git moved to systemAll.shell.git (reads from hostUsers)
         zsh.enable = true;
       };
       editors = {
