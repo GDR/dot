@@ -3,10 +3,11 @@
 { ... }:
 {
   imports = [
-    ./networking/networkmanager.nix
-    ./networking/tailscale.nix
+    ./desktop/hyprland/hyprland.nix
     ./graphics/nvidia.nix
     ./keyboards/keychron.nix
+    ./networking/networkmanager.nix
+    ./networking/tailscale.nix
     ./sound.nix
   ];
 }

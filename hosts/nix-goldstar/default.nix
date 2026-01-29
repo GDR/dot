@@ -23,6 +23,8 @@ in
     tags.enable = [
       "browsers"
       "core"
+      "desktop-utils"
+      "desktop-utils-wayland"
       "editors-terminal"
       "editors-ui"
       "games"
@@ -46,6 +48,7 @@ in
   };
 
   systemLinux = {
+    desktop.hyprland.enable = true;
     networking = {
       networkmanager.enable = true;
       tailscale.enable = true;
@@ -71,7 +74,7 @@ in
       };
     };
     linux = {
-      hyprland.enable = true;
+      # hyprland moved to systemLinux.desktop.hyprland
       # sound moved to systemLinux.sound
       # keychron moved to systemLinux.keyboards.keychron
       # steam moved to modules_v2 with "games" tag
