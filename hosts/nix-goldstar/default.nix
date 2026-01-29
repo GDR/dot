@@ -56,7 +56,7 @@ in
           signingKey = "/home/dgarifullin/.ssh/goldstar_id_rsa.pub";
         };
         zsh.enable = true;
-        ssh.enable = true;
+        # ssh.enable via "core" tag - reads keys from hostUsers
       };
       editors = {
         neovim.enable = true;
