@@ -179,9 +179,9 @@
             ];
             shellHook = ''
               if [ -f .envrc ]; then
-                direnv allow
+                direnv allow 2>/dev/null
               fi
-              pre-commit install -f --hook-type pre-commit
+              pre-commit install -f --hook-type pre-commit >/dev/null 2>&1
             '';
           };
         }
