@@ -36,6 +36,7 @@ in
 
   # System-scope modules (top-level, not in modules.*)
   systemAll = {
+    fonts.enable = true;
     nix-settings.enable = true;
     nix-gc.enable = true;
     shell = {
@@ -75,7 +76,7 @@ in
       # keychron moved to systemLinux.keyboards.keychron
       # steam moved to modules_v2 with "games" tag
     };
-    fonts.enable = true;
+    # fonts moved to systemAll.fonts
   };
 
   time.timeZone = "Europe/Moscow";

@@ -5,6 +5,7 @@
   imports = [
     ./shell/ssh.nix
     ./shell/git.nix
+    ./fonts.nix
     ./nix-gc.nix
     ./nix-settings.nix
   ];
