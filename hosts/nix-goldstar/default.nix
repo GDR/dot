@@ -23,6 +23,7 @@ in
     tags.enable = [
       "browsers"
       "core"
+      "editors-ui"
       "media"
       "shells"
       "terminal"
@@ -57,9 +58,9 @@ in
     # Global tags removed - using per-user tags instead (hostUsers.*.tags)
     common = {
       # zsh moved to modules_v2 with "shells" tag
+      # cursor moved to modules_v2 with "editors-ui" tag
       editors = {
         neovim.enable = true;
-        cursor.enable = true;
       };
       utils = {
         # bitwarden.enable = true;
