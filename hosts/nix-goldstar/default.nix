@@ -24,6 +24,7 @@ in
       "browsers"
       "core"
       "media"
+      "shells"
       "terminal"
     ];
   };
@@ -55,10 +56,7 @@ in
   modules = {
     # Global tags removed - using per-user tags instead (hostUsers.*.tags)
     common = {
-      shell = {
-        # git moved to systemAll.shell.git (reads from hostUsers)
-        zsh.enable = true;
-      };
+      # zsh moved to modules_v2 with "shells" tag
       editors = {
         neovim.enable = true;
         cursor.enable = true;
