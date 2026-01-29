@@ -38,7 +38,7 @@ in
         # Enable zsh at system level (required for users to use zsh as shell)
         programs.zsh.enable = true;
 
-        environment.systemPackages = with pkgs; [ eza fzf ];
+        environment.systemPackages = with pkgs; [ eza ];
 
         # Set user's default shell to zsh
         users.users = builtins.listToAttrs (map
@@ -55,6 +55,22 @@ in
           (username: {
             name = username;
             value = {
+              # Atuin - smart shell history with context-aware suggestions
+              programs.atuin = {
+                enable = true;
+                enableZshIntegration = true;
+                flags = [ "--disable-up-arrow" ]; # Keep up-arrow for normal history
+                settings = {
+                  auto_sync = false; # No cloud sync
+                  search_mode = "fuzzy";
+                  filter_mode = "global"; # Default to all history
+                  filter_mode_shell_up_key_binding = "directory"; # Up arrow = directory context
+                  show_preview = true;
+                  style = "compact";
+                  # In search UI: Ctrl+R cycles filter modes (global/host/session/directory)
+                };
+              };
+
               programs.zsh = {
                 enable = true;
                 enableCompletion = true;
@@ -78,18 +94,6 @@ in
                   [[ -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
                   source ~/.config/zsh/common.zsh
 
-                  # FZF history search (Ctrl+R)
-                  fzf-history-widget() {
-                    local selected
-                    selected=$(fc -rl 1 | awk '{$1=""; print substr($0,2)}' | awk '!seen[$0]++' | fzf --height 40% --reverse +s)
-                    if [[ -n "$selected" ]]; then
-                      BUFFER="$selected"
-                      CURSOR=''${#BUFFER}
-                    fi
-                    zle reset-prompt
-                  }
-                  zle -N fzf-history-widget
-                  bindkey '\C-r' fzf-history-widget
 
                   # Ctrl+E edits command line in nvim (last cmd if empty)
                   export EDITOR=nvim
