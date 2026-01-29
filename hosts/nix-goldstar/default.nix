@@ -16,7 +16,7 @@ in
       isDefault = true;
     }];
     # Per-user tags (enables user-scope modules for this user)
-    tags.enable = [ "core" "media" ];
+    tags.enable = [ "browsers" "core" "media" ];
   };
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -47,7 +47,7 @@ in
     # Global tags removed - using per-user tags instead (hostUsers.*.tags)
     common = {
       browsers = {
-        chrome.enable = true;
+        # chrome.enable = true;
         firefox.enable = true;
       };
       shell = {
