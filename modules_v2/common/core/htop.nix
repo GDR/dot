@@ -1,3 +1,4 @@
+# htop - interactive process viewer
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
