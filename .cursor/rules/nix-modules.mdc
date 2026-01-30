@@ -157,10 +157,14 @@ lib.my.mkModuleV2 args {
 | `platforms` | No | Default: `["linux" "darwin"]` |
 | `requires` | No | Module dependencies |
 | `module` | No | Platform config (attrset or `cfg -> attrset` function) |
+| `systemModule` | No | System-level config (attrset or `cfg -> attrset` function) |
 | `dotfiles` | No | `{ path, source }` for live-editable configs |
 | `extraOptions` | No | Additional module options (merged with `enable`) |
+| `imports` | No | List of module imports (for sub-modules) |
 
 ### Module Sections
+
+Both `module` and `systemModule` support platform-specific sections:
 
 ```nix
 module = {
@@ -172,6 +176,18 @@ module = {
   };
   allSystems = {
     home.packages = [ ... ];      # Both platforms
+  };
+};
+
+systemModule = {
+  nixosSystems = {
+    programs.nixvim.enable = true;  # Linux system-level config
+  };
+  darwinSystems = {
+    # macOS system-level config
+  };
+  allSystems = {
+    programs.zsh.enable = true;     # Both platforms system-level config
   };
 };
 ```
@@ -199,6 +215,71 @@ lib.my.mkModuleV2 args {
       home.packages = [ pkgs.zsh ];
       # Access custom option: cfg.showHostname
     };
+  };
+}
+```
+
+### With System-Level Configuration
+
+For modules that need system-level setup (e.g., enabling system services, setting user shells):
+
+```nix
+{ lib, pkgs, config, ... }@args:
+let
+  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
+  enabledUsernames = lib.attrNames enabledUsers;
+in
+
+lib.my.mkModuleV2 args {
+  tags = [ "shells" ];
+  description = "Zsh shell configuration";
+  
+  systemModule = {
+    allSystems = {
+      # Enable zsh at system level
+      programs.zsh.enable = true;
+      
+      # Set user shells using helper
+      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+        shell = pkgs.zsh;
+      });
+    };
+  };
+  
+  module = {
+    allSystems = {
+      # Home-manager zsh configuration
+      programs.zsh = { ... };
+    };
+  };
+}
+```
+
+### With Module Imports
+
+For modules that need to import sub-modules (e.g., neovim with plugin configs):
+
+```nix
+{ lib, pkgs, ... }@args:
+
+lib.my.mkModuleV2 args {
+  tags = [ "editors-terminal" ];
+  description = "Neovim editor";
+  
+  imports = [
+    ./dotfiles/colorschema.nix
+    ./dotfiles/general.nix
+    ./dotfiles/plugins/airline.nix
+  ];
+  
+  systemModule = {
+    allSystems = {
+      programs.nixvim.enable = true;
+    };
+  };
+  
+  module = {
+    allSystems.home.packages = [ pkgs.ripgrep pkgs.fzf ];
   };
 }
 ```
@@ -293,13 +374,33 @@ hostUsers.username = importUser "username" // {
 
 ## Key Helper Functions
 
-- `lib.my.mkModuleV2 args { tags, module, dotfiles?, ... }` - **Preferred** - Complete module generator
+- `lib.my.mkModuleV2 args { tags, module, systemModule?, dotfiles?, imports?, ... }` - **Preferred** - Complete module generator
+- `lib.my.mkUsersAttrs usernames fn` - Creates `users.users` attrset from username list and function
 - `lib.my.mkModule system config cfg` - Creates platform-aware config (for manual modules)
 - `lib.my.mkModuleConfig { system, config, self, module, dotfiles? }` - Combines mkModule + dotfiles
 - `lib.my.shouldEnableModule { config, modulePath, moduleTags }` - Checks if module should be enabled
 - `lib.my.mkModuleOptions modulePath options` - Creates module options at correct path
 - `lib.my.mkModuleMeta { tags, platforms, description }` - Module metadata
 - `lib.my.mkDotfilesSymlink { config, self, path, source }` - Live-editable dotfiles symlink
+
+### mkUsersAttrs Helper
+
+Simplifies creating `users.users` attribute sets:
+
+```nix
+# Before
+users.users = listToAttrs (map
+  (username: {
+    name = username;
+    value = { shell = pkgs.zsh; };
+  })
+  enabledUsernames);
+
+# After
+users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+  shell = pkgs.zsh;
+});
+```
 
 ## Adding New Modules Checklist
 
