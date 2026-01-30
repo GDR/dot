@@ -1,52 +1,41 @@
 # Steam gaming platform - Linux only (system-wide when any user enables "games" tag)
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  modulePath = _modulePath;
-  moduleTags = [ "games" ];
+{ lib, pkgs, config, _modulePath, ... }@args: with lib;
 
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
+let
+  baseModule = lib.my.mkModuleV2 args {
+    tags = [ "games" ];
     platforms = [ "linux" ];
     description = "Steam gaming platform with Gamescope support";
     requires = [ "systemLinux.graphics.nvidia" ]; # Better gaming with proper GPU drivers
+    extraOptions = {
+      enableGamescope = mkOption {
+        default = true;
+        type = types.bool;
+        description = "Whether to enable Gamescope support for Steam";
+      };
+
+      remotePlayOpenFirewall = mkOption {
+        default = true;
+        type = types.bool;
+        description = "Open ports in the firewall for Steam Remote Play";
+      };
+
+      dedicatedServerOpenFirewall = mkOption {
+        default = true;
+        type = types.bool;
+        description = "Open ports in the firewall for Source Dedicated Server";
+      };
+    };
+    module = { }; # Steam is system-level only, no home-manager config
   };
 
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-      description = "Enable Steam gaming platform";
-    };
-
-    enableGamescope = mkOption {
-      default = true;
-      type = types.bool;
-      description = "Whether to enable Gamescope support for Steam";
-    };
-
-    remotePlayOpenFirewall = mkOption {
-      default = true;
-      type = types.bool;
-      description = "Open ports in the firewall for Steam Remote Play";
-    };
-
-    dedicatedServerOpenFirewall = mkOption {
-      default = true;
-      type = types.bool;
-      description = "Open ports in the firewall for Source Dedicated Server";
-    };
-  };
-
-  # Steam uses NixOS system-level options (not home-manager)
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable {
+  pathParts = splitString "." _modulePath;
+  cfg = foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
+in
+baseModule // {
+  config = mkMerge [
+    baseModule.config
+    {
       # Enable the Steam program itself (system-level)
       programs.steam = {
         enable = true;
@@ -83,5 +72,6 @@ in
           "steam-original"
           "steam-run"
         ];
-    };
+    }
+  ];
 }
