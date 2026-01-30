@@ -1,37 +1,18 @@
 # Wayland-specific desktop utilities - screenshots, status bar, wallpaper
 # Only enabled when Wayland compositor (hyprland) is active
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system config;
-  modulePath = _modulePath;
-  moduleTags = [ "desktop-utils-wayland" ];
+{ lib, pkgs, config, ... }@args:
 
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-
-  # Check if Wayland is enabled system-wide
-  waylandEnabled = config.systemLinux.desktop.hyprland.enable or false;
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    platforms = [ "linux" ];
-    description = "Wayland-specific utilities - screenshots, status bar, wallpaper";
-  };
-
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-  };
-
-  config =
+lib.my.mkModuleV2 args {
+  tags = [ "desktop-utils-wayland" ];
+  platforms = [ "linux" ];
+  description = "Wayland-specific utilities - screenshots, status bar, wallpaper";
+  module = cfg:
     let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
+      # Check if Wayland is enabled system-wide
+      waylandEnabled = config.systemLinux.desktop.hyprland.enable or false;
     in
-    # Only enable if both tag is set AND Wayland is enabled system-wide
-    mkIf (shouldEnable && waylandEnabled) (mkModule {
+    # Only enable if Wayland is enabled system-wide
+    lib.mkIf waylandEnabled {
       nixosSystems.home.packages = with pkgs; [
         # Screenshot utilities
         grim
@@ -44,5 +25,5 @@ in
         # Status bar
         waybar
       ];
-    });
+    };
 }
