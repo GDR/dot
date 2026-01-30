@@ -18,8 +18,10 @@ lib.my.mkModuleV2 args {
     ./dotfiles/plugins/web-devicons.nix
   ];
   systemModule = {
-    # Enable nixvim (system-level NixOS option, not home-manager)
-    programs.nixvim.enable = true;
+    allSystems = {
+      # Enable nixvim (system-level NixOS option, not home-manager)
+      programs.nixvim.enable = true;
+    };
   };
   module = {
     allSystems.home.packages = with pkgs; [ ripgrep fzf ];

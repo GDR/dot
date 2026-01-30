@@ -17,19 +17,21 @@ lib.my.mkModuleV2 args {
     };
   };
   systemModule = {
-    # System-level config (NixOS programs.zsh, users.users)
-    # Enable zsh at system level (required for users to use zsh as shell)
-    programs.zsh.enable = true;
+    allSystems = {
+      # System-level config (NixOS programs.zsh, users.users)
+      # Enable zsh at system level (required for users to use zsh as shell)
+      programs.zsh.enable = true;
 
-    environment.systemPackages = with pkgs; [ eza ];
+      environment.systemPackages = with pkgs; [ eza ];
 
-    # Set user's default shell to zsh
-    users.users = listToAttrs (map
-      (username: {
-        name = username;
-        value = { shell = pkgs.zsh; };
-      })
-      enabledUsernames);
+      # Set user's default shell to zsh
+      users.users = listToAttrs (map
+        (username: {
+          name = username;
+          value = { shell = pkgs.zsh; };
+        })
+        enabledUsernames);
+    };
   };
   module = cfg: {
     allSystems = {

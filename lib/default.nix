@@ -324,7 +324,15 @@
   #       darwinSystems.homebrew.casks = [ "ghostty" ];
   #     };
   #     systemModule = {
-  #       programs.nixvim.enable = true;  # System-level config when any user enables module
+  #       nixosSystems = {
+  #         programs.nixvim.enable = true;  # Linux system-level config
+  #       };
+  #       darwinSystems = {
+  #         # macOS system-level config
+  #       };
+  #       allSystems = {
+  #         # Both platforms system-level config
+  #       };
   #     };
   #     dotfiles = {
   #       path = "ghostty";
@@ -338,6 +346,7 @@
   #     # module can be attrset OR function (cfg -> attrset) to access options
   #     module = cfg: { ... };
   #     # systemModule can be attrset OR function (cfg -> attrset) to access options
+  #     # Supports platform sections: allSystems, nixosSystems, darwinSystems
   #     systemModule = cfg: { ... };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
@@ -389,7 +398,12 @@
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
 
       # systemModule can be attrset or function (cfg -> attrset)
-      resolvedSystemModule = if isFunction systemModule then systemModule cfg else systemModule;
+      # Supports platform sections: allSystems, nixosSystems, darwinSystems
+      resolvedSystemModuleRaw = if isFunction systemModule then systemModule cfg else systemModule;
+      resolvedSystemModule =
+        if isLinux then (resolvedSystemModuleRaw.nixosSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
+        else if isDarwin then (resolvedSystemModuleRaw.darwinSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
+        else resolvedSystemModuleRaw;
     in
     {
       inherit imports;
