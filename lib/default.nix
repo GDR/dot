@@ -313,7 +313,7 @@
     { modules = setAttrByPath pathParts opts; };
 
   # Complete module wrapper for modules_v2
-  # Returns { meta, options, config } - the entire module structure
+  # Returns { meta, options, config, imports? } - the entire module structure
   # Usage:
   #   { lib, pkgs, ... }@args:
   #   lib.my.mkModuleV2 args {
@@ -331,6 +331,7 @@
   #     extraOptions = {
   #       showHostname = mkOption { default = true; type = types.bool; };
   #     };
+  #     imports = [ ./dotfiles/config.nix ];  # Optional: module imports
   #     # module can be attrset OR function (cfg -> attrset) to access options
   #     module = cfg: { ... };
   #   }
@@ -344,6 +345,7 @@
     , module ? { }
     , dotfiles ? null
     , extraOptions ? { }
+    , imports ? [ ]
     }:
     let
       inherit (args) config pkgs system _modulePath;
@@ -381,6 +383,8 @@
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
     in
     {
+      inherit imports;
+
       meta = mkModuleMeta {
         inherit requires platforms tags description;
       };
