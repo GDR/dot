@@ -247,27 +247,57 @@
       )
       enabledUsers;
 
-  # Create XDG config symlink to repo dotfiles for all enabled users
+  # Create symlink to repo dotfiles for all enabled users
   # This allows editing config files without rebuild
   # Usage:
   #   config.home-manager.users = lib.my.mkDotfilesSymlink {
   #     inherit config self;
-  #     path = "ghostty";                                    # ~/.config/ghostty
+  #     path = "ghostty";                                    # used as fallback if target not specified
   #     source = "modules_v2/common/terminal/ghostty/dotfiles";  # relative path in repo
+  #     target = "~/.config/ghostty";                        # explicit target path (defaults to ~/.config/${path})
   #   };
-  mkDotfilesSymlink = { config, self, path, source }:
+  mkDotfilesSymlink = { config, self, path, source, target ? null }:
     let
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
       # Use self.outPath to get actual repo path (not nix store)
       # In flakes, self.outPath should point to the source directory
       repoPath = self.outPath;
       fullPath = "${repoPath}/${source}";
+
+      # Determine target path: if not specified, default to ~/.config/${path}
+      targetPath = if target != null then target else "~/.config/${path}";
+
+      # Parse target path to determine if it's in ~/.config or elsewhere
+      # Handle both ~/.config/ and .config/ prefixes
+      isConfigDir = hasPrefix "~/.config/" targetPath || hasPrefix ".config/" targetPath;
+      configPath =
+        if isConfigDir then
+          let
+            withoutTilde = removePrefix "~/.config/" targetPath;
+          in
+          removePrefix ".config/" withoutTilde
+        else null;
+
+      # For non-config paths, extract the path relative to home
+      # If it doesn't start with ~/, treat it as relative to home
+      homePath =
+        if !isConfigDir then
+          if hasPrefix "~/" targetPath then
+            removePrefix "~/" targetPath
+          else
+            targetPath
+        else null;
     in
     mapAttrs
-      (name: _: {
-        xdg.configFile.${path}.source =
-          config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink fullPath;
-      })
+      (name: _:
+        if isConfigDir then {
+          xdg.configFile.${configPath}.source =
+            config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink fullPath;
+        } else {
+          home.file.${homePath}.source =
+            config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink fullPath;
+        }
+      )
       enabledUsers;
 
   # Generate module options from path string
@@ -296,6 +326,7 @@
   #     dotfiles = {
   #       path = "ghostty";
   #       source = "modules_v2/common/terminal/ghostty/dotfiles";
+  #       target = "~/.config/ghostty";  # explicit target path (defaults to ~/.config/${path} if not specified)
   #     };
   #     extraOptions = {
   #       showHostname = mkOption { default = true; type = types.bool; };
@@ -373,6 +404,7 @@
             home-manager.users = mkDotfilesSymlink {
               inherit config self;
               inherit (dotfiles) path source;
+              target = dotfiles.target or null;
             };
           })
         ]);
