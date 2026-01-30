@@ -1,33 +1,12 @@
 # Cursor IDE - AI-powered code editor
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system config;
-  modulePath = _modulePath;
-  moduleTags = [ "editors-ui" ];
+{ lib, pkgs, ... }@args:
 
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    platforms = [ "linux" "darwin" ];
-    description = "Cursor IDE - AI-powered code editor";
+lib.my.mkModuleV2 args {
+  tags = [ "editors-ui" ];
+  platforms = [ "linux" "darwin" ];
+  description = "Cursor IDE - AI-powered code editor";
+  module = {
+    nixosSystems.home.packages = [ pkgs.code-cursor pkgs.cursor-cli ];
+    darwinSystems.homebrew.casks = [ "cursor" ];
   };
-
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-  };
-
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable (mkModule {
-      nixosSystems.home.packages = [ pkgs.code-cursor pkgs.cursor-cli ];
-      darwinSystems.homebrew.casks = [ "cursor" ];
-    });
 }
