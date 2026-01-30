@@ -1,30 +1,12 @@
 # Chromium browser
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system config;
-  modulePath = _modulePath;
-  moduleTags = [ "browsers" ];
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    description = "Chromium web browser";
-  };
+{ lib, pkgs, ... }@args:
 
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-  };
-
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable (mkModule {
-      darwinSystems.homebrew.casks = [ "chromium" ];
-      nixosSystems.programs.chromium = {
+lib.my.mkModuleV2 args {
+  tags = [ "browsers" ];
+  description = "Chromium web browser";
+  module = {
+    nixosSystems = {
+      programs.chromium = {
         enable = true;
         commandLineArgs = [
           "--ignore-gpu-blocklist"
@@ -35,7 +17,7 @@ in
           "--ozone-platform-hint=auto"
         ];
       };
-      nixosSystems.xdg.desktopEntries.chromium = {
+      xdg.desktopEntries.chromium = {
         name = "Chromium";
         genericName = "Web Browser";
         exec = "chromium %U";
@@ -44,5 +26,9 @@ in
         categories = [ "Network" "WebBrowser" ];
         mimeType = [ "text/html" "text/xml" "application/xhtml+xml" "x-scheme-handler/http" "x-scheme-handler/https" ];
       };
-    });
+    };
+    darwinSystems = {
+      homebrew.casks = [ "chromium" ];
+    };
+  };
 }
