@@ -100,6 +100,18 @@
   #     nixosSystems.services.foo.enable = true;       # System-level config (stays as-is)
   #     darwinSystems.homebrew.casks = [ "htop" ];
   #   })
+  # Helper to create users.users attribute set from list of usernames
+  # Usage:
+  #   users.users = lib.my.mkUsersAttrs enabledUsernames (username: { shell = pkgs.zsh; });
+  #   users.users = lib.my.mkUsersAttrs enabledUsernames (username: { extraGroups = [ "docker" ]; });
+  mkUsersAttrs = usernames: fn:
+    listToAttrs (map
+      (username: {
+        name = username;
+        value = fn username;
+      })
+      usernames);
+
   # Home-manager attrs (home, programs, xdg, services, etc.) are routed to all enabled users
   mkModule = system: config: cfg:
     let

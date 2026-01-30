@@ -14,12 +14,9 @@ lib.my.mkModuleV2 args {
       virtualisation.docker.enable = true;
 
       # Add all enabled users to docker group
-      users.users = listToAttrs (map
-        (username: {
-          name = username;
-          value = { extraGroups = [ "docker" ]; };
-        })
-        enabledUsernames);
+      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+        extraGroups = [ "docker" ];
+      });
     };
   };
   module = {

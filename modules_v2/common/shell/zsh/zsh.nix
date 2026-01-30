@@ -25,12 +25,9 @@ lib.my.mkModuleV2 args {
       environment.systemPackages = with pkgs; [ eza ];
 
       # Set user's default shell to zsh
-      users.users = listToAttrs (map
-        (username: {
-          name = username;
-          value = { shell = pkgs.zsh; };
-        })
-        enabledUsernames);
+      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+        shell = pkgs.zsh;
+      });
     };
   };
   module = cfg: {
