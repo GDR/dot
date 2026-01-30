@@ -323,6 +323,9 @@
   #       nixosSystems.home.packages = [ pkgs.ghostty ];
   #       darwinSystems.homebrew.casks = [ "ghostty" ];
   #     };
+  #     systemModule = {
+  #       programs.nixvim.enable = true;  # System-level config when any user enables module
+  #     };
   #     dotfiles = {
   #       path = "ghostty";
   #       source = "modules_v2/common/terminal/ghostty/dotfiles";
@@ -334,6 +337,8 @@
   #     imports = [ ./dotfiles/config.nix ];  # Optional: module imports
   #     # module can be attrset OR function (cfg -> attrset) to access options
   #     module = cfg: { ... };
+  #     # systemModule can be attrset OR function (cfg -> attrset) to access options
+  #     systemModule = cfg: { ... };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
   # home.* config is automatically routed to all enabled hostUsers
@@ -343,6 +348,7 @@
     , platforms ? [ "linux" "darwin" ]
     , description ? null
     , module ? { }
+    , systemModule ? { }
     , dotfiles ? null
     , extraOptions ? { }
     , imports ? [ ]
@@ -381,6 +387,9 @@
 
       # Get enabled users for home config routing
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
+
+      # systemModule can be attrset or function (cfg -> attrset)
+      resolvedSystemModule = if isFunction systemModule then systemModule cfg else systemModule;
     in
     {
       inherit imports;
@@ -401,6 +410,7 @@
           shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
         in
         mkIf shouldEnable (mkMerge [
+          resolvedSystemModule
           (systemConfig // (optionalAttrs hasUserConfig {
             home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
           }))
