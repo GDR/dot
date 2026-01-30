@@ -61,7 +61,7 @@ in
       enable = true;
       open = true;
     };
-    keyboards.keychron.enable = true;
+    # keyboards.keychron.enable = true;
     sound.enable = true;
   };
 
