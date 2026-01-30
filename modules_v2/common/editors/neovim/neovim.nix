@@ -1,14 +1,17 @@
 # Neovim editor with nixvim configuration
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system config;
-  modulePath = _modulePath;
-  moduleTags = [ "editors-terminal" ];
+{ lib, pkgs, config, ... }@args:
 
-  pathParts = splitString "." modulePath;
-  cfg = foldl (acc: part: acc.${part}) config.modules pathParts;
+let
+  baseModule = lib.my.mkModuleV2 args {
+    tags = [ "editors-terminal" ];
+    platforms = [ "linux" "darwin" ];
+    description = "Neovim editor with nixvim configuration";
+    module = {
+      allSystems.home.packages = with pkgs; [ ripgrep fzf ];
+    };
+  };
 in
-{
+baseModule // {
   imports = [
     ./dotfiles/colorschema.nix
     ./dotfiles/general.nix
@@ -22,33 +25,11 @@ in
     ./dotfiles/plugins/web-devicons.nix
   ];
 
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    platforms = [ "linux" "darwin" ];
-    description = "Neovim editor with nixvim configuration";
-  };
-
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-  };
-
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable (mkMerge [
+  config = lib.mkMerge [
+    baseModule.config
+    {
       # Enable nixvim
-      {
-        programs.nixvim.enable = true;
-      }
-
-      # Additional packages
-      (mkModule {
-        nixosSystems.home.packages = with pkgs; [ ripgrep fzf ];
-        darwinSystems.home.packages = with pkgs; [ ripgrep fzf ];
-      })
-    ]);
+      programs.nixvim.enable = true;
+    }
+  ];
 }
