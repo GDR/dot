@@ -6,7 +6,6 @@ lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "Cursor IDE - AI-powered code editor";
   module = {
-    nixosSystems.home.packages = [ pkgs.code-cursor pkgs.cursor-cli ];
-    darwinSystems.homebrew.casks = [ "cursor" ];
+    allSystems.home.packages = [ pkgs.code-cursor pkgs.cursor-cli ];
   };
 }

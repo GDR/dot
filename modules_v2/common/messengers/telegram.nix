@@ -6,7 +6,6 @@ lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "Telegram desktop messenger";
   module = {
-    nixosSystems.home.packages = [ pkgs.telegram-desktop ];
-    darwinSystems.homebrew.casks = [ "telegram" ];
+    allSystems.home.packages = [ pkgs.telegram-desktop ];
   };
 }

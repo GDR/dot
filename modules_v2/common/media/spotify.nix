@@ -6,7 +6,6 @@ lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "Spotify music streaming client";
   module = {
-    nixosSystems.home.packages = [ pkgs.spotify ];
-    darwinSystems.homebrew.casks = [ "spotify" ];
+    allSystems.home.packages = [ pkgs.spotify ];
   };
 }
