@@ -5,7 +5,7 @@ lib.my.mkModuleV2 args {
   tags = [ "browsers" ];
   description = "Chromium web browser";
   module = {
-    nixosSystems = {
+    allSystems = {
       programs.chromium = {
         enable = true;
         commandLineArgs = [
@@ -26,9 +26,6 @@ lib.my.mkModuleV2 args {
         categories = [ "Network" "WebBrowser" ];
         mimeType = [ "text/html" "text/xml" "application/xhtml+xml" "x-scheme-handler/http" "x-scheme-handler/https" ];
       };
-    };
-    darwinSystems = {
-      homebrew.casks = [ "chromium" ];
     };
   };
 }
