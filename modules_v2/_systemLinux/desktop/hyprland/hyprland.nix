@@ -2,7 +2,6 @@
 { config, pkgs, lib, self, ... }: with lib;
 let
   cfg = config.systemLinux.desktop.hyprland;
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
 in
 {
   options.systemLinux.desktop.hyprland = {
@@ -10,7 +9,6 @@ in
   };
 
   config = mkIf cfg.enable (mkMerge [
-    # System-level configuration
     {
       # Enable Wayland and Hyprland
       programs.hyprland = {
