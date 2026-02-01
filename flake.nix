@@ -55,15 +55,9 @@
 
       packages = forAllSystems (system:
         let
-          pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-          };
-          customPkgs = import ./pkgs { inherit pkgs lib system; };
+          pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
         in
-        customPkgs // {
-          charon-key = charon-key.packages.${system}.default;
-        }
+        import ./packages.nix { inherit pkgs lib system charon-key; }
       );
 
       devShells = forAllSystems (system:
