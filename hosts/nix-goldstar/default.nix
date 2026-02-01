@@ -41,8 +41,8 @@ in
   # System-scope modules (top-level, not in modules.*)
   systemAll = {
     fonts.enable = true;
-    nix-settings.enable = true;
-    nix-gc.enable = true;
+    nix.settings.enable = true;
+    nix.gc.enable = true;
     shell = {
       ssh.enable = true;
       git.enable = true;
