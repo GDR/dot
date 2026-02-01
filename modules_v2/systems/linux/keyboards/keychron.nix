@@ -1,25 +1,24 @@
 # Keychron keyboard udev rules - Linux system module
-{ config, pkgs, lib, ... }: with lib;
-let
-  cfg = config.systemLinux.keyboards.keychron;
-in
-{
-  options.systemLinux.keyboards.keychron = {
-    enable = mkEnableOption "Keychron keyboard udev rules";
+{ lib, pkgs, ... }@args:
 
-    devices = mkOption {
-      type = types.listOf (types.submodule {
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "Keychron keyboard udev rules";
+
+  extraOptions = {
+    devices = lib.mkOption {
+      type = lib.types.listOf (lib.types.submodule {
         options = {
-          idVendor = mkOption {
-            type = types.str;
+          idVendor = lib.mkOption {
+            type = lib.types.str;
             description = "USB Vendor ID for the Keychron device";
           };
-          idProduct = mkOption {
-            type = types.str;
+          idProduct = lib.mkOption {
+            type = lib.types.str;
             description = "USB Product ID for the Keychron device";
           };
-          name = mkOption {
-            type = types.str;
+          name = lib.mkOption {
+            type = lib.types.str;
             description = "Device name for identification";
           };
         };
@@ -32,10 +31,10 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  module = cfg: {
     services.udev.packages = [ pkgs.qmk-udev-rules ];
 
-    services.udev.extraRules = concatStringsSep "\n" (map
+    services.udev.extraRules = lib.concatStringsSep "\n" (map
       (device: ''
         # ${device.name}
         SUBSYSTEM=="hidraw", KERNEL=="hidraw*", ATTRS{idVendor}=="${device.idVendor}", ATTRS{idProduct}=="${device.idProduct}", TAG+="uaccess", MODE="0660"

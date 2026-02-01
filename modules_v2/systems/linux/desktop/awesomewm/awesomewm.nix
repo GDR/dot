@@ -1,15 +1,14 @@
 # AwesomeWM - X11 window manager (system-wide Linux module)
-{ config, pkgs, lib, self, ... }: with lib;
-let
-  cfg = config.systemLinux.desktop.awesomewm;
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
-in
-{
-  options.systemLinux.desktop.awesomewm = {
-    enable = mkEnableOption "AwesomeWM X11 window manager";
-  };
+{ lib, pkgs, config, self, ... }@args:
 
-  config = mkIf cfg.enable {
+let
+  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
+in
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "AwesomeWM X11 window manager";
+
+  module = _: {
     # X server with AwesomeWM
     services.xserver = {
       enable = true;
@@ -47,7 +46,7 @@ in
     };
 
     # User packages and dotfiles
-    home-manager.users = mapAttrs
+    home-manager.users = lib.mapAttrs
       (name: _: {
         home.packages = with pkgs; [
           rofi
@@ -57,7 +56,7 @@ in
         # Link awesome config (live-editable symlink to repo)
         xdg.configFile."awesome".source =
           config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink
-            "${self.outPath}/modules_v2/_systemLinux/desktop/awesomewm/dotfiles";
+            "${self.outPath}/modules_v2/systems/linux/desktop/awesomewm/dotfiles";
       })
       enabledUsers;
   };

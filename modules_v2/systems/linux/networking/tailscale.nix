@@ -1,15 +1,11 @@
 # Tailscale VPN - Linux system module
-{ config, pkgs, lib, ... }: with lib;
+{ lib, pkgs, config, ... }@args:
 
-let
-  cfg = config.systemLinux.networking.tailscale;
-in
-{
-  options.systemLinux.networking.tailscale = {
-    enable = mkEnableOption "Tailscale VPN client and daemon";
-  };
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "Tailscale VPN client and daemon";
 
-  config = mkIf cfg.enable {
+  module = _: {
     # Kernel settings for forwarding
     boot.kernel.sysctl = {
       "net.ipv4.ip_forward" = 1;
@@ -25,11 +21,11 @@ in
     # Firewall settings
     networking.firewall.checkReversePath = "loose";
 
-    # Systray app (for first enabled hostUser)
-    home-manager.users = mapAttrs
+    # Systray app (for all enabled hostUsers)
+    home-manager.users = lib.mapAttrs
       (name: _: {
         home.packages = [ pkgs.tailscale-systray ];
       })
-      (filterAttrs (_: u: u.enable) config.hostUsers);
+      (lib.filterAttrs (_: u: u.enable) config.hostUsers);
   };
 }

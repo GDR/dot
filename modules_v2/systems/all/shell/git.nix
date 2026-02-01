@@ -1,14 +1,13 @@
 # Git configuration - reads user info and signing key from hostUsers
 # Cross-platform system module (Linux + Darwin)
-{ config, pkgs, lib, ... }: with lib;
+{ lib, config, system, ... }@args:
+
 let
-  isDarwin = pkgs.stdenv.isDarwin;
+  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
   homeDir = if isDarwin then "/Users" else "/home";
 
-  cfg = config.systemAll.shell.git;
-
   # Get enabled users
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
+  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
 
   # Build key path from key config (public key for signing)
   keyPath = userName: key:
@@ -25,16 +24,15 @@ let
   getGitKey = user:
     let
       keys = user.keys or [ ];
-      # First try to find a key with "git" purpose that's default
-      gitKeys = filter (k: elem "git" (k.purpose or [ ])) keys;
-      defaultGitKey = findFirst (k: k.isDefault or false) null gitKeys;
+      gitKeys = lib.filter (k: lib.elem "git" (k.purpose or [ ])) keys;
+      defaultGitKey = lib.findFirst (k: k.isDefault or false) null gitKeys;
     in
     if defaultGitKey != null then defaultGitKey
-    else if gitKeys != [ ] then head gitKeys
+    else if gitKeys != [ ] then lib.head gitKeys
     else null;
 
   # Build Git config for a user
-  mkUserGitConfig = userName: userCfg:
+  mkUserGitConfig = cfg: userName: userCfg:
     let
       gitKey = getGitKey userCfg;
       signingKeyPath = if gitKey != null then keyPath userName gitKey else null;
@@ -43,7 +41,7 @@ let
       programs.git = {
         enable = true;
 
-        signing = mkIf (signingKeyPath != null) {
+        signing = lib.mkIf (signingKeyPath != null) {
           key = signingKeyPath;
           signByDefault = true;
         };
@@ -61,23 +59,21 @@ let
       };
     };
 in
-{
-  options.systemAll.shell.git = {
-    enable = mkEnableOption "Git configuration (reads from hostUsers)";
+lib.my.mkSystemModuleV2 args {
+  namespace = "all";
+  description = "Git configuration (reads from hostUsers)";
 
-    editor = mkOption {
-      type = types.str;
+  extraOptions = {
+    editor = lib.mkOption {
+      type = lib.types.str;
       default = "nvim";
       description = "Default Git editor";
     };
   };
 
-  config = mkIf cfg.enable {
-    # Configure Git for each enabled user
-    home-manager.users = mapAttrs
-      (userName: userCfg:
-        mkUserGitConfig userName userCfg
-      )
+  module = cfg: {
+    home-manager.users = lib.mapAttrs
+      (userName: userCfg: mkUserGitConfig cfg userName userCfg)
       enabledUsers;
   };
 }

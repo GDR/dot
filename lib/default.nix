@@ -458,4 +458,112 @@
           ]
         );
     };
+
+  # System module wrapper for systems/all, systems/darwin, systems/linux modules
+  # Unlike mkModuleV2, this:
+  # - Uses systemAll/systemDarwin/systemLinux option namespace (not modules.*)
+  # - Has platform restrictions built-in (no need for tags)
+  # - Passes through special inputs (overlays, inputs, hardware, etc.)
+  # - No automatic home-manager user routing (modules can do it manually)
+  #
+  # Usage:
+  #   { lib, config, overlays, system, ... }@args:
+  #   lib.my.mkSystemModuleV2 args {
+  #     namespace = "all";  # "all" | "darwin" | "linux"
+  #     description = "Common Nix settings";
+  #     module = cfg: {
+  #       nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  #     };
+  #     # Optional: platform-specific config
+  #     moduleLinux = cfg: { system.stateVersion = "25.11"; };
+  #     moduleDarwin = cfg: { system.stateVersion = 5; };
+  #     extraOptions = { foo = mkOption { ... }; };
+  #   }
+  mkSystemModuleV2 = args:
+    { namespace  # "all" | "darwin" | "linux"
+    , description ? null
+    , module ? (_: {})
+    , moduleLinux ? null  # Linux-specific additions (for namespace = "all")
+    , moduleDarwin ? null  # Darwin-specific additions (for namespace = "all")
+    , extraOptions ? {}
+    , imports ? []
+    }:
+    let
+      inherit (args) config system _modulePath;
+      inherit (args) lib;
+
+      isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+      isLinux = system == "aarch64-linux" || system == "x86_64-linux";
+
+      # Determine if this module should be active on this platform
+      platformActive =
+        if namespace == "all" then true
+        else if namespace == "darwin" then isDarwin
+        else if namespace == "linux" then isLinux
+        else false;
+
+      # Build option path from _modulePath
+      # e.g., "systemAll.nix-settings" or "systemDarwin.homebrew"
+      # _modulePath comes in as e.g., "systems.all.nix-settings"
+      # We transform "systems.all" -> "systemAll", "systems.darwin" -> "systemDarwin", etc.
+      transformedPath =
+        let
+          parts = splitString "." _modulePath;
+          # Check if path starts with "systems"
+          startsWithSystems = (head parts) == "systems";
+          # Get platform part (all/darwin/linux) and rest of path
+          platformPart = if startsWithSystems then elemAt parts 1 else null;
+          restParts = if startsWithSystems then drop 2 parts else tail parts;
+          # Transform systems.all -> systemAll, systems.darwin -> systemDarwin, systems.linux -> systemLinux
+          newFirstPart =
+            if startsWithSystems then
+              if platformPart == "all" then "systemAll"
+              else if platformPart == "darwin" then "systemDarwin"
+              else if platformPart == "linux" then "systemLinux"
+              else "system${platformPart}"
+            else head parts;
+        in
+        concatStringsSep "." ([ newFirstPart ] ++ restParts);
+
+      pathParts = splitString "." transformedPath;
+
+      # Get module config
+      cfg = foldl' (acc: part: acc.${part} or {}) config pathParts;
+
+      # Get enabled users for modules that need home-manager access
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or {});
+    in
+    {
+      inherit imports;
+
+      options = setAttrByPath pathParts ({
+        enable = mkOption {
+          default = false;
+          type = bool;
+          description = description;
+        };
+      } // extraOptions);
+
+      config = mkIf (platformActive && (cfg.enable or false)) (
+        let
+          # module can be attrset or function (cfg -> attrset)
+          resolvedModule = if isFunction module then module cfg else module;
+
+          # Platform-specific additions
+          resolvedLinux =
+            if moduleLinux != null && isLinux then
+              (if isFunction moduleLinux then moduleLinux cfg else moduleLinux)
+            else {};
+          resolvedDarwin =
+            if moduleDarwin != null && isDarwin then
+              (if isFunction moduleDarwin then moduleDarwin cfg else moduleDarwin)
+            else {};
+        in
+        mkMerge [
+          resolvedModule
+          resolvedLinux
+          resolvedDarwin
+        ]
+      );
+    };
 }

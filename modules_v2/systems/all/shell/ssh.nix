@@ -1,17 +1,15 @@
 # SSH client configuration - reads keys from hostUsers
 # Cross-platform system module (Linux + Darwin)
-{ config, pkgs, lib, system, ... }: with lib;
+{ lib, config, system, ... }@args:
+
 let
   isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
   homeDir = if isDarwin then "/Users" else "/home";
 
-  cfg = config.systemAll.shell.ssh;
-
   # Get enabled users
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
+  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
 
   # Build key path from key config
-  # e.g., { name = "goldstar"; type = "rsa"; } -> ~/.ssh/goldstar_id_rsa
   keyPath = userName: key:
     let
       keyExt = {
@@ -26,9 +24,10 @@ let
   getDefaultKey = user:
     let
       keys = user.keys or [ ];
-      defaultKey = findFirst (k: k.isDefault or false) null keys;
+      defaultKey = lib.findFirst (k: k.isDefault or false) null keys;
     in
-    if defaultKey != null then defaultKey else (if keys != [ ] then head keys else null);
+    if defaultKey != null then defaultKey
+    else (if keys != [ ] then lib.head keys else null);
 
   # Build SSH config for a user
   mkUserSSHConfig = userName: userCfg:
@@ -38,44 +37,39 @@ let
     {
       programs.ssh = {
         enable = true;
-        # Disable deprecated default config
         enableDefaultConfig = false;
 
         matchBlocks = {
-          # Default settings for all hosts (replaces deprecated defaults)
           "*" = {
             extraOptions.AddKeysToAgent = "yes";
-          } // optionalAttrs (defaultKey != null) {
+          } // lib.optionalAttrs (defaultKey != null) {
             identityFile = keyPath userName defaultKey;
           };
-          # GitHub config
           "github.com" = {
             user = "git";
-          } // optionalAttrs (defaultKey != null) {
+          } // lib.optionalAttrs (defaultKey != null) {
             identityFile = keyPath userName defaultKey;
           };
         };
 
         includes = [ "~/.ssh/config.d/*" ];
-      } // optionalAttrs isDarwin {
+      } // lib.optionalAttrs isDarwin {
         extraConfig = "UseKeychain yes";
       };
     };
 in
-{
-  options.systemAll.shell.ssh = {
-    enable = mkEnableOption "SSH client configuration (reads keys from hostUsers)";
+lib.my.mkSystemModuleV2 args {
+  namespace = "all";
+  description = "SSH client configuration (reads keys from hostUsers)";
+
+  module = _: {
+    home-manager.users = lib.mapAttrs
+      (userName: userCfg: mkUserSSHConfig userName userCfg)
+      enabledUsers;
   };
 
-  config = mkIf cfg.enable ({
-    # Configure SSH for each enabled user
-    home-manager.users = mapAttrs
-      (userName: userCfg:
-        mkUserSSHConfig userName userCfg
-      )
-      enabledUsers;
-  } // optionalAttrs (!isDarwin) {
-    # Start SSH agent system-wide (Linux only, Darwin uses Keychain)
+  # Linux-only: start SSH agent system-wide (Darwin uses Keychain)
+  moduleLinux = _: {
     programs.ssh.startAgent = true;
-  });
+  };
 }

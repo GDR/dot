@@ -85,22 +85,23 @@ darwin-rebuild switch --flake .#<hostname>
 │       ├── tags.nix          # Tag system options
 │       └── user.nix          # hostUsers options & home-manager setup
 ├── modules_v2/
-│   ├── _systemAll/           # Cross-platform system modules
-│   │   ├── fonts.nix
-│   │   ├── nix-gc.nix
-│   │   ├── nix-settings.nix
-│   │   └── shell/
-│   │       ├── git.nix
-│   │       └── ssh.nix
-│   ├── _systemLinux/         # Linux-only system modules
-│   │   ├── desktop/
-│   │   │   ├── awesomewm/
-│   │   │   └── hyprland/
-│   │   ├── graphics/
-│   │   ├── keyboards/
-│   │   ├── networking/
-│   │   └── sound.nix
-│   ├── _systemDarwin/        # macOS-only system modules
+│   ├── systems/
+│   │   ├── all/              # Cross-platform system modules
+│   │   │   ├── fonts.nix
+│   │   │   ├── nix-gc.nix
+│   │   │   ├── nix-settings.nix
+│   │   │   └── shell/
+│   │   │       ├── git.nix
+│   │   │       └── ssh.nix
+│   │   ├── linux/            # Linux-only system modules
+│   │   │   ├── desktop/
+│   │   │   │   ├── awesomewm/
+│   │   │   │   └── hyprland/
+│   │   │   ├── graphics/
+│   │   │   ├── keyboards/
+│   │   │   ├── networking/
+│   │   │   └── sound.nix
+│   │   └── darwin/           # macOS-only system modules
 │   └── common/               # User-level modules (enabled via tags)
 │       ├── browsers/
 │       ├── core/
@@ -119,9 +120,9 @@ darwin-rebuild switch --flake .#<hostname>
 
 | Type | Location | Enabled via | Scope |
 |------|----------|-------------|-------|
-| **System (All)** | `_systemAll/` | `systemAll.<name>.enable` | System-wide, cross-platform |
-| **System (Linux)** | `_systemLinux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
-| **System (Darwin)** | `_systemDarwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
+| **System (All)** | `systems/all/` | `systemAll.<name>.enable` | System-wide, cross-platform |
+| **System (Linux)** | `systems/linux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
+| **System (Darwin)** | `systems/darwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
 | **User** | `common/` | `hostUsers.<user>.tags.enable` or `hostUsers.<user>.modules.<path>.enable` | Per-user via tags or explicit config |
 
 ---
@@ -322,23 +323,22 @@ in
 #### System Module (Linux)
 
 ```nix
-# modules_v2/_systemLinux/services/my-service.nix
-{ config, pkgs, lib, ... }: with lib;
-let
-  cfg = config.systemLinux.services.my-service;
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
-in
-{
-  options.systemLinux.services.my-service = {
-    enable = mkEnableOption "My service";
-  };
+# modules_v2/systems/linux/services/my-service.nix
+{ lib, pkgs, config, ... }@args:
 
-  config = mkIf cfg.enable {
+let
+  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
+in
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "My service";
+
+  module = _: {
     # System-level NixOS options
     services.my-service.enable = true;
 
     # User packages via home-manager
-    home-manager.users = mapAttrs (name: _: {
+    home-manager.users = lib.mapAttrs (name: _: {
       home.packages = [ pkgs.my-tool-client ];
     }) enabledUsers;
   };

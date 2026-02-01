@@ -1,14 +1,11 @@
 # Hyprland Wayland compositor - Linux system module
-{ config, pkgs, lib, self, ... }: with lib;
-let
-  cfg = config.systemLinux.desktop.hyprland;
-in
-{
-  options.systemLinux.desktop.hyprland = {
-    enable = mkEnableOption "Hyprland Wayland compositor";
-  };
+{ lib, pkgs, config, self, ... }@args:
 
-  config = mkIf cfg.enable (mkMerge [
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "Hyprland Wayland compositor";
+
+  module = _: lib.mkMerge [
     {
       # Enable Wayland and Hyprland
       programs.hyprland = {
@@ -38,7 +35,7 @@ in
 
       # Keyboard layout (for Wayland)
       services.xserver = {
-        enable = mkDefault false;
+        enable = lib.mkDefault false;
         xkb = {
           layout = "us,ru";
           variant = ",mac";
@@ -58,13 +55,12 @@ in
     }
 
     # Dotfiles symlink (live-editable)
-    # Note: Desktop utils (rofi, waybar, dunst, etc.) moved to "desktop-utils" tag
     {
       home-manager.users = lib.my.mkDotfilesSymlink {
         inherit config self;
         path = "hypr";
-        source = "modules_v2/_systemLinux/desktop/hyprland/dotfiles";
+        source = "modules_v2/systems/linux/desktop/hyprland/dotfiles";
       };
     }
-  ]);
+  ];
 }

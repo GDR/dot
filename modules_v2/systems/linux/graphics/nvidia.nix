@@ -1,32 +1,31 @@
 # NVIDIA GPU drivers and settings - Linux system module
-{ config, pkgs, lib, ... }: with lib;
-let
-  cfg = config.systemLinux.graphics.nvidia;
-in
-{
-  options.systemLinux.graphics.nvidia = {
-    enable = mkEnableOption "NVIDIA GPU drivers and settings";
+{ lib, config, ... }@args:
 
-    open = mkOption {
-      type = types.bool;
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "NVIDIA GPU drivers and settings";
+
+  extraOptions = {
+    open = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Use open source kernel modules (recommended for newer GPUs)";
     };
 
-    powerManagement = mkOption {
-      type = types.bool;
+    powerManagement = lib.mkOption {
+      type = lib.types.bool;
       default = false;
       description = "Enable NVIDIA power management (for laptops)";
     };
 
-    forceCompositionPipeline = mkOption {
-      type = types.bool;
+    forceCompositionPipeline = lib.mkOption {
+      type = lib.types.bool;
       default = true;
       description = "Force full composition pipeline to prevent tearing";
     };
   };
 
-  config = mkIf cfg.enable {
+  module = cfg: {
     # X11/Wayland with NVIDIA
     services.xserver.enable = true;
     services.xserver.videoDrivers = [ "nvidia" ];

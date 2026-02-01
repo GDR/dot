@@ -102,6 +102,19 @@
             modules
         );
 
+      # Wrap system modules (systems/all, systems/darwin, systems/linux)
+      # These get auto-discovered and wrapped to receive _modulePath
+      mkSystemModules = moduleDirPath:
+        let
+          moduleTree = lib.my.recursiveDirs moduleDirPath;
+          moduleFiles = lib.my.flattenModules moduleTree;
+        in
+        map
+          (filePath:
+            wrapModuleFile filePath (computeModulePath filePath)
+          )
+          moduleFiles;
+
       mkDarwinConfiguration = host-config:
         let
           system = "aarch64-darwin";
@@ -122,10 +135,8 @@
             ++ mkConfigurationModules [
             ./modules_v2/common
           ]
-            ++ [
-            ./modules_v2/_systemAll
-            ./modules_v2/_systemDarwin
-          ]
+            ++ mkSystemModules ./modules_v2/systems/all
+            ++ mkSystemModules ./modules_v2/systems/darwin
             ++ [
             # Import foundational modules separately (not package modules)
             ./lib/modules_v2/tags.nix
@@ -155,10 +166,8 @@
             ++ mkConfigurationModules [
             ./modules_v2/common
           ]
-            ++ [
-            ./modules_v2/_systemAll
-            ./modules_v2/_systemLinux
-          ]
+            ++ mkSystemModules ./modules_v2/systems/all
+            ++ mkSystemModules ./modules_v2/systems/linux
             ++ [
             # Import foundational modules separately (not package modules)
             ./lib/modules_v2/tags.nix

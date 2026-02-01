@@ -1,16 +1,15 @@
 # App Aliases - Darwin-only system module
 # Creates aliases in ~/Applications for home-manager apps so Spotlight can find them
-{ config, lib, pkgs, ... }:
-let
-  cfg = config.systemDarwin.app-aliases;
+{ lib, pkgs, config, ... }@args:
 
-  # Get enabled users to apply home.activation to each
+let
   enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
 in
-{
-  options.systemDarwin.app-aliases = {
-    enable = lib.mkEnableOption "Spotlight-compatible aliases for home-manager apps";
+lib.my.mkSystemModuleV2 args {
+  namespace = "darwin";
+  description = "Spotlight-compatible aliases for home-manager apps";
 
+  extraOptions = {
     folder = lib.mkOption {
       type = lib.types.str;
       default = "Home Manager Apps";
@@ -18,8 +17,7 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    # Apply home.activation to all enabled users
+  module = cfg: {
     home-manager.users = lib.mapAttrs
       (username: _: {
         home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

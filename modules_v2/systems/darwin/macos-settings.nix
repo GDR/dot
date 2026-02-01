@@ -1,15 +1,12 @@
 # macOS system settings - Darwin-only system module
 # Keyboard, trackpad, dock, finder, and other macOS preferences
-{ config, lib, ... }:
-let
-  cfg = config.systemDarwin.macos-settings;
-in
-{
-  options.systemDarwin.macos-settings = {
-    enable = lib.mkEnableOption "macOS system settings (keyboard, trackpad, dock, finder)";
-  };
+{ lib, ... }@args:
 
-  config = lib.mkIf cfg.enable {
+lib.my.mkSystemModuleV2 args {
+  namespace = "darwin";
+  description = "macOS system settings (keyboard, trackpad, dock, finder)";
+
+  module = _: {
     # Global settings
     system.defaults.NSGlobalDomain = {
       # Keyboard: fast key repeat

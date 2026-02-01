@@ -1,15 +1,14 @@
 # Sound/Audio - Linux system module (PipeWire)
-{ config, pkgs, lib, ... }: with lib;
-let
-  cfg = config.systemLinux.sound;
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
-in
-{
-  options.systemLinux.sound = {
-    enable = mkEnableOption "PipeWire audio with ALSA and PulseAudio emulation";
-  };
+{ lib, pkgs, config, ... }@args:
 
-  config = mkIf cfg.enable {
+let
+  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
+in
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "PipeWire audio with ALSA and PulseAudio emulation";
+
+  module = _: {
     # Enable PipeWire with ALSA and Pulse emulation
     services.pipewire = {
       enable = true;
@@ -23,7 +22,7 @@ in
     security.rtkit.enable = true;
 
     # Audio control apps for users
-    home-manager.users = mapAttrs
+    home-manager.users = lib.mapAttrs
       (name: _: {
         home.packages = with pkgs; [
           pavucontrol
