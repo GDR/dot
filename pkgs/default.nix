@@ -8,6 +8,8 @@ let
 
   common = {
     apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
+    # Custom pre-commit to avoid Swift dependency on Darwin
+    pre-commit = pkgs.callPackage ./pre-commit { };
   };
   linux = {
     lmstudio = pkgs.callPackage ./lmstudio { };

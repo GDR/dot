@@ -69,23 +69,9 @@
       devShells = forAllSystems (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          pre-commit-hooks = import ./pre-commit.nix { inherit pkgs; };
+          customPkgs = import ./pkgs { inherit pkgs lib system; };
         in
-        {
-          default = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              nixpkgs-fmt
-              pre-commit
-              direnv
-            ];
-            shellHook = ''
-              if [ -f .envrc ]; then
-                direnv allow 2>/dev/null
-              fi
-              pre-commit install -f --hook-type pre-commit >/dev/null 2>&1
-            '';
-          };
-        }
+        import ./devShells.nix { inherit pkgs customPkgs; }
       );
 
       # Host configurations

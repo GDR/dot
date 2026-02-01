@@ -222,7 +222,7 @@
         let
           cfg = foldl' (acc: part: acc.${part} or { }) config.modules parts;
         in
-        cfg.enable or false;
+          cfg.enable or false;
 
       anyGlobalPathEnabled = any checkPathEnable allPaths;
 
@@ -233,7 +233,7 @@
         let
           cfg = foldl' (acc: part: acc.${part} or { }) userModules parts;
         in
-        cfg.enable or false;
+          cfg.enable or false;
 
       anyUserHasPathEnabled = any
         (ucfg:
@@ -264,7 +264,7 @@
         let
           cfg = foldl' (acc: part: acc.${part} or { }) userModules parts;
         in
-        cfg.enable or false;
+          cfg.enable or false;
     in
     filterAttrs
       (name: ucfg:
@@ -482,11 +482,11 @@
   mkSystemModuleV2 = args:
     { namespace  # "all" | "darwin" | "linux"
     , description ? null
-    , module ? (_: {})
+    , module ? (_: { })
     , moduleLinux ? null  # Linux-specific additions (for namespace = "all")
     , moduleDarwin ? null  # Darwin-specific additions (for namespace = "all")
-    , extraOptions ? {}
-    , imports ? []
+    , extraOptions ? { }
+    , imports ? [ ]
     }:
     let
       inherit (args) config system _modulePath;
@@ -528,10 +528,10 @@
       pathParts = splitString "." transformedPath;
 
       # Get module config
-      cfg = foldl' (acc: part: acc.${part} or {}) config pathParts;
+      cfg = foldl' (acc: part: acc.${part} or { }) config pathParts;
 
       # Get enabled users for modules that need home-manager access
-      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or {});
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
     in
     {
       inherit imports;
@@ -553,11 +553,11 @@
           resolvedLinux =
             if moduleLinux != null && isLinux then
               (if isFunction moduleLinux then moduleLinux cfg else moduleLinux)
-            else {};
+            else { };
           resolvedDarwin =
             if moduleDarwin != null && isDarwin then
               (if isFunction moduleDarwin then moduleDarwin cfg else moduleDarwin)
-            else {};
+            else { };
         in
         mkMerge [
           resolvedModule
