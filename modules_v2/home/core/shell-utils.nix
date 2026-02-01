@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "core" ];
   platforms = [ "linux" "darwin" ];
   description = "Essential shell utilities (bat, fzf, wget, direnv)";
   module = {

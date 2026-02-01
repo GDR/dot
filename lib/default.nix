@@ -3,8 +3,6 @@
   moduleRegistry = import ./moduleRegistry.nix { inherit lib; };
 
   # Re-export module registry functions for convenience
-  resolveEnabledModules = moduleRegistry.resolveEnabledModules;
-  modulesByTags = moduleRegistry.modulesByTags;
   pathToConfigParts = moduleRegistry.pathToConfigParts;
 
   # Build module registry from a directory
@@ -164,18 +162,16 @@
       })
     ];
 
-  # Module metadata structure
+  # Module metadata structure (for registry/discovery)
   mkModuleMeta =
     { requires ? [ ]
     , # List of module paths: ["home.shell.git", "home.utils.bazel"]
       platforms ? [ "linux" "darwin" ]
-    , tags ? [ ]
-    , # List of tags: ["media", "ui", "desktop"]
-      scope ? "user"
+    , scope ? "user"
     , # "system" = system services/drivers, "user" = home.packages
       description ? null
     }: {
-      inherit requires platforms tags scope description;
+      inherit requires platforms scope description;
     };
 
   # Helper to derive config accessor from module path
@@ -190,75 +186,86 @@
       cfg = cfgAccessor;
     };
 
-  # Check if a module should be enabled based on its config, tags, and explicit enables
-  # Also checks per-user tags in hostUsers.<name>.tags and per-user module options
+  # Check if a module should be enabled based on hierarchical path enables
+  # A module is enabled if:
+  #   - Its own .enable is true (modules.home.browsers.vivaldi.enable)
+  #   - OR any parent path .enable is true (modules.home.browsers.enable, modules.home.enable)
+  #   - OR any user has it enabled via hostUsers.<user>.modules.<path>.enable
+  #
   # Usage (inside config block):
   #   shouldEnable = lib.my.shouldEnableModule {
   #     inherit config;
   #     modulePath = "home.media.vlc";
-  #     moduleTags = [ "media" ];
   #   };
-  shouldEnableModule = { config, modulePath, moduleTags }:
+  shouldEnableModule = { config, modulePath, moduleTags ? [ ] }:
     let
       pathParts = splitString "." modulePath;
-      cfg = foldl (acc: part: acc.${part} or { }) config.modules pathParts;
 
-      # Global tags (modules.tags)
-      globalTags = config.modules.tags or { enable = [ ]; explicit = [ ]; };
+      # Generate all parent paths: ["home", "home.browsers", "home.browsers.vivaldi"]
+      # We check .enable on each of these
+      generatePaths = parts:
+        let
+          indices = genList (i: i + 1) (length parts);
+        in
+        map (i: take i parts) indices;
 
-      # Per-user tags (hostUsers.<name>.tags)
+      allPaths = generatePaths pathParts;
+
+      # Check if any path (including parents) has .enable = true in config.modules
+      checkPathEnable = parts:
+        let
+          cfg = foldl' (acc: part: acc.${part} or { }) config.modules parts;
+        in
+        cfg.enable or false;
+
+      anyGlobalPathEnabled = any checkPathEnable allPaths;
+
+      # Per-user check: same logic but in hostUsers.<user>.modules
       enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or { });
-      userTagsLists = mapAttrsToList (name: ucfg: ucfg.tags or { enable = [ ]; explicit = [ ]; }) enabledUsers;
 
-      # Check if any user has this module's tag enabled
-      anyUserHasTag = any (userTags: any (tag: elem tag (userTags.enable or [ ])) moduleTags) userTagsLists;
-      anyUserHasExplicit = any (userTags: elem modulePath (userTags.explicit or [ ])) userTagsLists;
+      checkUserPathEnable = userModules: parts:
+        let
+          cfg = foldl' (acc: part: acc.${part} or { }) userModules parts;
+        in
+        cfg.enable or false;
 
-      # Check if any user has this module enabled via hostUsers.<name>.modules.<module_path>.enable
-      # Traverse the nested path in each user's modules configuration
-      checkUserModulePath = userModules: pathParts:
-        if pathParts == [ ] then
-        # At the end of the path, check for .enable
-          if isAttrs userModules then userModules.enable or false
-          else false
-        else
-          let
-            firstPart = head pathParts;
-            restParts = tail pathParts;
-            userModulePart = if isAttrs userModules then userModules.${firstPart} or null else null;
-          in
-          if userModulePart == null || !(isAttrs userModulePart) then false
-          else checkUserModulePath userModulePart restParts;
-
-      anyUserHasModuleEnabled = any
+      anyUserHasPathEnabled = any
         (ucfg:
           let
             userModules = ucfg.modules or { };
           in
-          checkUserModulePath userModules pathParts
+          any (path: checkUserPathEnable userModules path) allPaths
         )
         (attrValues enabledUsers);
     in
-    cfg.enable or false
-    || any (tag: elem tag globalTags.enable) moduleTags
-    || elem modulePath globalTags.explicit
-    || anyUserHasTag
-    || anyUserHasExplicit
-    || anyUserHasModuleEnabled;
+    anyGlobalPathEnabled || anyUserHasPathEnabled;
 
-  # Get list of users who have a module enabled via tags
-  # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath moduleTags; };
-  getUsersWithModule = { config, modulePath, moduleTags }:
+  # Get list of users who have a module enabled (via any path level)
+  # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath; };
+  getUsersWithModule = { config, modulePath, moduleTags ? [ ] }:
     let
+      pathParts = splitString "." modulePath;
+      generatePaths = parts:
+        let
+          indices = genList (i: i + 1) (length parts);
+        in
+        map (i: take i parts) indices;
+      allPaths = generatePaths pathParts;
+
       enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or { });
+
+      checkUserPathEnable = userModules: parts:
+        let
+          cfg = foldl' (acc: part: acc.${part} or { }) userModules parts;
+        in
+        cfg.enable or false;
     in
     filterAttrs
       (name: ucfg:
         let
-          userTags = ucfg.tags or { enable = [ ]; explicit = [ ]; };
+          userModules = ucfg.modules or { };
         in
-        any (tag: elem tag (userTags.enable or [ ])) moduleTags
-        || elem modulePath (userTags.explicit or [ ])
+        any (path: checkUserPathEnable userModules path) allPaths
       )
       enabledUsers;
 
@@ -329,47 +336,34 @@
 
   # Complete module wrapper for modules_v2
   # Returns { meta, options, config, imports? } - the entire module structure
+  #
+  # Modules are enabled hierarchically:
+  #   - modules.home.browsers.vivaldi.enable = true  (specific module)
+  #   - modules.home.browsers.enable = true          (all browsers)
+  #   - modules.home.enable = true                   (all home modules)
+  #   - hostUsers.<user>.modules.home.browsers.enable = true (per-user)
+  #
   # Usage:
   #   { lib, pkgs, ... }@args:
   #   lib.my.mkModuleV2 args {
-  #     tags = [ "terminal" ];
   #     description = "Ghostty terminal emulator";
   #     module = {
   #       nixosSystems.home.packages = [ pkgs.ghostty ];
   #       darwinSystems.homebrew.casks = [ "ghostty" ];
   #     };
-  #     systemModule = {
-  #       nixosSystems = {
-  #         programs.nixvim.enable = true;  # Linux system-level config
-  #       };
-  #       darwinSystems = {
-  #         # macOS system-level config
-  #       };
-  #       allSystems = {
-  #         # Both platforms system-level config
-  #       };
-  #     };
   #     dotfiles = {
   #       path = "ghostty";
   #       source = "modules_v2/home/terminal/ghostty/dotfiles";
-  #       target = "~/.config/ghostty";  # explicit target path (defaults to ~/.config/${path} if not specified)
   #     };
   #     extraOptions = {
   #       showHostname = mkOption { default = true; type = types.bool; };
   #     };
-  #     imports = [ ./dotfiles/config.nix ];  # Optional: module imports
-  #     # module can be attrset OR function (cfg -> attrset) to access options
-  #     module = cfg: { ... };
-  #     # systemModule can be attrset OR function (cfg -> attrset) to access options
-  #     # Supports platform sections: allSystems, nixosSystems, darwinSystems
-  #     systemModule = cfg: { ... };
   #   }
   # Module sections: allSystems, nixosSystems, darwinSystems
   # home.* config is automatically routed to all enabled hostUsers
   mkModuleV2 = args:
-    { tags
-    , requires ? [ ]
-    , platforms ? [ "linux" "darwin" ]
+    { platforms ? [ "linux" "darwin" ]
+    , requires ? [ ]  # List of module paths this module depends on
     , description ? null
     , module ? { }
     , systemModule ? { }
@@ -382,7 +376,6 @@
       inherit (args) lib;
       self = args.self or null;
       modulePath = _modulePath;
-      moduleTags = tags;
 
       # Get module config (for accessing options)
       pathParts = splitString "." modulePath;
@@ -398,19 +391,20 @@
       inherit imports;
 
       meta = mkModuleMeta {
-        inherit requires platforms tags description;
+        inherit requires platforms description;
       };
 
       options = mkModuleOptions modulePath ({
         enable = mkOption {
           default = false;
           type = bool;
+          description = description;
         };
       } // extraOptions);
 
       config =
         let
-          shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
+          shouldEnable = shouldEnableModule { inherit config modulePath; };
         in
         mkIf shouldEnable (
           let

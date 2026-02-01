@@ -6,7 +6,6 @@ let
   enabledUsernames = attrNames enabledUsers;
 in
 lib.my.mkModuleV2 args {
-  tags = [ "shells" ];
   platforms = [ "linux" "darwin" ];
   description = "Zsh shell configuration with oh-my-zsh and zplug";
   extraOptions = {

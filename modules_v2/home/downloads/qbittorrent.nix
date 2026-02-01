@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "downloads" ];
   platforms = [ "linux" "darwin" ];
   description = "qBittorrent torrent client";
   module = {

@@ -21,18 +21,18 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # Per-user tags (enables user-scope modules for this user)
-    tags.enable = [
-      "browsers"
-      "core"
-      "desktop-utils"
-      "downloads"
-      "editors-terminal"
-      "editors-ui"
-      "messengers"
-      "security"
-      "shells"
-    ];
+    # Hierarchical module enables
+    modules = {
+      home.browsers.enable = true;
+      home.core.enable = true;
+      home.desktop.enable = true;  # was desktop-utils
+      home.downloads.enable = true;
+      home.editors.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+    };
   };
 
   networking.hostName = "mac-brightstar";

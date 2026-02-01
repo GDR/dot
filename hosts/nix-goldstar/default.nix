@@ -19,23 +19,21 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # Per-user tags (enables user-scope modules for this user)
-    tags.enable = [
-      "browsers"
-      "core"
-      "desktop-utils-wayland"
-      "desktop-utils"
-      "downloads"
-      "editors-terminal"
-      "editors-ui"
-      "games"
-      "media"
-      "messengers"
-      "oci-containers"
-      "security"
-      "shells"
-      "terminal"
-    ];
+    # Hierarchical module enables
+    modules = {
+      home.browsers.enable = true;
+      home.core.enable = true;
+      home.desktop.enable = true;
+      home.downloads.enable = true;
+      home.editors.enable = true;
+      home.games.enable = true;
+      home.media.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+      home.virtualisation.enable = true;
+    };
   };
 
   networking.hostName = "nix-goldstar";

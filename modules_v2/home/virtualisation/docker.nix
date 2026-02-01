@@ -5,7 +5,6 @@ let
   enabledUsernames = attrNames enabledUsers;
 in
 lib.my.mkModuleV2 args {
-  tags = [ "oci-containers" ];
   platforms = [ "linux" "darwin" ];
   description = "Docker container runtime";
   systemModule = {

@@ -5,7 +5,6 @@ let
   isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
 in
 lib.my.mkModuleV2 args {
-  tags = [ "browsers" ];
   platforms = [ "linux" "darwin" ];
   description = "Chromium web browser";
   module = {

@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "terminal" ];
   description = "Ghostty terminal emulator";
   module = {
     nixosSystems.home.packages = [ pkgs.ghostty ];

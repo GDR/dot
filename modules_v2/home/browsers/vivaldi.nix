@@ -53,7 +53,6 @@ let
   ];
 in
 lib.my.mkModuleV2 args {
-  tags = [ "browsers" ];
   platforms = [ "linux" "darwin" ];
   description = "Vivaldi web browser with extensions";
 

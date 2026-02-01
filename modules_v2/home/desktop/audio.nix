@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "desktop-utils" ];
   platforms = [ "linux" ];
   description = "Audio control utilities (pamixer, pavucontrol)";
   module = {

@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/check-runs/gdr/dot/master?style=flat-square&label=CI)](https://github.com/GDR/dot/actions)
 
-Personal NixOS & nix-darwin configuration with a modular, tag-based architecture.
+Personal NixOS & nix-darwin configuration with a modular, hierarchical architecture.
 
 ### Why Nix?
 
@@ -22,9 +22,8 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
 ## ✨ Features
 
 - 🖥️ **Multi-platform** — Same structure for NixOS and macOS (nix-darwin)
-- 👥 **Multi-user ready** — Each user can have different tags/modules enabled
-- 🏷️ **Tag-based modules** — Enable packages per-user with simple tags like `"editors-ui"`, `"games"`
-- ⚙️ **Per-user module config** — Fine-grained control with `hostUsers.<name>.modules.<path>.enable`
+- 👥 **Multi-user ready** — Each user can have different modules enabled
+- 🎯 **Hierarchical enables** — Enable at any path level: `home.browsers.enable` or `home.browsers.vivaldi.enable`
 - ✏️ **Live-editable dotfiles** — Config files are symlinked to this repo, edit in place without rebuild
 - 🔍 **Auto-discovery** — Drop a `.nix` file in any module directory, it's automatically imported
 
@@ -42,7 +41,6 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
   - [Per-User Module Configuration](#per-user-module-configuration)
   - [Create a New Module](#create-a-new-module)
 - [Host Configuration](#-host-configuration)
-- [Tags Reference](#-tags-reference)
 - [License](#-license)
 
 ---
@@ -82,7 +80,6 @@ darwin-rebuild switch --flake .#<hostname>
 ├── lib/
 │   ├── default.nix           # Helper functions (mkModule, mkDotfilesSymlink)
 │   └── modules_v2/
-│       ├── tags.nix          # Tag system options
 │       └── user.nix          # hostUsers options & home-manager setup
 ├── modules_v2/
 │   ├── systems/
@@ -102,7 +99,7 @@ darwin-rebuild switch --flake .#<hostname>
 │   │   │   ├── networking/
 │   │   │   └── sound.nix
 │   │   └── darwin/           # macOS-only system modules
-│   └── home/                 # User-level modules (enabled via tags)
+│   └── home/                 # User-level modules (enabled hierarchically)
 │       ├── browsers/
 │       ├── core/
 │       ├── desktop/
@@ -123,7 +120,7 @@ darwin-rebuild switch --flake .#<hostname>
 | **System (All)** | `systems/all/` | `systemAll.<name>.enable` | System-wide, cross-platform |
 | **System (Linux)** | `systems/linux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
 | **System (Darwin)** | `systems/darwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
-| **User** | `home/` | `hostUsers.<user>.tags.enable` or `hostUsers.<user>.modules.<path>.enable` | Per-user via tags or explicit config |
+| **User** | `home/` | `hostUsers.<user>.modules.<path>.enable` | Per-user, hierarchical enables |
 
 ---
 
@@ -157,17 +154,14 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    tags.enable = [
-      "core"
-      "shells"
-      "editors-terminal"
-      # Add more tags as needed
-    ];
-    # Optional: Per-user module configuration
-    # modules = {
-    #   home.media.vlc.enable = true;
-    #   home.editors.neovim.enable = true;
-    # };
+    # Hierarchical module enables
+    modules = {
+      home.core.enable = true;
+      home.shell.enable = true;
+      home.editors.enable = true;
+      # Or enable specific modules:
+      # home.browsers.vivaldi.enable = true;
+    };
   };
 
   networking.hostName = "my-new-host";
@@ -236,11 +230,11 @@ hostUsers.newuser = importUser "newuser" // {
     purpose = [ "git" "ssh" ];
     isDefault = true;
   }];
-  tags.enable = [ "core" "shells" ];
-  # Per-user module configuration (alternative to tags)
+  # Hierarchical module enables
   modules = {
-    home.media.vlc.enable = true;
-    home.editors.neovim.enable = true;
+    home.core.enable = true;
+    home.shell.enable = true;
+    home.media.vlc.enable = true;  # specific module
   };
 };
 ```
@@ -249,29 +243,28 @@ hostUsers.newuser = importUser "newuser" // {
 
 ### Per-User Module Configuration
 
-In addition to tag-based enabling, you can explicitly configure modules per-user using the `modules` option:
+Configure modules per-user using hierarchical enables:
 
 ```nix
 hostUsers.dgarifullin = importUser "dgarifullin" // {
   enable = true;
 
-  # Option 1: Enable via tags (enables all modules with matching tags)
-  tags.enable = [ "media" "editors-terminal" ];
-
-  # Option 2: Enable specific modules explicitly
   modules = {
-    home.media.vlc.enable = true;
-    home.editors.neovim.enable = true;
-    home.browsers.chromium.enable = true;
-  };
+    # Enable entire categories
+    home.browsers.enable = true;     # enables vivaldi, chromium, etc.
+    home.editors.enable = true;      # enables neovim, cursor, etc.
 
-  # Both methods work together - modules are enabled if either condition is met
+    # Or enable specific modules
+    home.media.vlc.enable = true;    # just vlc
+    home.media.spotify.enable = true;
+  };
 };
 ```
 
-**When to use tags vs modules:**
-- **Tags**: Enable multiple related modules at once (e.g., `"media"` enables vlc, spotify, etc.)
-- **Modules**: Enable specific modules or override tag-based behavior for fine-grained control
+**Hierarchical enables:**
+- `home.enable = true` → enables ALL home modules
+- `home.browsers.enable = true` → enables all browsers
+- `home.browsers.vivaldi.enable = true` → enables just vivaldi
 
 Module paths follow the directory structure: `home.<category>.<module-name>`
 
@@ -279,44 +272,24 @@ Module paths follow the directory structure: `home.<category>.<module-name>`
 
 ### Create a New Module
 
-#### User Module (tag-based)
+#### User Module
 
 ```nix
 # modules_v2/home/tools/my-tool.nix
-{ config, pkgs, lib, system, _modulePath, ... }: with lib;
-let
-  mkModule = lib.my.mkModule system config;
-  modulePath = _modulePath;
-  moduleTags = [ "tools" ];  # Tag for enabling
-in
-{
-  meta = lib.my.mkModuleMeta {
-    tags = moduleTags;
-    platforms = [ "linux" "darwin" ];
-    description = "My awesome tool";
+{ lib, pkgs, ... }@args:
+
+lib.my.mkModuleV2 args {
+  description = "My awesome tool";
+  platforms = [ "linux" "darwin" ];  # optional, defaults to both
+
+  module = {
+    # Cross-platform config (goes to home-manager.users.*)
+    allSystems.home.packages = [ pkgs.my-tool ];
+
+    # Or platform-specific
+    nixosSystems.programs.my-tool.enable = true;
+    darwinSystems.homebrew.casks = [ "my-tool" ];
   };
-
-  options = lib.my.mkModuleOptions modulePath {
-    enable = mkOption {
-      default = false;
-      type = types.bool;
-    };
-  };
-
-  config =
-    let
-      shouldEnable = lib.my.shouldEnableModule { inherit config modulePath moduleTags; };
-    in
-    mkIf shouldEnable (mkModule {
-      # User packages (goes to home-manager.users.*)
-      allSystems.home.packages = [ pkgs.my-tool ];
-
-      # Darwin-specific
-      darwinSystems.homebrew.casks = [ "my-tool" ];
-
-      # Programs config (home-manager)
-      nixosSystems.programs.my-tool.enable = true;
-    });
 }
 ```
 
@@ -401,30 +374,34 @@ Edit the files directly, changes apply immediately (no `nixos-rebuild` needed)!
 
 ---
 
-## 🏷 Tags Reference
+## 📂 Module Reference
 
-Enable tags per-user in host config:
+Enable modules hierarchically per-user:
 
 ```nix
-hostUsers.myuser.tags.enable = [ "core" "shells" "editors-ui" ];
+hostUsers.myuser.modules = {
+  home.browsers.enable = true;    # enables all browsers
+  home.core.enable = true;        # enables htop, shell-utils
+  home.shell.enable = true;       # enables zsh, tmux
+  home.editors.neovim.enable = true;  # specific module
+};
 ```
 
-| Tag | Modules |
-|-----|---------|
-| `core` | htop, shell-utils (bat, fzf, wget, direnv) |
-| `shells` | zsh with oh-my-zsh, zplug, tmux |
-| `terminal` | ghostty |
-| `browsers` | chromium |
-| `editors-ui` | cursor |
-| `editors-terminal` | neovim (nixvim) |
-| `desktop-utils` | rofi, dunst, brightnessctl, pamixer |
-| `desktop-utils-wayland` | grim, slurp, wl-clipboard, waybar |
-| `media` | vlc, spotify |
-| `messengers` | telegram |
-| `games` | steam, gamescope |
-| `security` | keepassxc, bitwarden |
-| `downloads` | qbittorrent |
-| `oci-containers` | docker |
+| Path | Modules |
+|------|---------|
+| `home.core` | htop, shell-utils (bat, fzf, wget, direnv) |
+| `home.shell` | zsh with oh-my-zsh, zplug, tmux |
+| `home.terminal` | ghostty |
+| `home.browsers` | chromium, vivaldi |
+| `home.editors` | cursor, neovim (nixvim) |
+| `home.desktop` | rofi, dunst, brightnessctl, pamixer, wayland-utils |
+| `home.media` | vlc, spotify |
+| `home.messengers` | telegram |
+| `home.games` | steam |
+| `home.security` | keepassxc, bitwarden |
+| `home.downloads` | qbittorrent |
+| `home.virtualisation` | docker |
+| `home.utils` | raycast (darwin), macfuse (darwin) |
 
 ---
 

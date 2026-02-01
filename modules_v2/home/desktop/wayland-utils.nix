@@ -3,7 +3,6 @@
 { lib, pkgs, config, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "desktop-utils-wayland" ];
   platforms = [ "linux" ];
   description = "Wayland-specific utilities - screenshots, status bar, wallpaper";
   module = cfg:

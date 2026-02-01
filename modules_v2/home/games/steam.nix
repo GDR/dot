@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args: with lib;
 
 lib.my.mkModuleV2 args {
-  tags = [ "games" ];
   platforms = [ "linux" ];
   description = "Steam gaming platform with Gamescope support";
   requires = [ "systemLinux.graphics.nvidia" ]; # Better gaming with proper GPU drivers

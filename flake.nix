@@ -139,7 +139,6 @@
             ++ mkSystemModules ./modules_v2/systems/darwin
             ++ [
             # Import foundational modules separately (not package modules)
-            ./lib/modules_v2/tags.nix
             ./lib/modules_v2/user.nix
           ];
         };
@@ -170,7 +169,6 @@
             ++ mkSystemModules ./modules_v2/systems/linux
             ++ [
             # Import foundational modules separately (not package modules)
-            ./lib/modules_v2/tags.nix
             ./lib/modules_v2/user.nix
           ];
         };

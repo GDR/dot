@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "security" ];
   description = "KeePassXC password manager";
   module = {
     allSystems = {

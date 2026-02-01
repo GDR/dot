@@ -2,7 +2,6 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "editors-terminal" ];
   platforms = [ "linux" "darwin" ];
   description = "Neovim editor with nixvim configuration";
   imports = [

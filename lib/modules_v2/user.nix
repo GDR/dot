@@ -84,35 +84,20 @@ let
         description = "Extra groups for the user (Linux only)";
       };
 
-      # Per-user tags for enabling user-scope modules
-      tags = {
-        enable = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Enable user modules with these tags";
-          example = [ "core" "media" "editors" ];
-        };
-        explicit = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Explicitly enable these user modules by path";
-          example = [ "editors.neovim" "media.vlc" ];
-        };
-      };
-
-      # Per-user explicit module configuration
-      # Allows configuring modules like: modules.home.media.vlc.enable = true
+      # Per-user module configuration (hierarchical enables)
+      # Enable at any level: home.browsers.enable (all browsers) or home.browsers.vivaldi.enable (specific)
       modules = mkOption {
         type = buildModuleOptions modulesV2Registry;
         default = { };
         description = ''
-          Explicit module configuration for this user.
-          Example: modules.home.media.vlc.enable = true;
+          Module configuration for this user.
+          Enable at any path level - parent enables cascade to children.
+          Example: modules.home.browsers.enable = true (enables all browsers)
         '';
         example = literalExpression ''
           {
-            home.media.vlc.enable = true;
-            home.editors.neovim.enable = true;
+            home.browsers.enable = true;        # all browsers
+            home.editors.neovim.enable = true;  # specific editor
           }
         '';
       };
@@ -126,7 +111,7 @@ in
     default = { };
     description = ''
       Users to configure on this host.
-      Each user can have their own set of modules enabled via tags.
+      Each user can have their own set of modules enabled hierarchically.
     '';
     example = literalExpression ''
       {
@@ -141,11 +126,10 @@ in
             purpose = [ "git" "ssh" ];
             isDefault = true;
           }];
-          tags.enable = [ "core" "media" ];
-          # Per-user module configuration
+          # Hierarchical module enables
           modules = {
-            home.media.vlc.enable = true;
-            home.editors.neovim.enable = true;
+            home.browsers.enable = true;        # enables all browsers
+            home.editors.neovim.enable = true;  # specific module
           };
         };
       }
