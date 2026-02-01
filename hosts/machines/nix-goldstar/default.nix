@@ -9,7 +9,7 @@ in
   ];
 
   # Enable user via hostUsers (new system)
-  # Defaults from hosts/_users/<name>.nix, host-specific overrides here
+  # Defaults from hosts/users/<name>.nix, host-specific overrides here
   hostUsers.dgarifullin = importUser "dgarifullin" // {
     enable = true;
     # Host-specific: SSH key for this machine

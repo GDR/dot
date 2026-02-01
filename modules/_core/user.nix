@@ -140,22 +140,36 @@ in
   config = mkIf (enabledUsers != { }) ({
     # Create users.users entries for each enabled hostUser
     # Note: Darwin users are managed differently - only set Linux-specific options on Linux
-    users.users = mapAttrs
-      (name: cfg:
-        if isLinux then {
-          name = name;
-          isNormalUser = true;
-          home = "/home/${name}";
-          group = "users";
-          uid = 1000; # TODO: support multiple users with different UIDs
-          extraGroups = cfg.extraGroups;
-        } else {
-          # Darwin: minimal user config, home-manager handles the rest
-          name = name;
-          home = "/Users/${name}";
-        }
-      )
-      enabledUsers;
+    users.users =
+      let
+        # Generate UIDs starting from 1000, incrementing for each user
+        # This ensures unique UIDs for multiple users
+        userNames = attrNames enabledUsers;
+        # Helper to create UID mapping: first user gets 1000, second gets 1001, etc.
+        createUidMap = names: idx:
+          if names == [ ] then { }
+          else
+            (createUidMap (tail names) (idx + 1)) // {
+              ${head names} = 1000 + idx;
+            };
+        uidMap = createUidMap userNames 0;
+      in
+      mapAttrs
+        (name: cfg:
+          if isLinux then {
+            name = name;
+            isNormalUser = true;
+            home = "/home/${name}";
+            group = "users";
+            uid = uidMap.${name};
+            extraGroups = cfg.extraGroups;
+          } else {
+            # Darwin: minimal user config, home-manager handles the rest
+            name = name;
+            home = "/Users/${name}";
+          }
+        )
+        enabledUsers;
 
     # Add users to nix trusted/allowed users
     nix.settings = {

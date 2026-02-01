@@ -28,21 +28,28 @@
 
       # Try to extract metadata from modules
       # Use the lib.my that's already available (passed from flake)
+      # Note: We use a dummy system for metadata extraction - modules should
+      # not depend on system-specific pkgs during registry building
       tryImportMeta = path:
         let
           # lib.my should already be available since this is called from lib.my context
           libWithMy = lib // { inherit (lib) my; };
+          # Use dummy system - modules should extract metadata without evaluating
+          # platform-specific code. If a module fails here, it's likely accessing
+          # pkgs or system in its top-level, which should be avoided.
           moduleResult = builtins.tryEval (import path {
             config = { };
             options = { };
             pkgs = { };
             lib = libWithMy;
-            system = "x86_64-linux";
+            system = "x86_64-linux"; # Dummy system for metadata extraction
           });
         in
         if moduleResult.success then
           (moduleResult.value._meta or moduleResult.value.meta or null)
-        else null;
+        else
+        # Log failures for debugging but don't break registry building
+          builtins.trace "Warning: Failed to extract metadata from ${toString path}: ${toString moduleResult.value}" null;
 
       modulesWithMeta = map
         (path:

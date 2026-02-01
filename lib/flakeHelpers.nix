@@ -19,17 +19,17 @@ let
     filtered;
 
   # Compute module path from file path for modules
-  # e.g., "/path/to/modules/home/core/htop.nix" -> "home.core.htop"
-  # e.g., "/path/to/modules/home/core/htop/htop.nix" -> "home.core.htop" (dedup)
+  # e.g., "/path/to/modules/home/cli/htop.nix" -> "home.cli.htop"
+  # e.g., "/path/to/modules/home/cli/htop/htop.nix" -> "home.cli.htop" (dedup)
   computeModulePath = filePath:
     let
       pathStr = toString filePath;
       # Check if this is a modules module
-      isModulesV2 = lib.hasInfix "modules/" pathStr;
+      isModulePath = lib.hasInfix "modules/" pathStr;
       # Extract path after modules/
-      afterModulesV2 = lib.last (lib.splitString "modules/" pathStr);
+      afterModules = lib.last (lib.splitString "modules/" pathStr);
       # Remove .nix and split into parts
-      withoutNix = lib.removeSuffix ".nix" afterModulesV2;
+      withoutNix = lib.removeSuffix ".nix" afterModules;
       parts = lib.splitString "/" withoutNix;
       # If last two parts are the same (e.g., htop/htop), deduplicate
       fileName = lib.last parts;
@@ -40,7 +40,7 @@ let
         else parts;
       modulePath = lib.concatStringsSep "." dedupedParts;
     in
-    if isModulesV2 then modulePath else null;
+    if isModulePath then modulePath else null;
 
   # Process module directories (like modules/home) that have a default.nix
   # exporting a .modules list
@@ -138,4 +138,3 @@ in
       ];
     };
 }
-
