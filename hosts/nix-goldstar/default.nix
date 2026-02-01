@@ -22,7 +22,7 @@ in
     # Hierarchical module enables
     modules = {
       home.browsers.enable = true;
-      home.core.enable = true;
+      home.cli.enable = true;
       home.desktop.enable = true;
       home.downloads.enable = true;
       home.editors.enable = true;
