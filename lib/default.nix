@@ -155,7 +155,7 @@
   #       nixosSystems.home.packages = [ pkgs.ghostty ];
   #       darwinSystems.homebrew.casks = [ "ghostty" ];
   #     };
-  #     dotfiles = { path = "ghostty"; source = "modules_v2/.../dotfiles"; };
+  #     dotfiles = { path = "ghostty"; source = "modules/.../dotfiles"; };
   #   });
   mkModuleConfig = { system, config, self ? null, module, dotfiles ? null }:
     mkMerge [
@@ -281,7 +281,7 @@
   #   config.home-manager.users = lib.my.mkDotfilesSymlink {
   #     inherit config self;
   #     path = "ghostty";                                    # used as fallback if target not specified
-  #     source = "modules_v2/home/terminal/ghostty/dotfiles";  # relative path in repo
+  #     source = "modules/home/terminal/ghostty/dotfiles";  # relative path in repo
   #     target = "~/.config/ghostty";                        # explicit target path (defaults to ~/.config/${path})
   #   };
   mkDotfilesSymlink = { config, self, path, source, target ? null }:
@@ -340,7 +340,7 @@
     in
     { modules = setAttrByPath pathParts opts; };
 
-  # Complete module wrapper for modules_v2
+  # Complete module wrapper for modules
   # Returns { meta, options, config, imports? } - the entire module structure
   #
   # Modules are enabled hierarchically:
@@ -359,7 +359,7 @@
   #     };
   #     dotfiles = {
   #       path = "ghostty";
-  #       source = "modules_v2/home/terminal/ghostty/dotfiles";
+  #       source = "modules/home/terminal/ghostty/dotfiles";
   #     };
   #     extraOptions = {
   #       showHostname = mkOption { default = true; type = types.bool; };

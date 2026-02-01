@@ -33,6 +33,6 @@ lib.my.mkModuleV2 args {
 
   dotfiles = {
     path = "tmux";
-    source = "modules_v2/home/shell/tmux/dotfiles";
+    source = "modules/home/shell/tmux/dotfiles";
   };
 }

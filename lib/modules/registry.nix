@@ -1,8 +1,8 @@
-# Build module registry from modules_v2 directory
+# Build module registry from modules directory
 # This is called during import time, not module evaluation time
 { lib }:
 let
-  modulesDir = ../../modules_v2/home;
+  modulesDir = ../../modules/home;
 
   # Use library function to build registry from the modules directory
   registry = lib.my.buildModuleRegistry modulesDir "home";

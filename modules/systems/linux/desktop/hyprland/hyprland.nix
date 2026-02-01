@@ -59,7 +59,7 @@ lib.my.mkSystemModuleV2 args {
       home-manager.users = lib.my.mkDotfilesSymlink {
         inherit config self;
         path = "hypr";
-        source = "modules_v2/systems/linux/desktop/hyprland/dotfiles";
+        source = "modules/systems/linux/desktop/hyprland/dotfiles";
       };
     }
   ];

@@ -79,9 +79,9 @@ darwin-rebuild switch --flake .#<hostname>
 │       └── default.nix
 ├── lib/
 │   ├── default.nix           # Helper functions (mkModule, mkDotfilesSymlink)
-│   └── modules_v2/
+│   └── modules/
 │       └── user.nix          # hostUsers options & home-manager setup
-├── modules_v2/
+├── modules/
 │   ├── systems/
 │   │   ├── all/              # Cross-platform system modules
 │   │   │   ├── fonts.nix
@@ -275,7 +275,7 @@ Module paths follow the directory structure: `home.<category>.<module-name>`
 #### User Module
 
 ```nix
-# modules_v2/home/tools/my-tool.nix
+# modules/home/tools/my-tool.nix
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
@@ -296,7 +296,7 @@ lib.my.mkModuleV2 args {
 #### System Module (Linux)
 
 ```nix
-# modules_v2/systems/linux/services/my-service.nix
+# modules/systems/linux/services/my-service.nix
 { lib, pkgs, config, ... }@args:
 
 let
@@ -329,7 +329,7 @@ Modules are **auto-discovered** recursively! Just create your `.nix` file in the
 Store config files in the repo and symlink them so you can **edit without rebuilding**:
 
 ```
-modules_v2/home/terminal/ghostty/
+modules/home/terminal/ghostty/
 ├── ghostty.nix
 └── dotfiles/
     ├── config
@@ -351,14 +351,14 @@ In your module, use `mkDotfilesSymlink`:
       home-manager.users = lib.my.mkDotfilesSymlink {
         inherit config self;
         path = "ghostty";                                      # ~/.config/ghostty
-        source = "modules_v2/home/terminal/ghostty/dotfiles"; # repo path
+        source = "modules/home/terminal/ghostty/dotfiles"; # repo path
       };
     }
   ]);
 }
 ```
 
-Now `~/.config/ghostty` → `/path/to/repo/modules_v2/home/terminal/ghostty/dotfiles`
+Now `~/.config/ghostty` → `/path/to/repo/modules/home/terminal/ghostty/dotfiles`
 
 Edit the files directly, changes apply immediately (no `nixos-rebuild` needed)!
 

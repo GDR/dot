@@ -56,7 +56,7 @@ lib.my.mkSystemModuleV2 args {
         # Link awesome config (live-editable symlink to repo)
         xdg.configFile."awesome".source =
           config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink
-            "${self.outPath}/modules_v2/systems/linux/desktop/awesomewm/dotfiles";
+            "${self.outPath}/modules/systems/linux/desktop/awesomewm/dotfiles";
       })
       enabledUsers;
   };

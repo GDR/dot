@@ -102,6 +102,6 @@ lib.my.mkModuleV2 args {
   };
   dotfiles = {
     path = "zsh";
-    source = "modules_v2/home/shell/zsh/dotfiles";
+    source = "modules/home/shell/zsh/dotfiles";
   };
 }

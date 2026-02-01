@@ -8,7 +8,7 @@ let
   # Helper to wrap a module file and filter out 'meta' attribute
   # NixOS modules don't allow arbitrary top-level attributes
   # Accept all possible module arguments and forward them
-  # computedModulePath is passed for modules_v2 modules
+  # computedModulePath is passed for modules modules
   wrapModuleFile = filePath: computedModulePath: { config ? null, options ? null, pkgs ? null, lib ? null, system ? null, inputs ? null, overlays ? null, home-manager ? null, hardware ? null, nixpkgs ? null, ... }@args:
     let
       # Import the actual module with all arguments plus computed path
@@ -18,16 +18,16 @@ let
     in
     filtered;
 
-  # Compute module path from file path for modules_v2
-  # e.g., "/path/to/modules_v2/home/core/htop.nix" -> "home.core.htop"
-  # e.g., "/path/to/modules_v2/home/core/htop/htop.nix" -> "home.core.htop" (dedup)
+  # Compute module path from file path for modules
+  # e.g., "/path/to/modules/home/core/htop.nix" -> "home.core.htop"
+  # e.g., "/path/to/modules/home/core/htop/htop.nix" -> "home.core.htop" (dedup)
   computeModulePath = filePath:
     let
       pathStr = toString filePath;
-      # Check if this is a modules_v2 module
-      isModulesV2 = lib.hasInfix "modules_v2/" pathStr;
-      # Extract path after modules_v2/
-      afterModulesV2 = lib.last (lib.splitString "modules_v2/" pathStr);
+      # Check if this is a modules module
+      isModulesV2 = lib.hasInfix "modules/" pathStr;
+      # Extract path after modules/
+      afterModulesV2 = lib.last (lib.splitString "modules/" pathStr);
       # Remove .nix and split into parts
       withoutNix = lib.removeSuffix ".nix" afterModulesV2;
       parts = lib.splitString "/" withoutNix;
@@ -42,7 +42,7 @@ let
     in
     if isModulesV2 then modulePath else null;
 
-  # Process module directories (like modules_v2/home) that have a default.nix
+  # Process module directories (like modules/home) that have a default.nix
   # exporting a .modules list
   mkConfigurationModules = lib.concatMap
     (moduleDirPath:
@@ -76,7 +76,7 @@ let
       moduleFiles;
 
   # Build registry during import time (not module evaluation time)
-  modulesV2Registry = (import ./modules_v2/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
+  modulesV2Registry = (import ./modules/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
 
 in
 {
@@ -99,13 +99,13 @@ in
         nixvim.nixDarwinModules.nixvim
       ]
         ++ mkConfigurationModules [
-        ../modules_v2/home
+        ../modules/home
       ]
-        ++ mkSystemModules ../modules_v2/systems/all
-        ++ mkSystemModules ../modules_v2/systems/darwin
+        ++ mkSystemModules ../modules/systems/all
+        ++ mkSystemModules ../modules/systems/darwin
         ++ [
         # Import foundational modules separately (not package modules)
-        ./modules_v2/user.nix
+        ./modules/user.nix
       ];
     };
 
@@ -128,13 +128,13 @@ in
         vscode-server.nixosModules.default
       ]
         ++ mkConfigurationModules [
-        ../modules_v2/home
+        ../modules/home
       ]
-        ++ mkSystemModules ../modules_v2/systems/all
-        ++ mkSystemModules ../modules_v2/systems/linux
+        ++ mkSystemModules ../modules/systems/all
+        ++ mkSystemModules ../modules/systems/linux
         ++ [
         # Import foundational modules separately (not package modules)
-        ./modules_v2/user.nix
+        ./modules/user.nix
       ];
     };
 }
