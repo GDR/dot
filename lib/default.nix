@@ -167,7 +167,7 @@
   # Module metadata structure
   mkModuleMeta =
     { requires ? [ ]
-    , # List of module paths: ["common.shell.git", "common.utils.bazel"]
+    , # List of module paths: ["home.shell.git", "home.utils.bazel"]
       platforms ? [ "linux" "darwin" ]
     , tags ? [ ]
     , # List of tags: ["media", "ui", "desktop"]
@@ -180,8 +180,8 @@
 
   # Helper to derive config accessor from module path
   # Usage:
-  #   let mod = lib.my.modulePath [ "common" "browsers" "firefox" ] config;
-  #   in { options.modules.common.browsers.firefox = ...; config = mkIf mod.cfg.enable ...; }
+  #   let mod = lib.my.modulePath [ "home" "browsers" "firefox" ] config;
+  #   in { options.modules.home.browsers.firefox = ...; config = mkIf mod.cfg.enable ...; }
   modulePath = pathParts: config:
     let
       cfgAccessor = foldl (acc: part: acc.${part}) config.modules pathParts;
@@ -195,7 +195,7 @@
   # Usage (inside config block):
   #   shouldEnable = lib.my.shouldEnableModule {
   #     inherit config;
-  #     modulePath = "common.media.vlc";
+  #     modulePath = "home.media.vlc";
   #     moduleTags = [ "media" ];
   #   };
   shouldEnableModule = { config, modulePath, moduleTags }:
@@ -268,7 +268,7 @@
   #   config.home-manager.users = lib.my.mkDotfilesSymlink {
   #     inherit config self;
   #     path = "ghostty";                                    # used as fallback if target not specified
-  #     source = "modules_v2/common/terminal/ghostty/dotfiles";  # relative path in repo
+  #     source = "modules_v2/home/terminal/ghostty/dotfiles";  # relative path in repo
   #     target = "~/.config/ghostty";                        # explicit target path (defaults to ~/.config/${path})
   #   };
   mkDotfilesSymlink = { config, self, path, source, target ? null }:
@@ -317,10 +317,10 @@
 
   # Generate module options from path string
   # Usage:
-  #   options = lib.my.mkModuleOptions "common.core.htop" {
+  #   options = lib.my.mkModuleOptions "home.core.htop" {
   #     enable = mkOption { default = false; type = types.bool; };
   #   };
-  # Returns: { modules.common.core.htop = { enable = ...; }; }
+  # Returns: { modules.home.core.htop = { enable = ...; }; }
   mkModuleOptions = modulePath: opts:
     let
       pathParts = splitString "." modulePath;
@@ -351,7 +351,7 @@
   #     };
   #     dotfiles = {
   #       path = "ghostty";
-  #       source = "modules_v2/common/terminal/ghostty/dotfiles";
+  #       source = "modules_v2/home/terminal/ghostty/dotfiles";
   #       target = "~/.config/ghostty";  # explicit target path (defaults to ~/.config/${path} if not specified)
   #     };
   #     extraOptions = {

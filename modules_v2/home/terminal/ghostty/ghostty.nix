@@ -10,6 +10,6 @@ lib.my.mkModuleV2 args {
   };
   dotfiles = {
     path = "ghostty";
-    source = "modules_v2/common/terminal/ghostty/dotfiles";
+    source = "modules_v2/home/terminal/ghostty/dotfiles";
   };
 }

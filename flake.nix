@@ -61,8 +61,8 @@
         filtered;
 
       # Compute module path from file path for modules_v2
-      # e.g., "/path/to/modules_v2/common/core/htop.nix" -> "common.core.htop"
-      # e.g., "/path/to/modules_v2/common/core/htop/htop.nix" -> "common.core.htop" (dedup)
+      # e.g., "/path/to/modules_v2/home/core/htop.nix" -> "home.core.htop"
+      # e.g., "/path/to/modules_v2/home/core/htop/htop.nix" -> "home.core.htop" (dedup)
       computeModulePath = filePath:
         let
           pathStr = toString filePath;
@@ -133,7 +133,7 @@
             nixvim.nixDarwinModules.nixvim
           ]
             ++ mkConfigurationModules [
-            ./modules_v2/common
+            ./modules_v2/home
           ]
             ++ mkSystemModules ./modules_v2/systems/all
             ++ mkSystemModules ./modules_v2/systems/darwin
@@ -164,7 +164,7 @@
             vscode-server.nixosModules.default
           ]
             ++ mkConfigurationModules [
-            ./modules_v2/common
+            ./modules_v2/home
           ]
             ++ mkSystemModules ./modules_v2/systems/all
             ++ mkSystemModules ./modules_v2/systems/linux

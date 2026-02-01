@@ -82,7 +82,7 @@ lib.my.mkModuleV2 args {
           zle -N edit-last-or-current
           bindkey "\C-e" edit-last-or-current
         '' + optionalString (!cfg.showHostname) ''
-          # Hide hostname in prompt (set by modules.common.shell.zsh.showHostname = false)
+          # Hide hostname in prompt (set by modules.home.shell.zsh.showHostname = false)
           typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%n'
           typeset -g POWERLEVEL9K_CONTEXT_ROOT_TEMPLATE='%n'
         '' + optionalString isDarwin ''
@@ -103,6 +103,6 @@ lib.my.mkModuleV2 args {
   };
   dotfiles = {
     path = "zsh";
-    source = "modules_v2/common/shell/zsh/dotfiles";
+    source = "modules_v2/home/shell/zsh/dotfiles";
   };
 }

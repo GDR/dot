@@ -14,7 +14,7 @@ let
 
   # Build module options structure from registry
   # Creates options like hostUsers.<name>.modules.<module_path>.enable
-  # Uses attrs to allow nested paths like common.media.vlc.enable = true
+  # Uses attrs to allow nested paths like home.media.vlc.enable = true
   buildModuleOptions = registry:
     # Use attrs to allow any nested structure
     # We'll check for .enable in shouldEnableModule by traversing the path
@@ -101,18 +101,18 @@ let
       };
 
       # Per-user explicit module configuration
-      # Allows configuring modules like: modules.common.media.vlc.enable = true
+      # Allows configuring modules like: modules.home.media.vlc.enable = true
       modules = mkOption {
         type = buildModuleOptions modulesV2Registry;
         default = { };
         description = ''
           Explicit module configuration for this user.
-          Example: modules.common.media.vlc.enable = true;
+          Example: modules.home.media.vlc.enable = true;
         '';
         example = literalExpression ''
           {
-            common.media.vlc.enable = true;
-            common.editors.neovim.enable = true;
+            home.media.vlc.enable = true;
+            home.editors.neovim.enable = true;
           }
         '';
       };
@@ -144,8 +144,8 @@ in
           tags.enable = [ "core" "media" ];
           # Per-user module configuration
           modules = {
-            common.media.vlc.enable = true;
-            common.editors.neovim.enable = true;
+            home.media.vlc.enable = true;
+            home.editors.neovim.enable = true;
           };
         };
       }

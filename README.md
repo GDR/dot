@@ -102,7 +102,7 @@ darwin-rebuild switch --flake .#<hostname>
 │   │   │   ├── networking/
 │   │   │   └── sound.nix
 │   │   └── darwin/           # macOS-only system modules
-│   └── common/               # User-level modules (enabled via tags)
+│   └── home/                 # User-level modules (enabled via tags)
 │       ├── browsers/
 │       ├── core/
 │       ├── desktop/
@@ -123,7 +123,7 @@ darwin-rebuild switch --flake .#<hostname>
 | **System (All)** | `systems/all/` | `systemAll.<name>.enable` | System-wide, cross-platform |
 | **System (Linux)** | `systems/linux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
 | **System (Darwin)** | `systems/darwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
-| **User** | `common/` | `hostUsers.<user>.tags.enable` or `hostUsers.<user>.modules.<path>.enable` | Per-user via tags or explicit config |
+| **User** | `home/` | `hostUsers.<user>.tags.enable` or `hostUsers.<user>.modules.<path>.enable` | Per-user via tags or explicit config |
 
 ---
 
@@ -165,8 +165,8 @@ in
     ];
     # Optional: Per-user module configuration
     # modules = {
-    #   common.media.vlc.enable = true;
-    #   common.editors.neovim.enable = true;
+    #   home.media.vlc.enable = true;
+    #   home.editors.neovim.enable = true;
     # };
   };
 
@@ -239,8 +239,8 @@ hostUsers.newuser = importUser "newuser" // {
   tags.enable = [ "core" "shells" ];
   # Per-user module configuration (alternative to tags)
   modules = {
-    common.media.vlc.enable = true;
-    common.editors.neovim.enable = true;
+    home.media.vlc.enable = true;
+    home.editors.neovim.enable = true;
   };
 };
 ```
@@ -260,9 +260,9 @@ hostUsers.dgarifullin = importUser "dgarifullin" // {
 
   # Option 2: Enable specific modules explicitly
   modules = {
-    common.media.vlc.enable = true;
-    common.editors.neovim.enable = true;
-    common.browsers.chromium.enable = true;
+    home.media.vlc.enable = true;
+    home.editors.neovim.enable = true;
+    home.browsers.chromium.enable = true;
   };
 
   # Both methods work together - modules are enabled if either condition is met
@@ -273,7 +273,7 @@ hostUsers.dgarifullin = importUser "dgarifullin" // {
 - **Tags**: Enable multiple related modules at once (e.g., `"media"` enables vlc, spotify, etc.)
 - **Modules**: Enable specific modules or override tag-based behavior for fine-grained control
 
-Module paths follow the directory structure: `common.<category>.<module-name>`
+Module paths follow the directory structure: `home.<category>.<module-name>`
 
 ---
 
@@ -282,7 +282,7 @@ Module paths follow the directory structure: `common.<category>.<module-name>`
 #### User Module (tag-based)
 
 ```nix
-# modules_v2/common/tools/my-tool.nix
+# modules_v2/home/tools/my-tool.nix
 { config, pkgs, lib, system, _modulePath, ... }: with lib;
 let
   mkModule = lib.my.mkModule system config;
@@ -356,7 +356,7 @@ Modules are **auto-discovered** recursively! Just create your `.nix` file in the
 Store config files in the repo and symlink them so you can **edit without rebuilding**:
 
 ```
-modules_v2/common/terminal/ghostty/
+modules_v2/home/terminal/ghostty/
 ├── ghostty.nix
 └── dotfiles/
     ├── config
@@ -378,14 +378,14 @@ In your module, use `mkDotfilesSymlink`:
       home-manager.users = lib.my.mkDotfilesSymlink {
         inherit config self;
         path = "ghostty";                                      # ~/.config/ghostty
-        source = "modules_v2/common/terminal/ghostty/dotfiles"; # repo path
+        source = "modules_v2/home/terminal/ghostty/dotfiles"; # repo path
       };
     }
   ]);
 }
 ```
 
-Now `~/.config/ghostty` → `/path/to/repo/modules_v2/common/terminal/ghostty/dotfiles`
+Now `~/.config/ghostty` → `/path/to/repo/modules_v2/home/terminal/ghostty/dotfiles`
 
 Edit the files directly, changes apply immediately (no `nixos-rebuild` needed)!
 

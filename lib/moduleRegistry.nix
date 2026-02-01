@@ -44,6 +44,6 @@
     unique allPaths;
 
   # Convert module path to config path parts
-  # "common.browsers.firefox" -> [ "common" "browsers" "firefox" ]
+  # "home.browsers.firefox" -> [ "home" "browsers" "firefox" ]
   pathToConfigParts = path: splitString "." path;
 }

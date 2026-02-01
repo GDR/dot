@@ -14,7 +14,7 @@
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "Explicitly enable these modules by path";
-      example = [ "common.media.vlc" ];
+      example = [ "home.media.vlc" ];
     };
   };
 
