@@ -273,6 +273,7 @@ $RECYCLE.BIN/
 ### Nix ###
 # Remove result folder with build
 result/
+result
 
 /instructions
 

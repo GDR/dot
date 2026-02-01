@@ -124,7 +124,10 @@
         else { };
 
       # Home-manager user-level attributes (routed to home-manager.users.*)
-      hmUserAttrs = [ "home" "programs" "xdg" "services" "systemd" "gtk" "qt" "dconf" "accounts" "fonts" "manual" "news" "nix" "targets" "wayland" "xresources" "xsession" ];
+      # Note: systemd, gtk, qt, dconf, wayland, xresources, xsession are Linux-only
+      hmUserAttrsBase = [ "home" "programs" "xdg" "services" "accounts" "fonts" "manual" "news" "nix" "targets" ];
+      hmUserAttrsLinux = [ "systemd" "gtk" "qt" "dconf" "wayland" "xresources" "xsession" ];
+      hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else []);
 
       # Extract home-manager attrs from config
       userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
@@ -388,34 +391,8 @@
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
       isLinux = system == "aarch64-linux" || system == "x86_64-linux";
 
-      # module can be attrset or function (cfg -> attrset)
-      resolvedModule = if isFunction module then module cfg else module;
-
-      rawConfig =
-        if isLinux then (resolvedModule.nixosSystems or { }) // (resolvedModule.allSystems or { })
-        else if isDarwin then (resolvedModule.darwinSystems or { }) // (resolvedModule.allSystems or { })
-        else { };
-
-      # Home-manager user-level attributes (routed to home-manager.users.*)
-      hmUserAttrs = [ "home" "programs" "xdg" "services" "systemd" "gtk" "qt" "dconf" "accounts" "fonts" "manual" "news" "nix" "targets" "wayland" "xresources" "xsession" ];
-
-      # Extract home-manager attrs from config
-      userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
-      hasUserConfig = userConfig != { };
-
-      # Remove home-manager attrs from system config
-      systemConfig = filterAttrs (name: _: !(elem name hmUserAttrs)) rawConfig;
-
-      # Get enabled users for home config routing
+      # Get enabled users for home config routing (needed for shouldEnable check)
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
-
-      # systemModule can be attrset or function (cfg -> attrset)
-      # Supports platform sections: allSystems, nixosSystems, darwinSystems
-      resolvedSystemModuleRaw = if isFunction systemModule then systemModule cfg else systemModule;
-      resolvedSystemModule =
-        if isLinux then (resolvedSystemModuleRaw.nixosSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
-        else if isDarwin then (resolvedSystemModuleRaw.darwinSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
-        else resolvedSystemModuleRaw;
     in
     {
       inherit imports;
@@ -435,18 +412,50 @@
         let
           shouldEnable = shouldEnableModule { inherit config modulePath moduleTags; };
         in
-        mkIf shouldEnable (mkMerge [
-          resolvedSystemModule
-          (systemConfig // (optionalAttrs hasUserConfig {
-            home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
-          }))
-          (optionalAttrs (dotfiles != null && self != null) {
-            home-manager.users = mkDotfilesSymlink {
-              inherit config self;
-              inherit (dotfiles) path source;
-              target = dotfiles.target or null;
-            };
-          })
-        ]);
+        mkIf shouldEnable (
+          let
+            # module can be attrset or function (cfg -> attrset)
+            resolvedModule = if isFunction module then module cfg else module;
+
+            rawConfig =
+              if isLinux then (resolvedModule.nixosSystems or { }) // (resolvedModule.allSystems or { })
+              else if isDarwin then (resolvedModule.darwinSystems or { }) // (resolvedModule.allSystems or { })
+              else { };
+
+            # Home-manager user-level attributes (routed to home-manager.users.*)
+            # Note: systemd, gtk, qt, dconf, wayland, xresources, xsession are Linux-only
+            hmUserAttrsBase = [ "home" "programs" "xdg" "services" "accounts" "fonts" "manual" "news" "nix" "targets" ];
+            hmUserAttrsLinux = [ "systemd" "gtk" "qt" "dconf" "wayland" "xresources" "xsession" ];
+            hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else []);
+
+            # Extract home-manager attrs from config
+            userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
+            hasUserConfig = userConfig != { };
+
+            # Remove home-manager attrs from system config
+            systemConfig = filterAttrs (name: _: !(elem name hmUserAttrs)) rawConfig;
+
+            # systemModule can be attrset or function (cfg -> attrset)
+            # Supports platform sections: allSystems, nixosSystems, darwinSystems
+            resolvedSystemModuleRaw = if isFunction systemModule then systemModule cfg else systemModule;
+            resolvedSystemModule =
+              if isLinux then (resolvedSystemModuleRaw.nixosSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
+              else if isDarwin then (resolvedSystemModuleRaw.darwinSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
+              else resolvedSystemModuleRaw;
+          in
+          mkMerge [
+            resolvedSystemModule
+            (systemConfig // (optionalAttrs hasUserConfig {
+              home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
+            }))
+            (optionalAttrs (dotfiles != null && self != null) {
+              home-manager.users = mkDotfilesSymlink {
+                inherit config self;
+                inherit (dotfiles) path source;
+                target = dotfiles.target or null;
+              };
+            })
+          ]
+        );
     };
 }

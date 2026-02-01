@@ -1,13 +1,13 @@
 # Core user module - defines hostUsers options
 # This is a foundational module, not a typical package module
-{ config, lib, pkgs, modulesV2Registry ? null, ... }:
+{ config, lib, system, modulesV2Registry ? null, ... }:
 
 with lib;
 
 let
-  # Platform detection
-  isDarwin = pkgs.stdenv.isDarwin;
-  isLinux = pkgs.stdenv.isLinux;
+  # Platform detection - use system from specialArgs (avoids pkgs->config recursion)
+  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+  isLinux = system == "aarch64-linux" || system == "x86_64-linux";
 
   # Get enabled users
   enabledUsers = filterAttrs (name: cfg: cfg.enable) config.hostUsers;
@@ -153,17 +153,24 @@ in
   };
 
   # Create system users from enabled hostUsers
-  config = mkIf (enabledUsers != { }) {
+  config = mkIf (enabledUsers != { }) ({
     # Create users.users entries for each enabled hostUser
+    # Note: Darwin users are managed differently - only set Linux-specific options on Linux
     users.users = mapAttrs
-      (name: cfg: {
-        name = name;
-        isNormalUser = true;
-        home = if isDarwin then "/Users/${name}" else "/home/${name}";
-        group = if isLinux then "users" else "staff";
-        uid = 1000; # TODO: support multiple users with different UIDs
-        extraGroups = mkIf isLinux cfg.extraGroups;
-      })
+      (name: cfg:
+        if isLinux then {
+          name = name;
+          isNormalUser = true;
+          home = "/home/${name}";
+          group = "users";
+          uid = 1000; # TODO: support multiple users with different UIDs
+          extraGroups = cfg.extraGroups;
+        } else {
+          # Darwin: minimal user config, home-manager handles the rest
+          name = name;
+          home = "/Users/${name}";
+        }
+      )
       enabledUsers;
 
     # Add users to nix trusted/allowed users
@@ -176,6 +183,8 @@ in
     home-manager = {
       useUserPackages = true;
       useGlobalPkgs = true;
+      # Back up existing files instead of failing
+      backupFileExtension = "backup";
 
       users = mapAttrs
         (name: cfg: {
@@ -188,5 +197,8 @@ in
         })
         enabledUsers;
     };
-  };
+  } // optionalAttrs isDarwin {
+    # Darwin requires primaryUser for certain options
+    system.primaryUser = head (attrNames enabledUsers);
+  });
 }

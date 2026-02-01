@@ -1,8 +1,8 @@
 # SSH client configuration - reads keys from hostUsers
 # Cross-platform system module (Linux + Darwin)
-{ config, pkgs, lib, ... }: with lib;
+{ config, pkgs, lib, system, ... }: with lib;
 let
-  isDarwin = pkgs.stdenv.isDarwin;
+  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
   homeDir = if isDarwin then "/Users" else "/home";
 
   cfg = config.systemAll.shell.ssh;
@@ -67,15 +67,15 @@ in
     enable = mkEnableOption "SSH client configuration (reads keys from hostUsers)";
   };
 
-  config = mkIf cfg.enable {
-    # Start SSH agent system-wide (Linux only, Darwin uses Keychain)
-    programs.ssh.startAgent = !isDarwin;
-
+  config = mkIf cfg.enable ({
     # Configure SSH for each enabled user
     home-manager.users = mapAttrs
       (userName: userCfg:
         mkUserSSHConfig userName userCfg
       )
       enabledUsers;
-  };
+  } // optionalAttrs (!isDarwin) {
+    # Start SSH agent system-wide (Linux only, Darwin uses Keychain)
+    programs.ssh.startAgent = true;
+  });
 }

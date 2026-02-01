@@ -1,11 +1,23 @@
-# Chromium browser
-{ lib, pkgs, ... }@args:
-
+# Chromium browser - cross-platform
+# On Darwin, package = null means use externally installed Chromium (homebrew cask)
+{ lib, pkgs, system, ... }@args:
+let
+  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+in
 lib.my.mkModuleV2 args {
   tags = [ "browsers" ];
+  platforms = [ "linux" "darwin" ];
   description = "Chromium web browser";
   module = {
-    allSystems = {
+    # Darwin: manage config for externally-installed Chromium
+    darwinSystems = {
+      programs.chromium = {
+        enable = true;
+        package = null;  # Install Chromium via: brew install --cask chromium
+      };
+    };
+    # Linux: use nixpkgs chromium package
+    nixosSystems = {
       programs.chromium = {
         enable = true;
         commandLineArgs = [

@@ -105,14 +105,33 @@
       mkDarwinConfiguration = host-config:
         let
           system = "aarch64-darwin";
+          # Build registry during import time (not module evaluation time)
+          modulesV2Registry = (import ./lib/modules_v2/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
         in
         nix-darwin.lib.darwinSystem {
           inherit system;
-          specialArgs = { inherit self inputs lib overlays system vscode-server; };
+          specialArgs = {
+            inherit self inputs lib overlays system vscode-server;
+            modulesV2Registry = modulesV2Registry;
+          };
           modules = [ host-config ]
+            ++ [
+            # Core Darwin modules from inputs
+            home-manager.darwinModules.home-manager
+            nixvim.nixDarwinModules.nixvim
+            # Note: vscode-server is NixOS-only (uses systemd), not included on Darwin
+          ]
             ++ mkConfigurationModules [
-            ./modules/common
-            ./modules/darwin
+            ./modules_v2/common
+          ]
+            ++ [
+            ./modules_v2/_systemAll
+            ./modules_v2/_systemDarwin
+          ]
+            ++ [
+            # Import foundational modules separately (not package modules)
+            ./lib/modules_v2/tags.nix
+            ./lib/modules_v2/user.nix
           ];
         };
 
@@ -188,7 +207,7 @@
       );
 
       # Temporarily disabled for testing - will re-enable after migration
-      # darwinConfigurations.mac-italy = mkDarwinConfiguration ./hosts/mac-italy;
+      darwinConfigurations.mac-brightstar = mkDarwinConfiguration ./hosts/mac-brightstar;
       # darwinConfigurations.mac-blackstar = mkDarwinConfiguration ./hosts/mac-blackstar;
       # nixosConfigurations.nix-germany = mkNixosConfiguration ./hosts/nix-germany;
       nixosConfigurations.nix-goldstar = mkNixosConfiguration ./hosts/nix-goldstar;
