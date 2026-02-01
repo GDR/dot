@@ -2,7 +2,7 @@
 # This is called during import time, not module evaluation time
 { lib }:
 let
-  modulesDir = ../../modules/home;
+  modulesDir = ../home;
 
   # Use library function to build registry from the modules directory
   registry = lib.my.buildModuleRegistry modulesDir "home";

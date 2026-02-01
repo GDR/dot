@@ -1,6 +1,6 @@
 # Core user module - defines hostUsers options
 # This is a foundational module, not a typical package module
-{ config, lib, system, modulesV2Registry ? null, ... }:
+{ config, lib, system, modulesRegistry ? null, ... }:
 
 with lib;
 
@@ -87,7 +87,7 @@ let
       # Per-user module configuration (hierarchical enables)
       # Enable at any level: home.browsers.enable (all browsers) or home.browsers.vivaldi.enable (specific)
       modules = mkOption {
-        type = buildModuleOptions modulesV2Registry;
+        type = buildModuleOptions modulesRegistry;
         default = { };
         description = ''
           Module configuration for this user.

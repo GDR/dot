@@ -76,7 +76,7 @@ let
       moduleFiles;
 
   # Build registry during import time (not module evaluation time)
-  modulesV2Registry = (import ./modules/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
+  modulesRegistry = (import ../modules/_core/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
 
 in
 {
@@ -91,7 +91,7 @@ in
       inherit system;
       specialArgs = {
         inherit self inputs lib overlays system vscode-server;
-        modulesV2Registry = modulesV2Registry;
+        modulesRegistry = modulesRegistry;
       };
       modules = [ host-config ]
         ++ [
@@ -105,7 +105,7 @@ in
         ++ mkSystemModules ../modules/systems/darwin
         ++ [
         # Import foundational modules separately (not package modules)
-        ./modules/user.nix
+        ../modules/_core/user.nix
       ];
     };
 
@@ -118,7 +118,7 @@ in
       inherit system;
       specialArgs = {
         inherit self inputs lib overlays system hardware;
-        modulesV2Registry = modulesV2Registry;
+        modulesRegistry = modulesRegistry;
       };
       modules = [ host-config ]
         ++ [
@@ -134,7 +134,7 @@ in
         ++ mkSystemModules ../modules/systems/linux
         ++ [
         # Import foundational modules separately (not package modules)
-        ./modules/user.nix
+        ../modules/_core/user.nix
       ];
     };
 }
