@@ -48,5 +48,15 @@ in
     };
   };
 
+  # Darwin-specific system modules
+  systemDarwin = {
+    macos-settings.enable = true;
+    homebrew = {
+      enable = true;
+      user = "dgarifullin";
+    };
+    app-aliases.enable = true;  # Spotlight aliases for home-manager apps
+  };
+
   time.timeZone = "Europe/Moscow";
 }

@@ -116,10 +116,8 @@
           };
           modules = [ host-config ]
             ++ [
-            # Core Darwin modules from inputs
             home-manager.darwinModules.home-manager
             nixvim.nixDarwinModules.nixvim
-            # Note: vscode-server is NixOS-only (uses systemd), not included on Darwin
           ]
             ++ mkConfigurationModules [
             ./modules_v2/common
