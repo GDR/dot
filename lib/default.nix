@@ -1,6 +1,12 @@
-{ lib, ... }: with lib; with types; rec {
+{ lib, inputs, ... }: with lib; with types; rec {
   # Import module registry functions
   moduleRegistry = import ./moduleRegistry.nix { inherit lib; };
+
+  # Factory function to create flake helpers
+  # Call with: lib.my.mkFlakeHelpers { inherit self overlays; }
+  # Returns: { mkDarwinConfiguration, mkNixosConfiguration, ... }
+  mkFlakeHelpers = { self, overlays }:
+    import ./flakeHelpers.nix { inherit inputs lib self overlays; };
 
   # Re-export module registry functions for convenience
   pathToConfigParts = moduleRegistry.pathToConfigParts;
