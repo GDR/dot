@@ -69,10 +69,10 @@
       );
 
       # Host configurations
-      darwinConfigurations.mac-brightstar = flakeHelpers.mkDarwinConfiguration ./hosts/mac-brightstar;
-      # darwinConfigurations.mac-blackstar = flakeHelpers.mkDarwinConfiguration ./hosts/mac-blackstar;
-      # nixosConfigurations.nix-germany = flakeHelpers.mkNixosConfiguration ./hosts/nix-germany;
-      nixosConfigurations.nix-goldstar = flakeHelpers.mkNixosConfiguration ./hosts/nix-goldstar;
+      darwinConfigurations.mac-brightstar = flakeHelpers.mkDarwinConfiguration ./hosts/machines/mac-brightstar;
+      # darwinConfigurations.mac-blackstar = flakeHelpers.mkDarwinConfiguration ./hosts/machines/mac-blackstar;
+      # nixosConfigurations.nix-germany = flakeHelpers.mkNixosConfiguration ./hosts/machines/nix-germany;
+      nixosConfigurations.nix-goldstar = flakeHelpers.mkNixosConfiguration ./hosts/machines/nix-goldstar;
 
       templates = {
         python = {

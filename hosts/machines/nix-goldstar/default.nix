@@ -1,14 +1,12 @@
-{ self, pkgs, lib, overlays, ... }:
+{ inputs, lib, config, pkgs, home-manager, hardware, ... }:
 let
   # Import user defaults by name
-  importUser = name: import ../_users/${name}.nix { inherit lib; };
+  importUser = name: import ../../users/${name}.nix { inherit lib; };
 in
 {
-  nix.enable = true;
-
-  # Fix GID mismatch for existing Nix installation
-  ids.gids.nixbld = 30000;
-
+  imports = [
+    ./hardware-configuration.nix
+  ];
 
   # Enable user via hostUsers (new system)
   # Defaults from hosts/_users/<name>.nix, host-specific overrides here
@@ -16,7 +14,7 @@ in
     enable = true;
     # Host-specific: SSH key for this machine
     keys = [{
-      name = "brightstar";
+      name = "goldstar";
       type = "rsa";
       purpose = [ "git" "ssh" ];
       isDefault = true;
@@ -25,21 +23,24 @@ in
     modules = {
       home.browsers.enable = true;
       home.cli.enable = true;
-      home.desktop.enable = true; # was desktop-utils
+      home.desktop.enable = true;
       home.downloads.enable = true;
       home.editors.enable = true;
+      home.games.enable = true;
+      home.media.enable = true;
       home.messengers.enable = true;
       home.security.enable = true;
       home.shell.enable = true;
       home.terminal.enable = true;
+      home.virtualisation.enable = true;
     };
   };
 
-  networking.hostName = "mac-brightstar";
+  networking.hostName = "nix-goldstar";
 
   # System-scope modules (top-level, not in modules.*)
   systemAll = {
-    # fonts.enable = true;
+    fonts.enable = true;
     nix.settings.enable = true;
     nix.gc.enable = true;
     shell = {
@@ -48,14 +49,18 @@ in
     };
   };
 
-  # Darwin-specific system modules
-  systemDarwin = {
-    macos-settings.enable = true;
-    homebrew = {
-      enable = true;
-      user = "dgarifullin";
+  systemLinux = {
+    desktop.hyprland.enable = true;
+    networking = {
+      networkmanager.enable = true;
+      tailscale.enable = true;
     };
-    app-aliases.enable = true; # Spotlight aliases for home-manager apps
+    graphics.nvidia = {
+      enable = true;
+      open = true;
+    };
+    # keyboards.keychron.enable = true;
+    sound.enable = true;
   };
 
   time.timeZone = "Europe/Moscow";

@@ -70,23 +70,26 @@ darwin-rebuild switch --flake .#<hostname>
 .
 ├── flake.nix                 # Entry point - defines hosts and imports
 ├── hosts/
-│   ├── _users/               # User defaults (imported by hosts)
+│   ├── users/                # User defaults (imported by machines)
 │   │   └── dgarifullin.nix
-│   ├── nix-goldstar/         # NixOS host
-│   │   ├── default.nix
-│   │   └── hardware-configuration.nix
-│   └── mac-italy/            # Darwin host
-│       └── default.nix
+│   └── machines/             # Machine configurations
+│       ├── nix-goldstar/     # NixOS host
+│       │   ├── default.nix
+│       │   └── hardware-configuration.nix
+│       └── mac-brightstar/   # Darwin host
+│           └── default.nix
 ├── lib/
-│   ├── default.nix           # Helper functions (mkModule, mkDotfilesSymlink)
-│   └── modules/
-│       └── user.nix          # hostUsers options & home-manager setup
+│   └── default.nix           # Helper functions (mkModule, mkDotfilesSymlink)
 ├── modules/
+│   ├── _core/                # Core module infrastructure
+│   │   ├── registry.nix      # Module registry builder
+│   │   └── user.nix          # hostUsers options & home-manager setup
 │   ├── systems/
 │   │   ├── all/              # Cross-platform system modules
 │   │   │   ├── fonts.nix
-│   │   │   ├── nix-gc.nix
-│   │   │   ├── nix-settings.nix
+│   │   │   ├── nix/
+│   │   │   │   ├── gc.nix
+│   │   │   │   └── settings.nix
 │   │   │   └── shell/
 │   │   │       ├── git.nix
 │   │   │       └── ssh.nix
@@ -101,8 +104,12 @@ darwin-rebuild switch --flake .#<hostname>
 │   │   └── darwin/           # macOS-only system modules
 │   └── home/                 # User-level modules (enabled hierarchically)
 │       ├── browsers/
-│       ├── core/
+│       ├── cli/
 │       ├── desktop/
+│       │   ├── appearance/
+│       │   ├── services/
+│       │   ├── utils/
+│       │   └── widgets/
 │       ├── editors/
 │       ├── games/
 │       ├── media/
@@ -131,16 +138,16 @@ darwin-rebuild switch --flake .#<hostname>
 1. **Create host directory:**
 
 ```bash
-mkdir -p hosts/my-new-host
+mkdir -p hosts/machines/my-new-host
 ```
 
 2. **Create `default.nix`:**
 
 ```nix
-# hosts/my-new-host/default.nix
+# hosts/machines/my-new-host/default.nix
 { config, lib, pkgs, ... }:
 let
-  importUser = name: import ../_users/${name}.nix { inherit lib; };
+  importUser = name: import ../../users/${name}.nix { inherit lib; };
 in
 {
   imports = [ ./hardware-configuration.nix ];
@@ -156,7 +163,7 @@ in
     }];
     # Hierarchical module enables
     modules = {
-      home.core.enable = true;
+      home.cli.enable = true;
       home.shell.enable = true;
       home.editors.enable = true;
       # Or enable specific modules:
@@ -169,8 +176,8 @@ in
   # System modules
   systemAll = {
     fonts.enable = true;
-    nix-settings.enable = true;
-    nix-gc.enable = true;
+    nix.settings.enable = true;
+    nix.gc.enable = true;
     shell.ssh.enable = true;
     shell.git.enable = true;
   };
@@ -189,15 +196,15 @@ in
 3. **Generate hardware config (NixOS):**
 
 ```bash
-nixos-generate-config --show-hardware-config > hosts/my-new-host/hardware-configuration.nix
+nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardware-configuration.nix
 ```
 
 4. **Add to `flake.nix`:**
 
 ```nix
-nixosConfigurations.my-new-host = mkNixosConfiguration ./hosts/my-new-host;
+nixosConfigurations.my-new-host = mkNixosConfiguration ./hosts/machines/my-new-host;
 # or for Darwin:
-darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/my-new-host;
+darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/machines/my-new-host;
 ```
 
 ---
@@ -207,7 +214,7 @@ darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/my-new-host;
 1. **Create user defaults:**
 
 ```nix
-# hosts/_users/newuser.nix
+# hosts/users/newuser.nix
 { lib, ... }:
 {
   enable = lib.mkDefault false;
@@ -221,7 +228,7 @@ darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/my-new-host;
 2. **Enable in host config:**
 
 ```nix
-# hosts/my-host/default.nix
+# hosts/machines/my-host/default.nix
 hostUsers.newuser = importUser "newuser" // {
   enable = true;
   keys = [{
