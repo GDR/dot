@@ -1,15 +1,13 @@
-# AwesomeWM - X11 window manager (system-wide Linux module)
-{ lib, pkgs, config, self, ... }@args:
+# AwesomeWM - X11 window manager
+{ lib, pkgs, ... }@args:
 
-let
-  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
-in
-lib.my.mkSystemModuleV2 args {
-  namespace = "linux";
+lib.my.mkModuleV2 args {
+  platforms = [ "linux" ];
   description = "AwesomeWM X11 window manager";
 
-  module = _: lib.mkMerge [
-    {
+  # System-level configuration (requires root)
+  systemModule = {
+    nixosSystems = {
       # X server with AwesomeWM
       services.xserver = {
         enable = true;
@@ -45,25 +43,20 @@ lib.my.mkSystemModuleV2 args {
           vsync = true;
         };
       };
+    };
+  };
 
-      # User packages
-      home-manager.users = lib.mapAttrs
-        (name: _: {
-          home.packages = with pkgs; [
-            rofi
-            xclip
-          ];
-        })
-        enabledUsers;
-    }
+  # User-level configuration (routed to home-manager.users.*)
+  module = {
+    nixosSystems.home.packages = with pkgs; [
+      rofi
+      xclip
+    ];
+  };
 
-    # Dotfiles symlink (live-editable)
-    {
-      home-manager.users = lib.my.mkDotfilesSymlink {
-        inherit config self;
-        path = "awesome";
-        source = "modules/systems/linux/desktop/awesomewm/dotfiles";
-      };
-    }
-  ];
+  # Dotfiles symlink (live-editable)
+  dotfiles = {
+    path = "awesome";
+    source = "modules/home/desktop/awesomewm/dotfiles";
+  };
 }

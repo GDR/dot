@@ -23,7 +23,16 @@ in
     modules = {
       home.browsers.enable = true;
       home.cli.enable = true;
-      home.desktop.enable = true;
+      home.desktop = {
+        # Desktop utilities (appearance, services, widgets)
+        appearance.enable = true;
+        services.enable = true;
+        widgets.enable = true;
+        utils.enable = true;
+        # Window manager (pick one)
+        hyprland.enable = true;
+        # awesomewm.enable = true;
+      };
       home.downloads.enable = true;
       home.editors.enable = true;
       home.games.enable = true;
@@ -50,7 +59,6 @@ in
   };
 
   systemLinux = {
-    desktop.hyprland.enable = true;
     networking = {
       networkmanager.enable = true;
       tailscale.enable = true;

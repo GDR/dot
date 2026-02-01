@@ -1,12 +1,13 @@
-# Hyprland Wayland compositor - Linux system module
-{ lib, pkgs, config, self, ... }@args:
+# Hyprland Wayland compositor
+{ lib, pkgs, ... }@args:
 
-lib.my.mkSystemModuleV2 args {
-  namespace = "linux";
+lib.my.mkModuleV2 args {
+  platforms = [ "linux" ];
   description = "Hyprland Wayland compositor";
 
-  module = _: lib.mkMerge [
-    {
+  # System-level configuration (requires root)
+  systemModule = {
+    nixosSystems = {
       # Enable Wayland and Hyprland
       programs.hyprland = {
         enable = true;
@@ -52,15 +53,12 @@ lib.my.mkSystemModuleV2 args {
         nerd-fonts.jetbrains-mono
         nerd-fonts.fira-code
       ];
-    }
+    };
+  };
 
-    # Dotfiles symlink (live-editable)
-    {
-      home-manager.users = lib.my.mkDotfilesSymlink {
-        inherit config self;
-        path = "hypr";
-        source = "modules/systems/linux/desktop/hyprland/dotfiles";
-      };
-    }
-  ];
+  # Dotfiles symlink (live-editable)
+  dotfiles = {
+    path = "hypr";
+    source = "modules/home/desktop/hyprland/dotfiles";
+  };
 }
