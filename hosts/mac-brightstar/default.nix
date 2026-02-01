@@ -55,7 +55,7 @@ in
       enable = true;
       user = "dgarifullin";
     };
-    app-aliases.enable = true;  # Spotlight aliases for home-manager apps
+    app-aliases.enable = true; # Spotlight aliases for home-manager apps
   };
 
   time.timeZone = "Europe/Moscow";

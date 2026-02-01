@@ -13,7 +13,7 @@ lib.my.mkModuleV2 args {
     darwinSystems = {
       programs.chromium = {
         enable = true;
-        package = null;  # Install Chromium via: brew install --cask chromium
+        package = null; # Install Chromium via: brew install --cask chromium
       };
     };
     # Linux: use nixpkgs chromium package

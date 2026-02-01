@@ -3,7 +3,7 @@
 { lib, ... }@args:
 lib.my.mkModuleV2 args {
   tags = [ "utils" ];
-  platforms = [ "darwin" ];  # macOS only
+  platforms = [ "darwin" ]; # macOS only
   description = "macFUSE filesystem support";
 
   module = {

@@ -65,7 +65,7 @@ lib.my.mkModuleV2 args {
     darwinSystems = {
       programs.vivaldi = {
         enable = true;
-        package = null;  # Install via: brew install --cask vivaldi
+        package = null; # Install via: brew install --cask vivaldi
         extensions = sharedExtensions;
       };
       homebrew.casks = [ "vivaldi" ];

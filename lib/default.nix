@@ -127,7 +127,7 @@
       # Note: systemd, gtk, qt, dconf, wayland, xresources, xsession are Linux-only
       hmUserAttrsBase = [ "home" "programs" "xdg" "services" "accounts" "fonts" "manual" "news" "nix" "targets" ];
       hmUserAttrsLinux = [ "systemd" "gtk" "qt" "dconf" "wayland" "xresources" "xsession" ];
-      hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else []);
+      hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else [ ]);
 
       # Extract home-manager attrs from config
       userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
@@ -426,7 +426,7 @@
             # Note: systemd, gtk, qt, dconf, wayland, xresources, xsession are Linux-only
             hmUserAttrsBase = [ "home" "programs" "xdg" "services" "accounts" "fonts" "manual" "news" "nix" "targets" ];
             hmUserAttrsLinux = [ "systemd" "gtk" "qt" "dconf" "wayland" "xresources" "xsession" ];
-            hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else []);
+            hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else [ ]);
 
             # Extract home-manager attrs from config
             userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;

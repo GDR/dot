@@ -2,7 +2,7 @@
 { lib, pkgs, ... }@args:
 lib.my.mkModuleV2 args {
   tags = [ "utils" "desktop-utils" ];
-  platforms = [ "darwin" ];  # macOS only
+  platforms = [ "darwin" ]; # macOS only
   description = "Raycast launcher";
 
   module = {
