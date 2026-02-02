@@ -1,9 +1,6 @@
 # VirtualBox virtualization
-{ lib, pkgs, config, ... }@args: with lib;
-let
-  enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
-  enabledUsernames = attrNames enabledUsers;
-in
+{ lib, pkgs, config, _modulePath, ... }@args: with lib;
+
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "VirtualBox virtualization";
@@ -12,8 +9,8 @@ lib.my.mkModuleV2 args {
       # Linux: Enable VirtualBox host, add users to vboxusers group
       virtualisation.virtualbox.host.enable = true;
 
-      # Add all enabled users to vboxusers group
-      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+      # Add only users who enabled VirtualBox to vboxusers group
+      users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: {
         extraGroups = [ "vboxusers" ];
       });
     };

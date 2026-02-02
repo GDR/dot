@@ -115,7 +115,20 @@
   # Usage:
   #   users.users = lib.my.mkUsersAttrs enabledUsernames (username: { shell = pkgs.zsh; });
   #   users.users = lib.my.mkUsersAttrs enabledUsernames (username: { extraGroups = [ "docker" ]; });
-  mkUsersAttrs = usernames: fn:
+  #
+  # Or with module path (automatically gets users who enabled the module):
+  #   users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: { extraGroups = [ "docker" ]; });
+  mkUsersAttrs = usernamesOrModule: fn:
+    let
+      # Check if first arg is a module config (has config and _modulePath keys) or a list of usernames
+      isModuleConfig = builtins.isAttrs usernamesOrModule &&
+        (usernamesOrModule ? config || usernamesOrModule ? _modulePath || usernamesOrModule ? modulePath);
+      usernames =
+        if isModuleConfig then
+          getUsersWithModuleNames usernamesOrModule
+        else
+          usernamesOrModule;
+    in
     listToAttrs (map
       (username: {
         name = username;
@@ -281,6 +294,17 @@
         any (path: checkUserPathEnable userModules path) allPaths
       )
       enabledUsers;
+
+  # Get list of usernames who have a module enabled (convenience wrapper)
+  # Usage: usernames = lib.my.getUsersWithModuleNames { inherit config _modulePath; };
+  # Returns: [ "user1" "user2" ] - list of usernames
+  getUsersWithModuleNames = { config, modulePath ? null, _modulePath ? null, moduleTags ? [ ] }:
+    let
+      # Support both modulePath and _modulePath (from args)
+      path = if _modulePath != null then _modulePath else modulePath;
+      usersWithModule = getUsersWithModule { inherit config moduleTags; modulePath = path; };
+    in
+    attrNames usersWithModule;
 
   # Create symlink to repo dotfiles for all enabled users
   # This allows editing config files without rebuild

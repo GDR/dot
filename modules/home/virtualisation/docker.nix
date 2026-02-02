@@ -1,9 +1,6 @@
 # Docker container runtime
-{ lib, pkgs, config, ... }@args: with lib;
-let
-  enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
-  enabledUsernames = attrNames enabledUsers;
-in
+{ lib, pkgs, config, _modulePath, ... }@args: with lib;
+
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "Docker container runtime";
@@ -12,8 +9,8 @@ lib.my.mkModuleV2 args {
       # Linux: Enable docker daemon system-wide, add users to docker group
       virtualisation.docker.enable = true;
 
-      # Add all enabled users to docker group
-      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+      # Add only users who enabled Docker to docker group
+      users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: {
         extraGroups = [ "docker" ];
       });
     };

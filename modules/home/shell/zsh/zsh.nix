@@ -1,9 +1,7 @@
 # Zsh shell configuration with oh-my-zsh and zplug
-{ lib, pkgs, config, system, self, ... }@args: with lib;
+{ lib, pkgs, config, system, self, _modulePath, ... }@args: with lib;
 let
   isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
-  enabledUsers = filterAttrs (n: v: v.enable) config.hostUsers;
-  enabledUsernames = attrNames enabledUsers;
 in
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
@@ -23,8 +21,8 @@ lib.my.mkModuleV2 args {
 
       environment.systemPackages = with pkgs; [ eza ];
 
-      # Set user's default shell to zsh
-      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
+      # Set user's default shell to zsh (only for users who enabled zsh)
+      users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: {
         shell = pkgs.zsh;
       });
     };
