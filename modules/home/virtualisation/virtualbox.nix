@@ -1,6 +1,5 @@
 # VirtualBox virtualization
 { lib, pkgs, config, _modulePath, ... }@args: with lib;
-
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "VirtualBox virtualization";

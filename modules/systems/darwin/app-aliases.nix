@@ -20,10 +20,22 @@ lib.my.mkSystemModuleV2 args {
   module = cfg: {
     home-manager.users = lib.mapAttrs
       (username: _: {
+        # Override nix-darwin's linkapps module with our custom implementation
+        # Use mkForce to override the default Applications/Home Manager Apps link
+        home.file."Applications/${cfg.folder}" = {
+          source = lib.mkForce (pkgs.runCommand "app-aliases-dir" { } "mkdir -p $out");
+          recursive = true;
+          force = true;
+        };
+
+        # Populate the directory with app aliases after files are written
         home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           app_folder="/Users/${username}/Applications/${cfg.folder}"
-          rm -rf "$app_folder"
-          mkdir -p "$app_folder"
+          # Remove existing aliases to avoid duplicates
+          if [ -d "$app_folder" ]; then
+            find "$app_folder" -type f -delete
+          fi
+          # Create aliases for home-manager apps
           if [ -d "$genProfilePath/home-path/Applications" ]; then
             find "$genProfilePath/home-path/Applications" -type l -print | while read -r app; do
               app_target="$app_folder/$(basename "$app")"
@@ -36,4 +48,3 @@ lib.my.mkSystemModuleV2 args {
       enabledUsers;
   };
 }
-

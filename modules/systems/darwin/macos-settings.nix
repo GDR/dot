@@ -55,6 +55,9 @@ lib.my.mkSystemModuleV2 args {
       # Save screenshots to Pictures/Screenshots
       location = "~/Pictures/Screenshots";
     };
+
+    # PAM configuration for Touch ID authentication
+    # Enable Touch ID for sudo authentication (works in zsh and other shells)
+    security.pam.services.sudo_local.touchIdAuth = true;
   };
 }
-
