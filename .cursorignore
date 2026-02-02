@@ -1,0 +1,32 @@
+# Nix build artifacts
+result
+result-*
+result-*/
+
+# Nix store paths (if any leak into repo)
+/nix/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+*.orig
+*.tmp
+
+# Build artifacts
+*.o
+*.so
+*.a
+
+# Cache directories
+.cache/
+.direnv
+.direnv/
+
+# Large generated files
+*.lock
+
+# IDE caches (but keep .cursor/rules/)
+.vscode/
+.idea/
