@@ -1,34 +1,32 @@
-# Host Configuration Guide
+---
+description: Host and user configuration guide
+globs: ["hosts/**/*.nix"]
+alwaysApply: true
+---
 
-How to configure hosts and users in this NixOS dotfiles repository.
-
-## Host File Structure
-
+# Structure
 ```
 hosts/
-├── _users/
-│   └── dgarifullin.nix    # User defaults (shared across hosts)
-├── nix-goldstar/
-│   ├── default.nix        # Host configuration
-│   └── hardware-configuration.nix  # Hardware-specific settings
+├── users/
+│   └── dgarifullin.nix    # User defaults (shared)
+├── machines/
+│   └── nix-goldstar/
+│       ├── default.nix        # Host config
+│       └── hardware-configuration.nix  # Hardware/boot
 └── mac-blackstar/
     └── default.nix
 ```
 
-## Host Configuration Template
-
+# Host Template
 ```nix
-# hosts/hostname/default.nix
+# hosts/machines/hostname/default.nix
 { inputs, lib, config, pkgs, home-manager, hardware, ... }:
 let
-  importUser = name: import ../_users/${name}.nix { inherit lib; };
+  importUser = name: import ../../users/${name}.nix { inherit lib; };
 in
 {
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  imports = [ ./hardware-configuration.nix ];
 
-  # User configuration
   hostUsers.username = importUser "username" // {
     enable = true;
     keys = [{
@@ -37,80 +35,84 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    tags.enable = [
-      "browsers"
-      "core"
-      "shells"
-      "terminal"
-    ];
+    # Hierarchical module enables (NOT tags)
+    modules = {
+      home.browsers.enable = true;
+      home.cli.enable = true;
+      home.desktop = {
+        appearance.enable = true;
+        services.enable = true;
+        widgets.enable = true;
+        utils.enable = true;
+        hyprland.enable = true;  # or awesomewm.enable
+      };
+      home.downloads.enable = true;
+      home.editors.enable = true;
+      home.games.enable = true;
+      home.media.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+      home.virtualisation.enable = true;
+    };
   };
 
   networking.hostName = "hostname";
 
-  # System modules (cross-platform)
   systemAll = {
     fonts.enable = true;
-    nix-settings.enable = true;
-    nix-gc.enable = true;
-    shell = {
-      ssh.enable = true;
-      git.enable = true;
-    };
+    nix.settings.enable = true;
+    nix.gc.enable = true;
+    shell = { ssh.enable = true; git.enable = true; };
   };
 
-  # Linux-specific system modules
   systemLinux = {
-    desktop.hyprland.enable = true;
+    networking = {
+      networkmanager.enable = true;
+      tailscale.enable = true;
+    };
+    graphics.nvidia.enable = true;
     sound.enable = true;
-    # ...
   };
 
   time.timeZone = "Europe/Moscow";
 }
 ```
 
-## User Defaults File
-
+# User Defaults
 ```nix
-# hosts/_users/username.nix
+# hosts/users/username.nix
 { lib, ... }: {
   fullName = lib.mkDefault "Full Name";
   email = lib.mkDefault "email@example.com";
   github = lib.mkDefault "github-username";
   extraGroups = lib.mkDefault [ "wheel" "networkmanager" "docker" ];
-  # Note: keys are NOT in defaults - they're host-specific
+  # Keys NOT in defaults - host-specific
 }
 ```
 
-## Hardware Configuration
-
-Put hardware-specific and boot settings here:
-
+# Hardware Config
 ```nix
-# hosts/hostname/hardware-configuration.nix
+# hosts/machines/hostname/hardware-configuration.nix
 { config, lib, pkgs, modulesPath, ... }:
 {
-  imports = [
-    (modulesPath + "/installer/scan/not-detected.nix")
-  ];
+  imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Filesystem mounts, hardware modules, etc.
   fileSystems."/" = { ... };
-
   hardware.cpu.intel.updateMicrocode = true;
 }
 ```
 
-## What Goes Where
-
+# What Goes Where
 | Setting | Location |
 |---------|----------|
-| User tags/keys | `default.nix` → `hostUsers` |
-| System modules | `default.nix` → `systemAll`/`systemLinux` |
+| User modules | `default.nix` → `hostUsers.<user>.modules` |
+| System modules | `default.nix` → `systemAll`/`systemLinux`/`systemDarwin` |
 | Hostname | `default.nix` → `networking.hostName` |
 | Timezone | `default.nix` → `time.timeZone` |
 | Boot loader | `hardware-configuration.nix` |
@@ -118,24 +120,25 @@ Put hardware-specific and boot settings here:
 | Filesystems | `hardware-configuration.nix` |
 | Hardware drivers | `hardware-configuration.nix` or `systemLinux` modules |
 
-## Adding a New Host
+# Hierarchical Enables
+- `home.enable = true` → enables ALL home modules
+- `home.browsers.enable = true` → enables all browsers
+- `home.browsers.vivaldi.enable = true` → enables just vivaldi
+- Path follows directory: `modules/home/<category>/<module>`
 
-1. Create `hosts/new-hostname/default.nix`
-2. Create `hosts/new-hostname/hardware-configuration.nix`
-3. Add to `flake.nix`:
-   ```nix
-   nixosConfigurations.new-hostname = mkNixosConfiguration ./hosts/new-hostname;
-   ```
-4. Generate hardware config: `nixos-generate-config --show-hardware-config`
+# Add Host
+1. Create `hosts/machines/new-hostname/default.nix`
+2. Create `hosts/machines/new-hostname/hardware-configuration.nix`
+3. Add to `flake.nix`: `nixosConfigurations.new-hostname = mkNixosConfiguration ./hosts/machines/new-hostname;`
+4. Generate: `nixos-generate-config --show-hardware-config`
 
-## Adding a New User
-
-1. Create `hosts/_users/newuser.nix` with defaults
+# Add User
+1. Create `hosts/users/newuser.nix` with defaults
 2. In host config:
-   ```nix
-   hostUsers.newuser = importUser "newuser" // {
-     enable = true;
-     keys = [{ ... }];
-     tags.enable = [ ... ];
-   };
-   ```
+```nix
+hostUsers.newuser = importUser "newuser" // {
+  enable = true;
+  keys = [{ ... }];
+  modules = { home.browsers.enable = true; };
+};
+```

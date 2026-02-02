@@ -1,9 +1,10 @@
-# Git Commit Conventions
+---
+description: Git commit conventions (ZeroMQ C4 with type prefixes)
+globs: ["**/*.{nix,md}"]
+alwaysApply: true
+---
 
-This project uses commit messages following the ZeroMQ C4 standard with type prefixes.
-
-## Format
-
+# Format
 ```
 <type>: <short description>
 
@@ -11,51 +12,36 @@ This project uses commit messages following the ZeroMQ C4 standard with type pre
 - Detail 2
 ```
 
-## Types
+Optional scope: `refactor(flake):`, `feat(zsh):`, `fix(devShell):`
 
-| Type | Description |
-|------|-------------|
-| `feat:` | New feature or functionality |
-| `fix:` | Bug fix |
-| `refactor:` | Code restructuring without changing behavior |
-| `docs:` | Documentation changes |
-| `chore:` | Maintenance, dependencies, tooling |
-| `style:` | Formatting, whitespace (no code change) |
+# Types
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `refactor:` - Code restructuring (no behavior change)
+- `docs:` - Documentation
+- `chore:` - Maintenance/deps/tooling
+- `style:` - Formatting/whitespace only
+- `fmt:` - Code formatting (nixpkgs-fmt)
 
-## Examples
-
+# Examples
 ```
-feat: migrate zsh to modules_v2 with shells tag
+refactor: move hyprland/awesomewm to home/desktop as user-choice modules
 
-- Create modules_v2/common/shell/zsh with tag-based enablement
-- Use mkDotfilesSymlink for live-editable config
-- Apply zsh config to all enabled hostUsers automatically
-- Remove old modules/common/shell/zsh
-- Enable "shells" tag in nix-goldstar user config
-```
-
-```
-refactor: split desktop utils into individual modules
-
-- Create separate modules under modules_v2/common/desktop/
-  - launcher.nix (rofi)
-  - audio.nix (pamixer, pavucontrol)
-  - notifications.nix (dunst)
-- All share "desktop-utils" tag for unified enablement
+Move window managers from systems/linux/desktop/ to home/desktop/:
+- hyprland/ and awesomewm/ are now user-enabled via hostUsers.modules
+- Convert from mkSystemModuleV2 to mkModuleV2 with systemModule
+- System config (xserver, greetd) in systemModule.nixosSystems
+- User config (packages, dotfiles) via module and dotfiles params
+- Update host config to use home.desktop.hyprland.enable
 ```
 
 ```
-chore: move boot settings to hardware-configuration.nix
-
-- Move boot.kernelPackages to hardware-configuration.nix
-- Move boot.loader settings to hardware-configuration.nix
-- Keep host default.nix focused on module enablement
+refactor(flake): simplify outputs function signature
 ```
 
-## Guidelines
-
-- First line: type + concise description (imperative mood)
+# Rules
+- First line: type + concise description (imperative mood), < 72 chars
+- Optional scope: `type(scope):`
 - Blank line after first line
 - Body: bullet points with specific changes
-- Keep first line under 72 characters
-- Be specific about what was added/removed/changed
+- Be specific: what added/removed/changed

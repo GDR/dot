@@ -1,206 +1,130 @@
-# NixOS Module System Architecture
+---
+description: NixOS module system architecture (system + user modules)
+globs: ["modules/**/*.nix", "lib/**/*.nix"]
+alwaysApply: true
+---
 
-This document describes the module system architecture for this NixOS/nix-darwin dotfiles repository.
+# Overview
+- System modules (`systems/all`, `systems/linux`, `systems/darwin`): System-wide config, enabled via `systemAll.*`/`systemLinux.*`/`systemDarwin.*`
+- User modules (`modules/home/`): Per-user packages, enabled via hierarchical paths in `hostUsers.<user>.modules.<path>.enable`
 
-## Overview
-
-The system uses two types of modules:
-1. **System modules** (`_systemAll`, `_systemLinux`, `_systemDarwin`) - system-wide configuration
-2. **User modules** (`modules_v2/common/`) - per-user packages enabled via tags
-
-## Directory Structure
-
-```
-modules_v2/
-├── _systemAll/           # Cross-platform system modules (Linux + Darwin)
-│   ├── shell/
-│   │   ├── ssh.nix
-│   │   └── git.nix
-│   ├── fonts.nix
-│   ├── nix-gc.nix
-│   └── nix-settings.nix
-├── _systemLinux/         # Linux-only system modules
-│   ├── desktop/
-│   │   └── hyprland/
-│   ├── graphics/
-│   │   └── nvidia.nix
-│   ├── keyboards/
-│   │   └── keychron.nix
-│   ├── networking/
-│   │   ├── networkmanager.nix
-│   │   └── tailscale.nix
-│   └── sound.nix
-├── _systemDarwin/        # Darwin-only system modules
-│   └── default.nix
-└── common/               # User modules (tag-based)
-    ├── browsers/
-    ├── desktop/
-    ├── downloads/
-    ├── editors/
-    ├── games/
-    ├── media/
-    ├── security/
-    ├── shell/
-    └── terminal/
-```
-
-## System Modules
-
-System modules configure system-wide services, drivers, and settings. They are:
-- Enabled explicitly via `systemAll.*`, `systemLinux.*`, or `systemDarwin.*` options
-- NOT controlled by tags
-- Can include user packages via `home-manager.users` if needed
-
-### Creating a System Module
+# System Modules
+Location: `systems/{all,linux,darwin}`, enabled: `systemLinux.*.enable = true`, pattern: `mkSystemModuleV2 args { namespace, module, ... }`, uses `meta`: No, auto-discovered: No (needs import)
 
 ```nix
-# modules_v2/_systemLinux/example/example.nix
-{ config, pkgs, lib, ... }: with lib;
-let
-  cfg = config.systemLinux.example;
-  enabledUsers = filterAttrs (_: u: u.enable) config.hostUsers;
-in
-{
-  options.systemLinux.example = {
-    enable = mkEnableOption "Example system module";
-    # Add other options as needed
+# modules/systems/linux/graphics/nvidia.nix
+{ lib, pkgs, config, ... }@args:
+
+lib.my.mkSystemModuleV2 args {
+  namespace = "linux";
+  description = "NVIDIA graphics drivers";
+  module = cfg: {
+    services.xserver.videoDrivers = [ "nvidia" ];
+    hardware.nvidia = {
+      open = cfg.open or false;
+      modesetting.enable = true;
+    };
   };
-
-  config = mkIf cfg.enable {
-    # System-level configuration
-    services.example.enable = true;
-
-    # Optional: User packages (applied to all enabled users)
-    home-manager.users = mapAttrs
-      (username: _: {
-        home.packages = [ pkgs.example-tool ];
-      })
-      enabledUsers;
+  extraOptions = {
+    open = lib.mkOption {
+      default = false;
+      type = lib.types.bool;
+      description = "Use open-source NVIDIA drivers";
+    };
   };
 }
 ```
 
-### Enabling in Host Config
+Enable: `systemLinux.graphics.nvidia.enable = true;` in host config.
 
+# User Modules
+Location: `modules/home/`, enabled: Via hierarchical paths, pattern: `mkModuleV2 args { module, systemModule?, dotfiles?, ... }`, uses `meta`: Yes (auto), auto-discovered: Yes
+
+## Simple
 ```nix
-# hosts/nix-goldstar/default.nix
-systemAll = {
-  fonts.enable = true;
-  nix-settings.enable = true;
-  shell.ssh.enable = true;
-};
-
-systemLinux = {
-  desktop.hyprland.enable = true;
-  graphics.nvidia.enable = true;
-  sound.enable = true;
-};
-```
-
-## User Modules (Tag-Based)
-
-User modules install packages for specific users based on tags. They:
-- Live in `modules_v2/common/`
-- Use `mkModuleV2` helper which handles everything (meta, options, config, shouldEnable)
-- Are enabled when a user has the module's tag in `hostUsers.<user>.tags.enable`
-
-### Creating a User Module (Simple)
-
-```nix
-# modules_v2/common/category/example.nix
+# modules/home/browsers/vivaldi.nix
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
-  tags = [ "example-tag" ];
-  description = "Example module description";
+  description = "Vivaldi browser";
   module = {
-    nixosSystems = {
-      home.packages = [ pkgs.example ];
-    };
-    darwinSystems = {
-      homebrew.casks = [ "example" ];
-    };
+    allSystems.home.packages = [ pkgs.vivaldi ];
   };
 }
 ```
 
-### With Live-Editable Dotfiles
-
+## With Dotfiles
 ```nix
-# modules_v2/common/terminal/ghostty/ghostty.nix
-{ lib, pkgs, ... }@args:
-
+# modules/home/terminal/ghostty/ghostty.nix
 lib.my.mkModuleV2 args {
-  tags = [ "terminal" ];
   description = "Ghostty terminal emulator";
   module = {
-    nixosSystems = {
-      home.packages = [ pkgs.ghostty ];
-    };
-    darwinSystems = {
-      homebrew.casks = [ "ghostty" ];
-    };
+    allSystems.home.packages = [ pkgs.ghostty ];
   };
   dotfiles = {
     path = "ghostty";  # ~/.config/ghostty
-    source = "modules_v2/common/terminal/ghostty/dotfiles";
+    source = "modules/home/terminal/ghostty/dotfiles";
+  };
+}
+```
+Creates symlink: `~/.config/ghostty` → `repo/modules/home/terminal/ghostty/dotfiles`
+
+## With System-Level Config
+```nix
+# modules/home/desktop/hyprland/hyprland.nix
+{ lib, pkgs, config, ... }@args:
+let
+  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
+in
+
+lib.my.mkModuleV2 args {
+  description = "Hyprland compositor";
+  systemModule = {
+    nixosSystems = {
+      programs.hyprland.enable = true;
+      services.greetd.enable = true;
+      xserver.enable = true;
+    };
+  };
+  module = {
+    nixosSystems.home.packages = [ pkgs.hyprland ];
+  };
+  dotfiles = {
+    path = "hyprland";
+    source = "modules/home/desktop/hyprland/dotfiles";
   };
 }
 ```
 
-### mkModuleV2 Parameters
+## mkModuleV2 Params
+- `description`: Module description
+- `platforms`: Default `["linux" "darwin"]`
+- `requires`: List of module paths this depends on
+- `module`: Platform config (attrset or `cfg -> attrset`)
+- `systemModule`: System-level config (attrset or `cfg -> attrset`)
+- `dotfiles`: `{ path, source }` for live-editable configs
+- `extraOptions`: Additional options (merged with `enable`)
+- `imports`: Sub-module imports
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `tags` | Yes | Tags that enable this module |
-| `description` | No | Module description |
-| `platforms` | No | Default: `["linux" "darwin"]` |
-| `requires` | No | Module dependencies |
-| `module` | No | Platform config (attrset or `cfg -> attrset` function) |
-| `systemModule` | No | System-level config (attrset or `cfg -> attrset` function) |
-| `dotfiles` | No | `{ path, source }` for live-editable configs |
-| `extraOptions` | No | Additional module options (merged with `enable`) |
-| `imports` | No | List of module imports (for sub-modules) |
-
-### Module Sections
-
-Both `module` and `systemModule` support platform-specific sections:
-
+## Platform Sections
 ```nix
 module = {
-  nixosSystems = {
-    home.packages = [ ... ];      # Linux home-manager
-  };
-  darwinSystems = {
-    homebrew.casks = [ ... ];     # macOS homebrew
-  };
-  allSystems = {
-    home.packages = [ ... ];      # Both platforms
-  };
+  allSystems.home.packages = [ ... ];      # Both platforms
+  nixosSystems.home.packages = [ ... ];   # Linux only
+  darwinSystems.homebrew.casks = [ ... ];  # macOS only
 };
 
 systemModule = {
-  nixosSystems = {
-    programs.nixvim.enable = true;  # Linux system-level config
-  };
-  darwinSystems = {
-    # macOS system-level config
-  };
-  allSystems = {
-    programs.zsh.enable = true;     # Both platforms system-level config
-  };
+  nixosSystems = { programs.nixvim.enable = true; }; # Linux system-level
+  darwinSystems = { ... };                           # macOS system-level
+  allSystems = { programs.zsh.enable = true; };     # Both platforms
 };
 ```
 
-### With Custom Options
-
+## Custom Options
 ```nix
-{ lib, pkgs, ... }@args:
-
 lib.my.mkModuleV2 args {
-  tags = [ "shells" ];
   description = "Zsh shell";
-
   extraOptions = {
     showHostname = lib.mkOption {
       default = true;
@@ -208,254 +132,108 @@ lib.my.mkModuleV2 args {
       description = "Show hostname in prompt";
     };
   };
-
-  # module as function to access cfg (option values)
   module = cfg: {
-    nixosSystems = {
-      home.packages = [ pkgs.zsh ];
-      # Access custom option: cfg.showHostname
-    };
+    allSystems.home.packages = [ pkgs.zsh ];
+    # Access: cfg.showHostname
   };
 }
 ```
 
-### With System-Level Configuration
-
-For modules that need system-level setup (e.g., enabling system services, setting user shells):
-
+## Module Imports
 ```nix
-{ lib, pkgs, config, ... }@args:
-let
-  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
-  enabledUsernames = lib.attrNames enabledUsers;
-in
-
 lib.my.mkModuleV2 args {
-  tags = [ "shells" ];
-  description = "Zsh shell configuration";
-  
-  systemModule = {
-    allSystems = {
-      # Enable zsh at system level
-      programs.zsh.enable = true;
-      
-      # Set user shells using helper
-      users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
-        shell = pkgs.zsh;
-      });
-    };
-  };
-  
-  module = {
-    allSystems = {
-      # Home-manager zsh configuration
-      programs.zsh = { ... };
-    };
-  };
-}
-```
-
-### With Module Imports
-
-For modules that need to import sub-modules (e.g., neovim with plugin configs):
-
-```nix
-{ lib, pkgs, ... }@args:
-
-lib.my.mkModuleV2 args {
-  tags = [ "editors-terminal" ];
   description = "Neovim editor";
-  
   imports = [
     ./dotfiles/colorschema.nix
     ./dotfiles/general.nix
     ./dotfiles/plugins/airline.nix
   ];
-  
   systemModule = {
-    allSystems = {
-      programs.nixvim.enable = true;
-    };
+    allSystems.programs.nixvim.enable = true;
   };
-  
   module = {
     allSystems.home.packages = [ pkgs.ripgrep pkgs.fzf ];
   };
 }
 ```
 
-### Enabling via Tags in Host Config
-
+## Enable via Hierarchical Paths
 ```nix
-# hosts/nix-goldstar/default.nix
 hostUsers.dgarifullin = importUser "dgarifullin" // {
   enable = true;
-  tags.enable = [
-    "browsers"
-    "core"
-    "desktop-utils"
-    "editors-terminal"
-    "example-tag"  # Enables the example module
-  ];
-};
-```
-
-## Live-Editable Dotfiles
-
-For modules with config files that should be editable without rebuilding, use the `dotfiles` parameter in `mkModuleV2`:
-
-```nix
-lib.my.mkModuleV2 args {
-  tags = [ "terminal" ];
-  module = { ... };
-  dotfiles = {
-    path = "example";  # ~/.config/example
-    source = "modules_v2/common/category/example/dotfiles";
+  modules = {
+    home.browsers.enable = true;           # All browsers
+    home.browsers.vivaldi.enable = true;   # Just vivaldi
+    home.desktop.hyprland.enable = true;
+    home.editors.enable = true;
   };
-}
-```
-
-This creates a symlink: `~/.config/example` → `repo/modules_v2/common/.../dotfiles`
-
-For advanced cases (manual module structure), use `mkDotfilesSymlink` directly:
-
-```nix
-home-manager.users = lib.my.mkDotfilesSymlink {
-  inherit config self;
-  path = "example";
-  source = "modules_v2/common/category/example/dotfiles";
 };
 ```
 
-## Host Users System
+# mkSystemModuleV2 Params
+- `namespace` (req): `"all"` | `"linux"` | `"darwin"`
+- `description`: Module description
+- `module`: Config (attrset or `cfg -> attrset`)
+- `moduleLinux`: Linux-specific additions (for `namespace = "all"`)
+- `moduleDarwin`: Darwin-specific additions (for `namespace = "all"`)
+- `extraOptions`: Additional options
+- `imports`: Sub-module imports
 
-Users are defined in `hosts/_users/` with defaults, then enabled per-host:
+# Helpers
+- `lib.my.mkModuleV2 args { module, systemModule?, dotfiles?, imports?, ... }` - **User modules**
+- `lib.my.mkSystemModuleV2 args { namespace, module, moduleLinux?, moduleDarwin?, ... }` - **System modules**
+- `lib.my.shouldEnableModule { config, modulePath }` - Check if module enabled (hierarchical)
+- `lib.my.getUsersWithModule { config, modulePath }` - Get users with module enabled
+- `lib.my.mkDotfilesSymlink { config, self, path, source }` - Dotfiles symlink
+- `lib.my.mkUsersAttrs usernames fn` - Creates `users.users` attrset
 
-```nix
-# hosts/_users/username.nix
-{ lib, ... }: {
-  fullName = lib.mkDefault "Full Name";
-  email = lib.mkDefault "email@example.com";
-  github = lib.mkDefault "github-username";
-  extraGroups = lib.mkDefault [ "wheel" "networkmanager" ];
-}
-```
+# Hierarchical Enablement
+Module enabled if:
+- `modules.home.browsers.vivaldi.enable = true` (specific)
+- OR `modules.home.browsers.enable = true` (category)
+- OR `modules.home.enable = true` (all home)
+- OR `hostUsers.<user>.modules.home.browsers.enable = true` (per-user)
 
-```nix
-# hosts/hostname/default.nix
-hostUsers.username = importUser "username" // {
-  enable = true;
-  keys = [{
-    name = "keyname";
-    type = "rsa";
-    purpose = [ "git" "ssh" ];
-    isDefault = true;
-  }];
-  tags.enable = [ "tag1" "tag2" ];
-};
-```
+Path follows directory: `modules/home/<category>/<module>` → `modules.home.<category>.<module>`
 
-## Common Tags Reference
+# Module Paths
+- User: `modules.home.<category>.<module>` (e.g., `modules.home.browsers.vivaldi`)
+- System: `systemAll.*`, `systemLinux.*`, `systemDarwin.*` (transformed from `systems.all.*`, etc.)
 
-| Tag | Description |
-|-----|-------------|
-| `browsers` | Web browsers (chromium) |
-| `core` | Core utilities (htop) |
-| `desktop-utils` | Desktop utilities (rofi, dunst, audio controls) |
-| `desktop-utils-wayland` | Wayland-specific (waybar, grim, slurp) - requires hyprland |
-| `downloads` | Download managers (qbittorrent) |
-| `editors-terminal` | Terminal editors (neovim) |
-| `editors-ui` | GUI editors (cursor) |
-| `games` | Gaming (steam) |
-| `media` | Media players (vlc) |
-| `security` | Security tools (keepassxc) |
-| `shells` | Shell configs (zsh) |
-| `terminal` | Terminal emulators (ghostty) |
+# Adding Modules Checklist
+1. Decide scope: System (`systems/*`) or User (`home/*`)
+2. Choose category: Pick/create subdirectory
+3. Create module file using templates above
+4. System modules: Add import to `systems/*/default.nix`
+5. User modules: Auto-discovered, just add path to `hostUsers.<user>.modules`
+6. Stage: `git add` before `nix flake check` (Nix needs staged files)
+7. Test: `nix flake check`
 
-## Key Helper Functions
-
-- `lib.my.mkModuleV2 args { tags, module, systemModule?, dotfiles?, imports?, ... }` - **Preferred** - Complete module generator
-- `lib.my.mkUsersAttrs usernames fn` - Creates `users.users` attrset from username list and function
-- `lib.my.mkModule system config cfg` - Creates platform-aware config (for manual modules)
-- `lib.my.mkModuleConfig { system, config, self, module, dotfiles? }` - Combines mkModule + dotfiles
-- `lib.my.shouldEnableModule { config, modulePath, moduleTags }` - Checks if module should be enabled
-- `lib.my.mkModuleOptions modulePath options` - Creates module options at correct path
-- `lib.my.mkModuleMeta { tags, platforms, description }` - Module metadata
-- `lib.my.mkDotfilesSymlink { config, self, path, source }` - Live-editable dotfiles symlink
-
-### mkUsersAttrs Helper
-
-Simplifies creating `users.users` attribute sets:
-
-```nix
-# Before
-users.users = listToAttrs (map
-  (username: {
-    name = username;
-    value = { shell = pkgs.zsh; };
-  })
-  enabledUsernames);
-
-# After
-users.users = lib.my.mkUsersAttrs enabledUsernames (username: {
-  shell = pkgs.zsh;
-});
-```
-
-## Adding New Modules Checklist
-
-1. **Decide scope**: System (`_system*`) or User (`common/`)
-2. **Choose category**: Pick or create appropriate subdirectory
-3. **Create module file** using templates above
-4. **For system modules**: Add import to `_system*/default.nix`
-5. **For user modules**: Auto-discovered, just add tag to host config
-6. **Stage new files**: `git add` before `nix flake check` (Nix needs staged files)
-7. **Test**: Run `nix flake check`
-
-## SSH Keys Configuration
-
-Keys are defined per-host in `hostUsers.<user>.keys`:
-
+# SSH Keys
+Defined per-host in `hostUsers.<user>.keys`:
 ```nix
 keys = [{
   name = "goldstar";      # Key identifier
-  type = "rsa";           # Key type (rsa, ed25519)
-  purpose = [ "git" "ssh" ];  # Array: "git" for signing, "ssh" for auth
+  type = "rsa";           # rsa, ed25519
+  purpose = [ "git" "ssh" ];  # "git" for signing, "ssh" for auth
   isDefault = true;       # Default key for this host
 }];
 ```
+Path convention: `~/.ssh/<name>_id_<type>` (e.g., `~/.ssh/goldstar_id_rsa`)
+SSH/Git modules in `systems/all/shell/` read these automatically.
 
-**Key path convention**: `~/.ssh/<name>_id_<type>` (e.g., `~/.ssh/goldstar_id_rsa`)
+# Gotchas
 
-The SSH and Git modules in `_systemAll/shell/` read these keys automatically.
-
-## Important Patterns & Gotchas
-
-### System vs User Module Differences
-
-| Aspect | System Module | User Module |
-|--------|---------------|-------------|
-| Location | `_system*` | `modules_v2/common/` |
-| Enable | `systemLinux.*.enable = true` | Via tags |
-| Pattern | Manual `{ options, config }` | `mkModuleV2 args { ... }` |
-| Uses `meta` | No | Yes (auto-generated) |
-| Auto-discovered | No (needs import) | Yes |
-
-### Conditional Module Enablement
-
-For modules that depend on system config (e.g., Wayland utils needing Hyprland):
-
+## Conditional Enablement
 ```nix
 let
-  waylandEnabled = config.systemLinux.desktop.hyprland.enable or false;
+  waylandEnabled = config.modules.home.desktop.hyprland.enable or false;
 in
 mkIf (shouldEnable && waylandEnabled) (mkModule { ... });
 ```
 
-### Desktop Entries for App Launchers (Rofi)
-
-If an app doesn't appear in Rofi/app launchers, add a desktop entry:
-
+## Desktop Entries (Rofi)
+If app doesn't appear in Rofi:
 ```nix
 home-manager.users.username.xdg.desktopEntries.appname = {
   name = "App Name";
@@ -466,67 +244,48 @@ home-manager.users.username.xdg.desktopEntries.appname = {
 };
 ```
 
-### Avoiding Package Conflicts
-
-Don't combine `programs.X` with `home.packages = [ pkgs.X ]` - they conflict:
-
+## Package Conflicts
+Don't combine `programs.X` with `home.packages = [ pkgs.X ]`:
 ```nix
-# BAD - conflicts
+# BAD
 programs.chromium.enable = true;
 home.packages = [ pkgs.chromium ];
 
-# GOOD - use one or the other
+# GOOD
 programs.chromium.enable = true;
 ```
 
-### Hardware Configuration
+## Hardware Config
+Boot/hardware → `hardware-configuration.nix`, NOT host `default.nix`.
 
-Boot and hardware settings go in `hardware-configuration.nix`, NOT host `default.nix`:
-
-```nix
-# hosts/hostname/hardware-configuration.nix
-boot.kernelPackages = pkgs.linuxPackages_latest;
-boot.loader.systemd-boot.enable = true;
-boot.loader.efi.canTouchEfiVariables = true;
-```
-
-### Home Manager Option Paths
-
-Common path mistakes:
+## Home Manager Paths
 - `home.xdg.desktopEntries` ❌ → `xdg.desktopEntries` ✓
 - `home.programs.zsh` ❌ → `programs.zsh` ✓ (inside home-manager context)
 
-### Deprecation Warnings
-
-Check for deprecation warnings in build output. Common fixes:
+## Deprecation Warnings
 - `programs.ssh.addKeysToAgent` → `programs.ssh.matchBlocks.*.addKeysToAgent`
 - `programs.git.userEmail` → `programs.git.settings.user.email`
 
-### Theme/Config Files in Dotfiles
-
-For apps like Ghostty that need theme files, include them in the dotfiles folder:
-
+## Theme Files
+For apps like Ghostty, include theme files in dotfiles folder:
 ```
-modules_v2/common/terminal/ghostty/
+modules/home/terminal/ghostty/
 ├── ghostty.nix
 └── dotfiles/
     ├── config
-    └── themes/
-        └── catppuccin-mocha  # Theme file
+    └── themes/catppuccin-mocha
 ```
 
-## File Organization Guidelines
+# File Organization
+- Drivers/WM/DE → `systems/linux/` or `home/desktop/` (if user-choice)
+- Keyboards/udev → `systems/linux/` (system-level hardware)
+- Network services → `systems/linux/networking/` or `systems/all/`
+- User apps → `home/` with hierarchical paths
+- Cross-platform system → `systems/all/` (fonts, nix settings, git, ssh)
 
-- **Drivers/WM/DE** → `_systemLinux` (system-wide, not user-specific)
-- **Keyboards/udev** → `_systemLinux` (system-level hardware config)
-- **Network services** → `_systemLinux/networking/` or `_systemAll/`
-- **User apps** → `modules_v2/common/` with appropriate tags
-- **Cross-platform system** → `_systemAll/` (fonts, nix settings, git, ssh)
-
-## Don't
-
+# Don't
 - Don't use grep across monorepo root (user preference)
 - Don't put boot config in host default.nix
 - Don't mix `programs.X` and `home.packages = [X]`
-- Don't forget to `git add` new files before `nix flake check`
-- Don't use `meta` in system modules (causes errors)
+- Don't forget `git add` before `nix flake check`
+- Don't use tags - use hierarchical paths (`modules.home.browsers.enable`)

@@ -1,113 +1,87 @@
-# Project Structure
+---
+description: NixOS dotfiles repository structure
+globs: ["**/*.nix"]
+alwaysApply: true
+---
 
-Overview of the NixOS dotfiles repository structure.
-
-## Top-Level Directories
-
+# Structure
 ```
 dot/
-├── .cursor/rules/      # Cursor AI rules (this documentation)
-├── flake.nix           # Main flake entry point
-├── flake.lock          # Locked dependencies
-├── hosts/              # Host configurations
-├── lib/                # Helper functions and core modules
-├── modules/            # OLD modules (being migrated)
-├── modules_v2/         # NEW module system
+├── .cursor/rules/      # AI rules
+├── flake.nix           # Entry point
+├── hosts/              # Host configs
+│   ├── users/          # User defaults
+│   └── machines/       # Machine configs
+├── lib/                # Helpers/core modules
+├── modules/            # Module system
+│   ├── _core/          # Core (registry, user)
+│   ├── home/           # User modules
+│   └── systems/        # System modules
 ├── overlays/           # Nixpkgs overlays
 ├── pkgs/               # Custom packages
 └── templates/          # Flake templates
 ```
 
-## Key Files
+# Key Files
+- `flake.nix`: Inputs, mkNixosConfiguration/mkDarwinConfiguration, exports configs
+- `lib/default.nix`: mkModuleV2, mkSystemModuleV2, shouldEnableModule, mkDotfilesSymlink, platform detection
+- `lib/modules_v2/user.nix`: hostUsers option, creates users.users + home-manager.users, SSH/Git integration
+- `modules/_core/user.nix`: hostUsers option definition
 
-### `flake.nix`
-- Defines inputs (nixpkgs, home-manager, etc.)
-- Creates `mkNixosConfiguration` and `mkDarwinConfiguration`
-- Exports nixosConfigurations, darwinConfigurations
-- Imports all module systems
-
-### `lib/default.nix`
-- Helper functions: `mkModule`, `shouldEnableModule`, `mkDotfilesSymlink`
-- Module path utilities
-- Platform detection
-
-### `lib/modules_v2/user.nix`
-- Defines `hostUsers` option structure
-- Creates `users.users` and `home-manager.users` from `hostUsers`
-- SSH key and Git config integration
-
-## modules_v2 Structure
-
+# modules Structure
 ```
-modules_v2/
-├── _systemAll/         # Cross-platform system modules
-│   ├── default.nix     # Imports all modules (MANUAL)
-│   ├── fonts.nix
-│   ├── nix-gc.nix
-│   ├── nix-settings.nix
-│   └── shell/
-│       ├── git.nix
-│       └── ssh.nix
-├── _systemLinux/       # Linux-only system modules
-│   ├── default.nix     # Imports all modules (MANUAL)
-│   ├── sound.nix
+modules/
+├── _core/              # Core system
+│   ├── registry.nix    # Module discovery
+│   └── user.nix         # hostUsers option
+├── home/                # User modules (hierarchical enables)
+│   ├── browsers/{chromium,vivaldi}.nix
+│   ├── cli/{htop,shell-utils}.nix
 │   ├── desktop/
-│   │   └── hyprland/
-│   ├── graphics/
-│   │   └── nvidia.nix
-│   ├── keyboards/
-│   │   └── keychron.nix
-│   └── networking/
-│       ├── networkmanager.nix
-│       └── tailscale.nix
-├── _systemDarwin/      # Darwin-only system modules
-│   └── default.nix
-└── common/             # User modules (AUTO-DISCOVERED)
-    ├── browsers/
-    │   └── chromium.nix
-    ├── core/
-    │   └── htop.nix
-    ├── desktop/
-    │   ├── audio.nix
-    │   ├── brightness.nix
-    │   ├── cursor.nix
-    │   ├── launcher.nix
-    │   ├── network-applet.nix
-    │   ├── notifications.nix
-    │   └── wayland-utils.nix
-    ├── downloads/
-    │   └── qbittorrent.nix
-    ├── editors/
-    │   ├── cursor/
-    │   └── neovim/
-    ├── games/
-    │   └── steam.nix
-    ├── media/
-    │   └── vlc.nix
-    ├── security/
-    │   └── keepassxc.nix
-    ├── shell/
-    │   └── zsh/
-    └── terminal/
-        └── ghostty/
+│   │   ├── appearance/cursor.nix
+│   │   ├── awesomewm/awesomewm.nix
+│   │   ├── hyprland/hyprland.nix
+│   │   ├── services/{audio,brightness,notifications}.nix
+│   │   ├── utils/wayland.nix
+│   │   └── widgets/{launcher,network-applet}.nix
+│   ├── downloads/qbittorrent.nix
+│   ├── editors/{cursor,neovim}/
+│   ├── games/steam.nix
+│   ├── media/{spotify,vlc}.nix
+│   ├── messengers/telegram.nix
+│   ├── security/{bitwarden,keepassxc}.nix
+│   ├── shell/{tmux,zsh}/
+│   ├── terminal/ghostty/
+│   ├── utils/{macfuse,raycast}.nix
+│   └── virtualisation/docker.nix
+└── systems/             # System modules
+    ├── all/             # Cross-platform
+    │   ├── fonts.nix
+    │   ├── nix/{gc,settings}.nix
+    │   └── shell/{git,ssh}.nix
+    ├── darwin/          # macOS-only
+    │   ├── app-aliases.nix
+    │   ├── homebrew.nix
+    │   └── macos-settings.nix
+    └── linux/           # Linux-only
+        ├── editors/vscode-server.nix
+        ├── graphics/nvidia.nix
+        ├── keyboards/keychron.nix
+        ├── networking/{networkmanager,tailscale}.nix
+        └── sound.nix
 ```
 
-## Module Discovery
+# Discovery
+- System (`systems/*`): Manual import in default.nix
+- User (`home/*`): Auto-discovered via lib.my.recursiveDirs
 
-- **System modules** (`_system*`): Must be manually imported in `default.nix`
-- **User modules** (`common/`): Auto-discovered via `lib.my.recursiveDirs`
+# Naming
+- System dirs: `systems/{all,darwin,linux}`
+- Module files: `modulename.nix` or `modulename/modulename.nix`
+- Dotfiles: `modulename/dotfiles/`
+- Host dirs: `hosts/machines/hostname/` (matches networking.hostName)
+- User defaults: `hosts/users/username.nix`
 
-## Naming Conventions
-
-- **System module dirs**: Prefixed with `_` (e.g., `_systemLinux`)
-- **Module files**: `modulename.nix` or `modulename/modulename.nix` for complex modules
-- **Dotfiles**: `modulename/dotfiles/` for live-editable configs
-- **Host dirs**: `hostname/` matching `networking.hostName`
-- **User defaults**: `_users/username.nix`
-
-## Migration Status
-
-The `modules/` directory contains old-style modules being migrated to `modules_v2/`.
-- Check both when looking for existing functionality
-- New modules should ALWAYS go in `modules_v2/`
-- Delete from `modules/` after migrating
+# Module Paths
+- User: `modules.home.<category>.<module>` (e.g., `modules.home.browsers.vivaldi`)
+- System: `systemAll.*`, `systemLinux.*`, `systemDarwin.*` (transformed from `systems.all.*`, etc.)
