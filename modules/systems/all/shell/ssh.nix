@@ -34,6 +34,8 @@ let
   mkUserSSHConfig = userName: userCfg:
     let
       defaultKey = getDefaultKey userCfg;
+      allKeys = userCfg.keys or [ ];
+      keyPaths = map (key: keyPath userName key) allKeys;
     in
     {
       programs.ssh = {
@@ -55,8 +57,19 @@ let
 
         includes = [ "~/.ssh/config.d/*" ];
       } // lib.optionalAttrs isDarwin {
+        # macOS Keychain integration
         extraConfig = "UseKeychain yes";
       };
+    } // lib.optionalAttrs (isDarwin && keyPaths != [ ]) {
+      # Add all keys to macOS Keychain on activation
+      home.activation.addKeysToKeychain = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        echo "Adding SSH keys to macOS Keychain..."
+        ${lib.concatMapStringsSep "\n" (keyPath: ''
+          if [ -f "${keyPath}" ]; then
+            ssh-add --apple-use-keychain "${keyPath}" 2>/dev/null || true
+          fi
+        '') keyPaths}
+      '';
     };
 in
 lib.my.mkSystemModuleV2 args {
