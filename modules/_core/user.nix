@@ -77,6 +77,57 @@ let
         description = "SSH keys for this user";
       };
 
+      # SSH configuration
+      ssh = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            host = mkOption {
+              type = types.str;
+              description = "SSH host/match pattern (e.g., '*', 'github.com', '*.example.com')";
+            };
+            user = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "SSH username";
+            };
+            identityFile = mkOption {
+              type = types.nullOr (types.either types.str (types.listOf types.str));
+              default = null;
+              description = "Path to SSH identity file(s)";
+            };
+            forwardAgent = mkOption {
+              type = types.nullOr types.bool;
+              default = null;
+              description = "Enable SSH agent forwarding";
+            };
+            port = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "SSH port";
+            };
+            hostname = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Actual hostname/IP address";
+            };
+            extraOptions = mkOption {
+              type = types.attrsOf types.str;
+              default = { };
+              description = "Additional SSH options (e.g., AddKeysToAgent, Compression)";
+            };
+          };
+        });
+        default = [ ];
+        description = "SSH host configurations";
+      };
+
+      # SSH config includes
+      sshIncludes = mkOption {
+        type = types.listOf types.str;
+        default = [ "~/.ssh/config.d/*" ];
+        description = "Additional SSH config files to include";
+      };
+
       # Linux-specific
       extraGroups = mkOption {
         type = types.listOf types.str;
@@ -126,6 +177,18 @@ in
             purpose = [ "git" "ssh" ];
             isDefault = true;
           }];
+          ssh = [
+            {
+              host = "*";
+              identityFile = "~/.ssh/goldstar_id_rsa";
+              extraOptions.AddKeysToAgent = "yes";
+            }
+            {
+              host = "github.com";
+              user = "git";
+              identityFile = "~/.ssh/goldstar_id_rsa";
+            }
+          ];
           # Hierarchical module enables
           modules = {
             home.browsers.enable = true;        # enables all browsers

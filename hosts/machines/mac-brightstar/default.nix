@@ -21,6 +21,19 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
+    # SSH configuration
+    ssh = [
+      {
+        host = "*";
+        identityFile = "~/.ssh/brightstar_id_rsa";
+        extraOptions.AddKeysToAgent = "no"; # Darwin: use Touch ID prompt each time
+      }
+      {
+        host = "github.com";
+        user = "git";
+        identityFile = "~/.ssh/brightstar_id_rsa";
+      }
+    ];
     # Hierarchical module enables
     modules = {
       home.browsers.enable = true;
