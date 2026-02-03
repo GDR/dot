@@ -28,7 +28,7 @@ let
         description = "Key identifier, e.g. 'goldstar'";
       };
       type = mkOption {
-        type = types.enum [ "rsa" "ed25519" "ecdsa" ];
+        type = types.enum [ "rsa" "ed25519" "ecdsa" "ecdsa-sk" ];
         default = "rsa";
         description = "SSH key type";
       };

@@ -16,6 +16,7 @@ let
         "rsa" = "id_rsa";
         "ed25519" = "id_ed25519";
         "ecdsa" = "id_ecdsa";
+        "ecdsa-sk" = "id_ecdsa_sk";
       }.${key.type};
     in
     "${homeDir}/${userName}/.ssh/${key.name}_${keyExt}.pub";
