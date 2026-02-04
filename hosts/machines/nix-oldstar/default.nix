@@ -57,6 +57,7 @@ in
   systemLinux = {
     networking = {
       networkmanager.enable = true;
+      tailscale.enable = true;
     };
     editors.vscode-server.enable = true;
     graphics.intel = {
