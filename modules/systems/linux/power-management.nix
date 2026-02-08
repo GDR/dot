@@ -33,8 +33,6 @@ lib.my.mkSystemModuleV2 args {
     services.upower.enable = cfg.upower;
 
     # Lid switch behavior
-    services.logind.lidSwitch = cfg.lidSwitch;
+    services.logind.settings.Login.HandleLidSwitch = cfg.lidSwitch;
   };
 }
-
-
