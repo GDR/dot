@@ -19,6 +19,19 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
+    # SSH client configuration
+    ssh = [
+      {
+        host = "*";
+        identityFile = "~/.ssh/goldstar_id_rsa";
+        extraOptions.AddKeysToAgent = "yes";
+      }
+      {
+        host = "github.com";
+        user = "git";
+        identityFile = "~/.ssh/goldstar_id_rsa";
+      }
+    ];
     # Hierarchical module enables
     modules = {
       home.browsers.enable = true;

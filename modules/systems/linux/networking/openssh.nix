@@ -9,7 +9,7 @@ let
   userMapStr = lib.concatStringsSep "," (lib.mapAttrsToList (u: id: "${u}:${id}") userMap);
   authorizedKeysCommand =
     if charonKey != null then
-      "${charonKey}/bin/charon-key" + lib.optionalString (userMap != { }) " --user-map ${userMapStr}"
+      "${charonKey}/bin/charon-key" + lib.optionalString (userMap != { }) " --user-map ${userMapStr}" + " %u"
     else null;
 in
 lib.my.mkSystemModuleV2 args {
