@@ -1,16 +1,15 @@
 # OpenSSH server with charon-key AuthorizedKeysCommand
-# Uses github:GDR/charon-key for dynamic authorized keys (see INTEGRATION_EXAMPLES.md)
-{ lib, system, inputs, config, ... }@args:
+# Uses github:GDR/charon-key nixosModules.default for the wrapper + sshd config.
+# This module enables openssh and passes userMap to services.charon-key.
+#
+# Note: config is accessed via direct attribute access (lazy) rather than
+# mkSystemModuleV2's cfg parameter (uses foldl' which is strict and causes
+# infinite recursion when the result shapes the module's config output).
+{ lib, config, ... }@args:
 
 let
-  charonKey = (inputs.charon-key or { }).packages.${system}.default or null;
   cfg = config.systemLinux.networking.openssh or { };
   userMap = cfg.userMap or { };
-  userMapStr = lib.concatStringsSep "," (lib.mapAttrsToList (u: id: "${u}:${id}") userMap);
-  authorizedKeysCommand =
-    if charonKey != null then
-      "${charonKey}/bin/charon-key" + lib.optionalString (userMap != { }) " --user-map ${userMapStr}" + " %u"
-    else null;
 in
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
@@ -21,17 +20,17 @@ lib.my.mkSystemModuleV2 args {
       type = lib.types.attrsOf lib.types.str;
       default = { };
       example = lib.literalExpression ''{ "dgarifullin" = "gdr"; }'';
-      description = "Map NixOS user names to charon-key identities (--user-map)";
+      description = "Map NixOS user names to GitHub usernames for charon-key";
     };
   };
 
-  module = _: {
-    services.openssh = {
-      enable = true;
-    }
-    // lib.optionalAttrs (authorizedKeysCommand != null) {
-      authorizedKeysCommand = authorizedKeysCommand;
-      authorizedKeysCommandUser = "root";
-    };
-  };
+  module = _: lib.mkMerge [
+    { services.openssh.enable = true; }
+    (lib.mkIf (userMap != { }) {
+      services.charon-key = {
+        enable = true;
+        userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) userMap;
+      };
+    })
+  ];
 }
