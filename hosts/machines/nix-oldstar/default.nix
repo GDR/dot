@@ -57,6 +57,10 @@ in
   systemLinux = {
     networking = {
       networkmanager.enable = true;
+      openssh = {
+        enable = true; # SSH server + charon-key AuthorizedKeysCommand
+        userMap = { "dgarifullin" = "gdr"; }; # NixOS user -> GitHub username for charon-key
+      };
       tailscale.enable = true;
     };
     editors.vscode-server.enable = true;
@@ -73,8 +77,8 @@ in
     };
     networking.firewall = {
       enable = true;
-      allowedTCPPorts = [ 53 80 443 8080 8001 8081 ];
-      allowedUDPPorts = [ 53 80 443 8080 8001 8081 ];
+      allowedTCPPorts = [ 22 53 80 443 8080 8001 8081 ];
+      allowedUDPPorts = [ 22 53 80 443 8080 8001 8081 ];
     };
     sound.enable = true;
   };
