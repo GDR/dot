@@ -19,19 +19,6 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # SSH configuration
-    ssh = [
-      {
-        host = "*";
-        identityFile = "~/.ssh/goldstar_id_rsa";
-        extraOptions.AddKeysToAgent = "yes";
-      }
-      {
-        host = "github.com";
-        user = "git";
-        identityFile = "~/.ssh/goldstar_id_rsa";
-      }
-    ];
     # Hierarchical module enables
     modules = {
       home.browsers.enable = true;
@@ -74,13 +61,16 @@ in
   systemLinux = {
     networking = {
       networkmanager.enable = true;
+      openssh = {
+        enable = true; # SSH server + charon-key AuthorizedKeysCommand
+        userMap = { "*" = "gdr"; }; # NixOS user -> GitHub username for charon-key
+      };
       tailscale.enable = true;
     };
     graphics.nvidia = {
       enable = true;
       open = true;
     };
-    # keyboards.keychron.enable = true;
     sound.enable = true;
   };
 
