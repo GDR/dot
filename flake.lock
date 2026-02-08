@@ -25,11 +25,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770545733,
-        "narHash": "sha256-kpTptTebxGopFWM0bCFEFrU+LptZEPGCkzJfcn1fHDE=",
+        "lastModified": 1770547279,
+        "narHash": "sha256-xPR9rLb1sMgzZzS861o6pkE4hn4sFKWpEdZzjQgcbsA=",
         "owner": "GDR",
         "repo": "charon-key",
-        "rev": "25afc2fea740f9d2220d3ee5510b85b8468fd3a6",
+        "rev": "bb6c3d3676e631c5f25862549d0b91da345b3fba",
         "type": "github"
       },
       "original": {

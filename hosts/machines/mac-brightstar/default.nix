@@ -69,6 +69,10 @@ in
       user = "dgarifullin";
     };
     app-aliases.enable = true; # Spotlight aliases for home-manager apps
+    openssh = {
+      enable = true;
+      userMap = { "dgarifullin" = "gdr"; };
+    };
   };
 
   time.timeZone = "Europe/Moscow";

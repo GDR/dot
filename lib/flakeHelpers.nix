@@ -97,6 +97,7 @@ in
         ++ [
         home-manager.darwinModules.home-manager
         nixvim.nixDarwinModules.nixvim
+        charon-key.darwinModules.default
       ]
         ++ mkConfigurationModules [
         ../modules/home
