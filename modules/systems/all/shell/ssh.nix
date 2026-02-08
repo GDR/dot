@@ -10,5 +10,10 @@ lib.my.mkSystemModuleV2 args {
   # Linux-only: start SSH agent system-wide (Darwin uses Keychain)
   moduleLinux = _: {
     programs.ssh.startAgent = true;
+
+    # Enable all terminfo entries (including xterm-ghostty) to support
+    # remote SSH clients that send custom TERM values (e.g., Ghostty terminal).
+    # This prevents "can't find terminal definition" errors in set-environment.
+    environment.enableAllTerminfo = true;
   };
 }
