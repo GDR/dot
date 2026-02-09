@@ -24,10 +24,18 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 
-  module = _: lib.mkIf (userMap != { }) {
-    services.charon-key = {
-      enable = true;
-      userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) userMap;
-    };
-  };
+  module = _: lib.mkMerge [
+    (lib.mkIf (userMap != { }) {
+      services.charon-key = {
+        enable = true;
+        userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) userMap;
+      };
+
+      # Remove nix-darwin's default AuthorizedKeysCommand (101-authorized-keys.conf)
+      # which sorts before charon-key's 50-charon-key.conf alphabetically (1 < 5).
+      # SSH uses the first AuthorizedKeysCommand it encounters, so nix-darwin's
+      # /bin/cat would shadow charon-key's wrapper.
+      environment.etc."ssh/sshd_config.d/101-authorized-keys.conf".text = lib.mkForce "";
+    })
+  ];
 }
