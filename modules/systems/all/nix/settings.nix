@@ -12,7 +12,8 @@ lib.my.mkSystemModuleV2 args {
     nixpkgs.config.allowUnfree = true;
     nixpkgs.overlays = [
       overlays.${system}.additions
-      overlays.${system}.modifications
+      overlays.${system}.ollama
+      overlays.${system}.code-cursor
     ];
   };
 

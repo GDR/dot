@@ -1,15 +1,12 @@
+# Cursor editor overlay
 { lib, system, ... }:
+
 final: prev:
 let
   inherit (prev.stdenv) hostPlatform;
   sourcesJson = lib.importJSON ./sources.json;
   sources = lib.mapAttrs
-    (
-      _: info:
-        prev.fetchurl {
-          inherit (info) url hash;
-        }
-    )
+    (_: info: prev.fetchurl { inherit (info) url hash; })
     sourcesJson.sources;
 
   source = sources.${hostPlatform.system};
@@ -23,11 +20,7 @@ in
     inherit version vscodeVersion;
     src =
       if hostPlatform.isLinux then
-        prev.appimageTools.extract
-          {
-            inherit pname version;
-            src = source;
-          }
+        prev.appimageTools.extract { inherit pname version; src = source; }
       else
         source;
   });
