@@ -11,7 +11,7 @@ let
 
   source = sources.${hostPlatform.system};
 
-  pname = "code-cursor";
+  pname = "cursor";
   version = sourcesJson.version;
   vscodeVersion = sourcesJson.vscodeVersion;
 in
@@ -23,5 +23,10 @@ in
         prev.appimageTools.extract { inherit pname version; src = source; }
       else
         source;
+    sourceRoot =
+      if hostPlatform.isLinux then
+        "${pname}-${version}-extracted/usr/share/cursor"
+      else
+        _oldAttrs.sourceRoot;
   });
 }
