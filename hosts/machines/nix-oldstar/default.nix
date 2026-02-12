@@ -38,6 +38,10 @@ in
     modules = {
       home.cli.enable = true;
       home.shell.zsh.enable = true;
+      home.editors.neovim.enable = true;
+      home.shell.ssh.enable = true;
+      home.shell.tmux.enable = true;
+      home.virtualisation.docker.enable = true;
     };
   };
 
