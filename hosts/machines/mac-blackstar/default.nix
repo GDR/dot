@@ -35,6 +35,7 @@ in
     ];
     # Hierarchical module enables
     modules = {
+      home.ai-tools.enable = true;
       home.browsers.enable = true;
       home.cli.enable = true;
       home.desktop.enable = true; # was desktop-utils
