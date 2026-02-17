@@ -1,84 +1,77 @@
-{ self, pkgs, lib, overlays, ... }: {
-  modules = {
-    common = {
-      shell = {
-        git.enable = true;
-        ssh.enable = true;
-        tmux.enable = true;
-        utils.enable = true;
-        zsh.enable = true;
-      };
-      editors = {
-        neovim.enable = true;
-        vscode.enable = true;
-      };
-      terminal = {
-        kitty.enable = true;
-      };
-      utils = {
-        bazel.enable = true;
-        java.enable = true;
-        scala.enable = true;
-        keepassxc.enable = true;
-      };
-      messenger = {
-        telegram.enable = true;
-      };
-      browsers = {
-        chrome.enable = true;
-        firefox.enable = true;
-      };
-      virtualisation = {
-        podman.enable = true;
-        docker.enable = true;
-      };
-      media = {
-        vlc.enable = true;
-        spotify.enable = true;
-      };
-    };
-    darwin = {
-      utils = {
-        chatgpt.enable = true;
-        macfuse.enable = true;
-        # obsidian.enable = true;
-        yaak.enable = true;
-      };
-      vpn = {
-        outline-client.enable = true;
-        outline-manager.enable = true;
-      };
-      ide = {
-        #        xcode.enable = true;
-      };
-    };
-    fonts.enable = true;
-  };
-
+{ self, pkgs, lib, overlays, ... }:
+let
+  # Import user defaults by name
+  importUser = name: import ../../users/${name}.nix { inherit lib; };
+in
+{
   nix.enable = true;
 
-  nix.settings.experimental-features = "nix-command flakes";
+  # Fix GID mismatch for existing Nix installation
+  ids.gids.nixbld = 350;
 
-  system.configurationRevision = self.rev or self.dirtyRev or null;
-
-  system.stateVersion = 5;
-
-  nixpkgs.hostPlatform = "aarch64-darwin";
-
-  nixpkgs.config.allowUnfree = true;
-
-  security.pam.services.sudo_local.touchIdAuth = true;
-
-  security-keys.signingkey = "/Users/dgarifullin/.ssh/mac_blackstar_id_rsa";
-
-  home.programs.git.extraConfig.user = {
-    signingkey = "/Users/dgarifullin/.ssh/mac_blackstar_id_rsa.pub";
+  # Enable user via hostUsers (new system)
+  # Defaults from hosts/users/<name>.nix, host-specific overrides here
+  hostUsers.dgarifullin = importUser "dgarifullin" // {
+    enable = true;
+    # Host-specific: SSH key for this machine
+    keys = [{
+      name = "blackstar";
+      type = "rsa";
+      purpose = [ "git" "ssh" ];
+      isDefault = true;
+    }];
+    # SSH configuration
+    ssh = [
+      {
+        host = "*";
+        identityFile = "~/.ssh/blackstar_id_rsa";
+        extraOptions.AddKeysToAgent = "no"; # Darwin: use Touch ID prompt each time
+      }
+      {
+        host = "github.com";
+        user = "git";
+        identityFile = "~/.ssh/blackstar_id_rsa";
+      }
+    ];
+    # Hierarchical module enables
+    modules = {
+      home.browsers.enable = true;
+      home.cli.enable = true;
+      home.desktop.enable = true; # was desktop-utils
+      home.editors.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+    };
   };
 
-  environment.variables = {
-    TERM = "xterm-256color";
+  networking.hostName = "mac-blackstar";
+
+  # System-scope modules (top-level, not in modules.*)
+  systemAll = {
+    # fonts.enable = true;
+    nix.settings.enable = true;
+    nix.gc.enable = true;
+    shell = {
+      ssh.enable = true;
+      git.enable = true;
+    };
   };
 
-  # Set primary user for nix-darwin
-  system.primaryUser = "dgarifullin";
+  # Darwin-specific system modules
+  systemDarwin = {
+    macos-settings.enable = true;
+    homebrew = {
+      enable = true;
+      user = "dgarifullin";
+    };
+    # app-aliases.enable = true; # Spotlight aliases for home-manager apps
+    openssh = {
+      enable = true;
+      userMap = { "dgarifullin" = "gdr"; };
+    };
+  };
+
+  time.timeZone = "Europe/Moscow";
 }
