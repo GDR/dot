@@ -34,7 +34,7 @@ in
     ];
     # Hierarchical module enables
     modules = {
-      home.browsers.enable = true;
+      home.browsers.vivaldi.enable = true;
       home.cli.enable = true;
       home.desktop = {
         # Desktop utilities (appearance, services, widgets)
