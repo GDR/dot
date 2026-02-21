@@ -1,5 +1,5 @@
 # NVIDIA GPU drivers and settings - Linux system module
-{ lib, config, ... }@args:
+{ lib, config, pkgs, ... }@args:
 
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
@@ -43,5 +43,13 @@ lib.my.mkSystemModuleV2 args {
       package = config.boot.kernelPackages.nvidiaPackages.stable;
       forceFullCompositionPipeline = cfg.forceCompositionPipeline;
     };
+
+    # Force Vulkan to use NVIDIA ICD. Fixes "Found no drivers" when AMD iGPU
+    # (Driver None) causes loader to fail before reaching NVIDIA ICD.
+    # Use environment.variables (system-wide) so Lutris and subprocesses inherit.
+    environment.variables.VK_ICD_FILENAMES =
+      "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json";
+
+    environment.systemPackages = [ pkgs.vulkan-tools ];
   };
 }
