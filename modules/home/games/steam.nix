@@ -23,6 +23,12 @@ lib.my.mkModuleV2 args {
       type = types.bool;
       description = "Open ports in the firewall for Source Dedicated Server";
     };
+
+    extraCodecs = mkOption {
+      default = true;
+      type = types.bool;
+      description = "Add GStreamer plugins (H.265/HEVC, etc.) to Steam FHS for codec playback";
+    };
   };
   systemModule = cfg: {
     nixosSystems = {
@@ -32,7 +38,7 @@ lib.my.mkModuleV2 args {
         remotePlay.openFirewall = cfg.remotePlayOpenFirewall;
         dedicatedServer.openFirewall = cfg.dedicatedServerOpenFirewall;
         gamescopeSession.enable = cfg.enableGamescope;
-        extraPackages = with pkgs; optionals cfg.enableGamescope [
+        extraPackages = with pkgs; (optionals cfg.enableGamescope [
           gamescope
           xorg.libXcursor
           xorg.libXi
@@ -43,6 +49,16 @@ lib.my.mkModuleV2 args {
           libvorbis
           libkrb5
           keyutils
+        ]) ++ (optionals cfg.extraCodecs [
+          gst_all_1.gst-plugins-bad # H.265/HEVC
+          gst_all_1.gst-plugins-ugly
+          gst_all_1.gst-libav
+          gst_all_1.gstreamer
+          gst_all_1.gst-plugins-base
+          gst_all_1.gst-plugins-good
+        ]);
+        extraCompatPackages = with pkgs; [
+          proton-ge-bin
         ];
       };
 
