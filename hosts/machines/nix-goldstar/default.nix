@@ -55,7 +55,7 @@ in
       home.security.enable = true;
       home.shell.enable = true;
       home.terminal.enable = true;
-      home.virtualisation.enable = true;
+      home.virtualisation.docker.enable = true;
     };
   };
 
