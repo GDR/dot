@@ -23,25 +23,29 @@ lib.my.mkSystemModuleV2 args {
 
     # Fontconfig rules for better emoji fallback in applications
     fonts.fontconfig.localConf = ''
-      <!-- Add Apple Color Emoji to fallback chain for all fonts -->
-      <alias>
-        <family>sans-serif</family>
-        <prefer>
-          <family>Apple Color Emoji</family>
-        </prefer>
-      </alias>
-      <alias>
-        <family>serif</family>
-        <prefer>
-          <family>Apple Color Emoji</family>
-        </prefer>
-      </alias>
-      <alias>
-        <family>monospace</family>
-        <prefer>
-          <family>Apple Color Emoji</family>
-        </prefer>
-      </alias>
+      <?xml version="1.0"?>
+      <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+      <fontconfig>
+        <!-- Add Apple Color Emoji to fallback chain for all fonts -->
+        <alias>
+          <family>sans-serif</family>
+          <prefer>
+            <family>Apple Color Emoji</family>
+          </prefer>
+        </alias>
+        <alias>
+          <family>serif</family>
+          <prefer>
+            <family>Apple Color Emoji</family>
+          </prefer>
+        </alias>
+        <alias>
+          <family>monospace</family>
+          <prefer>
+            <family>Apple Color Emoji</family>
+          </prefer>
+        </alias>
+      </fontconfig>
     '';
   };
 }
