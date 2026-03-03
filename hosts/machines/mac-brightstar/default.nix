@@ -45,6 +45,7 @@ in
       home.security.enable = true;
       home.shell.enable = true;
       home.terminal.enable = true;
+      home.utils.raycast.enable = true;
     };
   };
 
