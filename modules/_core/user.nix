@@ -152,6 +152,19 @@ let
           }
         '';
       };
+
+      # Sudo configuration (Linux only)
+      sudo = {
+        nopasswd = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Grant this user NOPASSWD sudo on Linux.
+            Useful for deploy-rs or other unattended automation that
+            SSHes as the user and needs to switch to root.
+          '';
+        };
+      };
     };
   });
 
@@ -261,5 +274,17 @@ in
   } // optionalAttrs isDarwin {
     # Darwin requires primaryUser for certain options
     system.primaryUser = head (attrNames enabledUsers);
+  } // optionalAttrs isLinux {
+    # Grant NOPASSWD sudo to any user that opted in
+    security.sudo.extraRules =
+      let
+        nopasswdUsers = filterAttrs (_: cfg: cfg.enable && cfg.sudo.nopasswd) config.hostUsers;
+      in
+      mapAttrsToList
+        (name: _: {
+          users = [ name ];
+          commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
+        })
+        nopasswdUsers;
   });
 }

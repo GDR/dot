@@ -47,6 +47,8 @@ in
       home.shell.tmux.enable = true;
       home.virtualisation.docker.enable = true;
     };
+    # deploy-rs (and any other automation) can sudo without a password
+    sudo.nopasswd = true;
   };
 
   time.timeZone = "Europe/Moscow";

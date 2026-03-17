@@ -90,6 +90,7 @@
         nodes.nix-oldstar = {
           hostname = "nix-oldstar";
           sshUser = "dgarifullin";
+          sshOpts = [ "-t" ]; # allocate TTY so sudo can prompt for password
           profiles.system = {
             user = "root";
             path = deploy-rs.lib.x86_64-linux.activate.nixos
@@ -100,6 +101,7 @@
         nodes.nix-goldstar = {
           hostname = "nix-goldstar";
           sshUser = "dgarifullin";
+          sshOpts = [ "-t" ]; # allocate TTY so sudo can prompt for password
           profiles.system = {
             user = "root";
             path = deploy-rs.lib.x86_64-linux.activate.nixos
