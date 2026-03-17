@@ -17,7 +17,7 @@ in
     # Host-specific: SSH key for this machine
     keys = [{
       name = "oldstar";
-      type = "rsa";
+      type = "ed25519";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
@@ -25,13 +25,13 @@ in
     ssh = [
       {
         host = "*";
-        identityFile = "~/.ssh/oldstar_id_rsa";
+        identityFile = "~/.ssh/oldstar_id_ed25519";
         extraOptions.AddKeysToAgent = "yes";
       }
       {
         host = "github.com";
         user = "git";
-        identityFile = "~/.ssh/oldstar_id_rsa";
+        identityFile = "~/.ssh/oldstar_id_ed25519";
       }
     ];
     # Minimal home modules - CLI tools and shell
