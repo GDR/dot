@@ -52,6 +52,7 @@ in
     fonts.enable = true;
     nix.settings.enable = true;
     nix.gc.enable = true;
+    sops.enable = true;
     shell = {
       ssh.enable = true;
       git.enable = true;
