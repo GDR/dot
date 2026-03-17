@@ -47,6 +47,7 @@ in
       home.shell.enable = true;
       home.terminal.enable = true;
       home.utils.raycast.enable = true;
+      home.virtualisation.docker.enable = true;
     };
   };
 

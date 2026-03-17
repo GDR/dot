@@ -14,11 +14,13 @@ lib.my.mkModuleV2 args {
         extraGroups = [ "docker" ];
       });
     };
-  };
-  module = {
-    darwinSystems.home.packages = with pkgs; [
-      docker
-      docker-credential-helpers
-    ];
+    darwinSystems = {
+      # Darwin: install docker CLI system-wide via native Nix (pkgs.docker supports Darwin)
+      environment.systemPackages = with pkgs; [
+        colima
+        docker
+        docker-credential-helpers
+      ];
+    };
   };
 }
