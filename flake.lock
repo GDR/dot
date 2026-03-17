@@ -330,27 +330,6 @@
         "vscode-server": "vscode-server"
       }
     },
-    "sops-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "vantage",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1773698643,
-        "narHash": "sha256-VCiDjE8kNs8uCAK73Ezk1r3fFuc4JepvW07YFqaN968=",
-        "owner": "Mic92",
-        "repo": "sops-nix",
-        "rev": "8237de83e8200d16fe0c4467b02a1c608ff28044",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Mic92",
-        "repo": "sops-nix",
-        "type": "github"
-      }
-    },
     "systems": {
       "locked": {
         "lastModified": 1681028828,
@@ -483,15 +462,14 @@
         "flake-utils": "flake-utils_2",
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "sops-nix": "sops-nix"
+        ]
       },
       "locked": {
-        "lastModified": 1773782646,
-        "narHash": "sha256-JWy9eGIxDGi0xNzDPc4WLOZ2uV8F4ZtRUziVG2Brq4c=",
+        "lastModified": 1773785196,
+        "narHash": "sha256-RBwBUqx86syo/UTXYJx+7wIbHxBKAs4s318wut4MNsM=",
         "owner": "GDR",
         "repo": "vantage",
-        "rev": "baaa67268bc01200dc87943da7f8c4d12e3711f0",
+        "rev": "74807ac5c9dc9cc9f19d526686a0b5fb5abe127c",
         "type": "github"
       },
       "original": {

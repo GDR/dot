@@ -9,7 +9,8 @@ in
     ./hardware-configuration.nix
 
     # ── Vantage infra modules (consul + nomad) ──
-    inputs.vantage.nixosModules.infra-server # consul server + nomad server+client
+    inputs.vantage.nixosModules.infra-server # consul + nomad server+client
+    inputs.vantage.nixosModules.consul-dns # *.consul DNS forwarding via systemd-resolved
   ];
 
   networking.hostName = "nix-oldstar";
@@ -109,6 +110,10 @@ in
     datacenter = "homelab";
     # gossipKeyFile = config.sops.secrets.nomad_gossip_key.path;
   };
+
+  # ── Consul DNS: *.consul forwarding via local Consul agent ────────────
+  # Uses local Consul agent (127.0.0.1:8600 default)
+  services.vantage.consul-dns.enable = true;
 
   # ── Tailscale: connect manually with `tailscale up` ─────────────────
   # Run: sudo tailscale up --auth-key=<key>

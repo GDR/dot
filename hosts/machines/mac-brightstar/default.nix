@@ -1,9 +1,13 @@
-{ self, pkgs, lib, overlays, ... }:
+{ self, inputs, pkgs, lib, overlays, ... }:
 let
   # Import user defaults by name
   importUser = name: import ../../users/${name}.nix { inherit lib; };
 in
 {
+  imports = [
+    inputs.vantage.darwinModules.consul-dns # *.consul DNS via /etc/resolver/consul
+  ];
+
   nix.enable = true;
 
   # Fix GID mismatch for existing Nix installation
@@ -80,4 +84,10 @@ in
   };
 
   time.timeZone = "Europe/Moscow";
+
+  # *.consul DNS forwarding — queries nix-oldstar's Consul over Tailscale
+  services.vantage.consul-dns = {
+    enable = true;
+    nameserver = "100.64.100.3"; # nix-oldstar Tailscale IP
+  };
 }
