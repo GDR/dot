@@ -17,7 +17,7 @@ in
     # Host-specific: SSH key for this machine
     keys = [{
       name = "brightstar";
-      type = "rsa";
+      type = "ed25519";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
@@ -25,13 +25,13 @@ in
     ssh = [
       {
         host = "*";
-        identityFile = "~/.ssh/brightstar_id_rsa";
-        extraOptions.AddKeysToAgent = "no"; # Darwin: use Touch ID prompt each time
+        identityFile = "~/.ssh/brightstar_id_ed25519";
+        extraOptions.AddKeysToAgent = "yes"; # Darwin: use Touch ID prompt each time
       }
       {
         host = "github.com";
         user = "git";
-        identityFile = "~/.ssh/brightstar_id_rsa";
+        identityFile = "~/.ssh/brightstar_id_ed25519";
       }
     ];
     # Hierarchical module enables
