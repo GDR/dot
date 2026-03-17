@@ -53,12 +53,12 @@ nixos: nix-oldstar nix-goldstar
 # darwin-rebuild directly (no SSH needed).
 mac-brightstar:
 	@printf "\033[1m\033[32m▶ Switching mac-brightstar (local)…\033[0m\n"
-	darwin-rebuild switch --flake .#mac-brightstar
+	sudo darwin-rebuild switch --flake .#mac-brightstar
 
 # mac-blackstar is rebuilt remotely: SSH in and run darwin-rebuild there.
 mac-blackstar:
 	@printf "\033[1m\033[32m▶ Switching mac-blackstar (remote)…\033[0m\n"
-	ssh mac-blackstar -- "cd ~/.config/dot && darwin-rebuild switch --flake .#mac-blackstar"
+	ssh mac-blackstar -- "cd ~/.config/dot && sudo darwin-rebuild switch --flake .#mac-blackstar"
 
 # ── NixOS hosts (deploy-rs) ───────────────────────────────────────────────────
 # remoteBuild = true is set in flake.nix, so the build happens on the target
