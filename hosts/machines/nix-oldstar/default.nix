@@ -8,9 +8,7 @@ in
     hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
 
-    # ── Vantage infra modules (consul + nomad + tailscale secrets) ──
-    inputs.vantage.nixosModules.sops # sops-nix NixOS module (re-exported from vantage)
-    inputs.vantage.nixosModules.infra-secrets # sops config pointing at vantage secrets
+    # ── Vantage infra modules (consul + nomad) ──
     inputs.vantage.nixosModules.infra-server # consul server + nomad server+client
   ];
 
@@ -112,7 +110,6 @@ in
     # gossipKeyFile = config.sops.secrets.nomad_gossip_key.path;
   };
 
-  # ── Tailscale: auto-auth using shared key from Vantage ─────────────
-  # infra-secrets module decrypts tailscale_authkey to /run/secrets/tailscale_authkey
-  services.tailscale.authKeyFile = config.sops.secrets.tailscale_authkey.path;
+  # ── Tailscale: connect manually with `tailscale up` ─────────────────
+  # Run: sudo tailscale up --auth-key=<key>
 }
