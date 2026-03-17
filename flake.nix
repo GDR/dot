@@ -30,6 +30,10 @@
       url = "github:GDR/charon-key";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    vantage = {
+      url = "github:GDR/vantage";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, charon-key, ... }:

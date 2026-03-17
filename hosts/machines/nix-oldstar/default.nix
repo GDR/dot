@@ -7,6 +7,11 @@ in
   imports = [
     hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
+
+    # ── Vantage infra modules (consul + nomad + tailscale secrets) ──
+    inputs.vantage.nixosModules.sops # sops-nix NixOS module (re-exported from vantage)
+    inputs.vantage.nixosModules.infra-secrets # sops config pointing at vantage secrets
+    inputs.vantage.nixosModules.infra-server # consul server + nomad server+client
   ];
 
   networking.hostName = "nix-oldstar";
@@ -87,4 +92,27 @@ in
     };
     sound.enable = true;
   };
+
+  # ── Consul: single-node homelab server ─────────────────────────────
+  services.vantage.consul = {
+    enable = true;
+    mode = "both"; # server + client on one node
+    datacenter = "homelab";
+    enableUi = true; # UI at http://<tailscale-ip>:8500
+    # Uncomment after gossip key is provisioned in vantage/secrets/shared/cluster.yaml:
+    # gossipKeyFile = config.sops.secrets.consul_gossip_key.path;
+  };
+
+  # ── Nomad: server + client on homelab ──────────────────────────────
+  services.vantage.nomad = {
+    enable = true;
+    server = true;
+    client = true;
+    datacenter = "homelab";
+    # gossipKeyFile = config.sops.secrets.nomad_gossip_key.path;
+  };
+
+  # ── Tailscale: auto-auth using shared key from Vantage ─────────────
+  # infra-secrets module decrypts tailscale_authkey to /run/secrets/tailscale_authkey
+  services.tailscale.authKeyFile = config.sops.secrets.tailscale_authkey.path;
 }
