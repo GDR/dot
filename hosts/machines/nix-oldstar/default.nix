@@ -15,6 +15,13 @@ in
 
   networking.hostName = "nix-oldstar";
 
+  # Static IPv6 address — replace <eth-interface> with the actual interface
+  # name (run `ip link show` on the machine, e.g. enp0s31f6, eth0, …)
+  networking.interfaces."eth0".ipv6.addresses = [{
+    address = "2a02:2168:875d:ec00::1";
+    prefixLength = 64;
+  }];
+
   # Enable user via hostUsers (system user account only, no home modules)
   hostUsers.dgarifullin = importUser "dgarifullin" // {
     enable = true;
