@@ -59,8 +59,7 @@ in
 
   # ── Remote builder: nix-oldstar (x86_64-linux) ─────────────────────
   # Offloads x86_64-linux builds (e.g. Vantage infra-image-test qcow2) to nix-oldstar.
-  # Requires: nix-oldstar must have trusted-users = [ "root" "@wheel" ] and
-  # `ssh nix-oldstar` must work from mac-brightstar (brightstar_id_ed25519 key).
+  # nix-oldstar imports vantage.nixosModules.remote-builder (trusted-users, kvm, max-jobs).
   nix.distributedBuilds = true;
 
   nix.buildMachines = [
@@ -68,7 +67,7 @@ in
       hostName = "nix-oldstar"; # Tailscale MagicDNS — must be reachable
       system = "x86_64-linux";
       protocol = "ssh-ng";
-      maxJobs = 4;
+      maxJobs = 8;
       speedFactor = 2;
       supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
     }

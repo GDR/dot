@@ -11,6 +11,10 @@ in
     # ── Vantage infra modules (consul + nomad) ──
     inputs.vantage.nixosModules.infra-server # consul + nomad server+client
     inputs.vantage.nixosModules.consul-dns # *.consul DNS forwarding via systemd-resolved
+
+    # ── Vantage remote-builder module ──
+    # Sets trusted-users, max-jobs = "auto", and system-features (kvm, big-parallel)
+    inputs.vantage.nixosModules.remote-builder
   ];
 
   networking.hostName = "nix-oldstar";
@@ -59,10 +63,6 @@ in
   };
 
   time.timeZone = "Europe/Moscow";
-
-  # Allow mac-brightstar's nix-daemon to submit remote builds.
-  # @wheel covers dgarifullin who is in the wheel group on nix-oldstar.
-  nix.settings.trusted-users = [ "root" "@wheel" ];
 
   # System-scope modules (server-side only)
   systemAll = {
