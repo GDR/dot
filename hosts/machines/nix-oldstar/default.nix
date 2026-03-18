@@ -60,6 +60,10 @@ in
 
   time.timeZone = "Europe/Moscow";
 
+  # Allow mac-brightstar's nix-daemon to submit remote builds.
+  # @wheel covers dgarifullin who is in the wheel group on nix-oldstar.
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+
   # System-scope modules (server-side only)
   systemAll = {
     fonts.enable = true;
