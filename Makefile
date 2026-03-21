@@ -7,7 +7,6 @@
 #
 #   make all             Switch all reachable hosts
 #   make mac-brightstar  Switch the local Mac (darwin-rebuild)
-#   make mac-blackstar   Switch mac-blackstar remotely via darwin-rebuild
 #   make nix-oldstar     Deploy nix-oldstar via deploy-rs
 #   make nix-goldstar    Deploy nix-goldstar via deploy-rs
 #   make nixos           Deploy all NixOS hosts
@@ -16,7 +15,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help all update fmt check \
-        mac-brightstar mac-blackstar \
+        mac-brightstar \
         nix-oldstar nix-goldstar \
         nixos darwin
 
@@ -32,7 +31,6 @@ help:
 	@printf "  \033[36mmake nixos\033[0m          Deploy all NixOS hosts via deploy-rs\n"
 	@printf "\n"
 	@printf "  \033[36mmake mac-brightstar\033[0m darwin-rebuild switch for mac-brightstar (this machine)\n"
-	@printf "  \033[36mmake mac-blackstar\033[0m  darwin-rebuild switch for mac-blackstar (remote)\n"
 	@printf "  \033[36mmake nix-oldstar\033[0m    deploy-rs switch for nix-oldstar\n"
 	@printf "  \033[36mmake nix-goldstar\033[0m   deploy-rs switch for nix-goldstar\n"
 	@printf "\n"
@@ -44,7 +42,7 @@ help:
 # ── Top-level targets ─────────────────────────────────────────────────────────
 all: darwin nixos
 
-darwin: mac-brightstar mac-blackstar
+darwin: mac-brightstar
 
 nixos: nix-oldstar nix-goldstar
 
@@ -54,11 +52,6 @@ nixos: nix-oldstar nix-goldstar
 mac-brightstar:
 	@printf "\033[1m\033[32m▶ Switching mac-brightstar (local)…\033[0m\n"
 	sudo darwin-rebuild switch --flake .#mac-brightstar
-
-# mac-blackstar is rebuilt remotely: SSH in and run darwin-rebuild there.
-mac-blackstar:
-	@printf "\033[1m\033[32m▶ Switching mac-blackstar (remote)…\033[0m\n"
-	ssh mac-blackstar -- "cd ~/.config/dot && sudo darwin-rebuild switch --flake .#mac-blackstar"
 
 # ── NixOS hosts (deploy-rs) ───────────────────────────────────────────────────
 # remoteBuild = true is set in flake.nix, so the build happens on the target

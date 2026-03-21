@@ -78,7 +78,6 @@
 
       # Host configurations
       darwinConfigurations.mac-brightstar = flakeHelpers.mkDarwinConfiguration ./hosts/machines/mac-brightstar;
-      darwinConfigurations.mac-blackstar = flakeHelpers.mkDarwinConfiguration ./hosts/machines/mac-blackstar;
       nixosConfigurations.nix-oldstar = flakeHelpers.mkNixosConfiguration ./hosts/machines/nix-oldstar;
       nixosConfigurations.nix-goldstar = flakeHelpers.mkNixosConfiguration ./hosts/machines/nix-goldstar;
 
