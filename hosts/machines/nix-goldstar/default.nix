@@ -89,5 +89,14 @@ in
     sound.enable = true;
   };
 
+  # Passwordless sudo for deploy-rs (it can't allocate a TTY reliably over SSH)
+  security.sudo.extraRules = [{
+    users = [ "dgarifullin" ];
+    commands = [{
+      command = "ALL";
+      options = [ "NOPASSWD" ];
+    }];
+  }];
+
   time.timeZone = "Europe/Moscow";
 }
