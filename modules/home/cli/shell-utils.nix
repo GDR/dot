@@ -9,7 +9,7 @@ lib.my.mkModuleV2 args {
       home.packages = with pkgs; [
         bat
         fzf
-        neofetch
+        fastfetch
         wget
       ];
       programs.direnv = {
