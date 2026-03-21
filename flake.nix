@@ -30,9 +30,10 @@
       url = "github:GDR/charon-key";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Stub by default — override with the real repo for infra hosts:
+    # --override-input vantage github:GDR/vantage
     vantage = {
-      url = "github:GDR/vantage";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "path:./stubs/vantage";
     };
   };
 

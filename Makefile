@@ -52,13 +52,14 @@ mac-brightstar:
 # ── NixOS hosts (SSH + nixos-rebuild) ─────────────────────────────────────────
 # SSH into the remote host, pull latest config, and nixos-rebuild switch.
 # Each host has DOTFILES_DIR set in its NixOS config.
+# Hosts that need infra override vantage with the real private repo.
 nix-oldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-oldstar…\033[0m\n"
-	ssh -t nix-oldstar 'cd $$DOTFILES_DIR && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar'
+	ssh -t nix-oldstar 'cd $$DOTFILES_DIR && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar --override-input vantage github:GDR/vantage'
 
 nix-goldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-goldstar…\033[0m\n"
-	ssh -t nix-goldstar 'cd $$DOTFILES_DIR && git pull && sudo nixos-rebuild switch --flake .#nix-goldstar --override-input vantage path:./stubs/vantage'
+	ssh -t nix-goldstar 'cd $$DOTFILES_DIR && git pull && sudo nixos-rebuild switch --flake .#nix-goldstar'
 
 # ── Maintenance ───────────────────────────────────────────────────────────────
 update:
