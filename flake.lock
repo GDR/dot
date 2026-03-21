@@ -267,15 +267,14 @@
     },
     "vantage": {
       "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-bMvtBebEZlnKhUEQ+yMOIIDIRqUtYs+2nMWElbEMXUU=",
         "path": "./stubs/vantage",
         "type": "path"
       },
       "original": {
         "path": "./stubs/vantage",
         "type": "path"
-      }
+      },
+      "parent": []
     },
     "vscode-server": {
       "inputs": {
