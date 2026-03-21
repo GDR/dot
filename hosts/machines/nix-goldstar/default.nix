@@ -12,6 +12,8 @@ in
   # Defaults from hosts/users/<name>.nix, host-specific overrides here
   hostUsers.dgarifullin = importUser "dgarifullin" // {
     enable = true;
+    # Passwordless sudo for remote deployment via SSH + nixos-rebuild
+    sudo.nopasswd = true;
     # Host-specific: SSH key for this machine
     keys = [{
       name = "goldstar";
@@ -61,6 +63,7 @@ in
   };
 
   networking.hostName = "nix-goldstar";
+  environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
   # System-scope modules (top-level, not in modules.*)
   systemAll = {
@@ -89,15 +92,6 @@ in
     };
     sound.enable = true;
   };
-
-  # Passwordless sudo for deploy-rs (it can't allocate a TTY reliably over SSH)
-  security.sudo.extraRules = [{
-    users = [ "dgarifullin" ];
-    commands = [{
-      command = "ALL";
-      options = [ "NOPASSWD" ];
-    }];
-  }];
 
   time.timeZone = "Europe/Moscow";
 }

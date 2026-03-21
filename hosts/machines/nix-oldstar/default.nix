@@ -18,6 +18,7 @@ in
   ];
 
   networking.hostName = "nix-oldstar";
+  environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
   # Static IPv6 address — replace <eth-interface> with the actual interface
   # name (run `ip link show` on the machine, e.g. enp0s31f6, eth0, …)

@@ -56,6 +56,7 @@ in
   };
 
   networking.hostName = "mac-brightstar";
+  environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
 
   # ── Remote builder: nix-oldstar (x86_64-linux) ─────────────────────
   # Offloads x86_64-linux builds (e.g. Vantage infra-image-test qcow2) to nix-oldstar.
