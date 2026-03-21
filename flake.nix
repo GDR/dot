@@ -33,7 +33,7 @@
     # Stub by default — override with the real repo for infra hosts:
     # --override-input vantage github:GDR/vantage
     vantage = {
-      url = "path:./stubs/vantage";
+      url = "github:GDR/dot-stubs?dir=vantage";
     };
   };
 
