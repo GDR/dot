@@ -50,7 +50,7 @@ in
       home.security.enable = true;
       home.shell.enable = true;
       home.terminal.enable = true;
-      home.utils.raycast.enable = true;
+      # home.utils.raycast.enable = true; # disabled: nixpkgs download URL broken
       home.virtualisation.docker.enable = true;
     };
   };
