@@ -47,7 +47,7 @@ nixos: nix-oldstar nix-goldstar
 # darwin-rebuild directly (no SSH needed).
 mac-brightstar:
 	@printf "\033[1m\033[32m▶ Switching mac-brightstar (local)…\033[0m\n"
-	sudo darwin-rebuild switch --flake .#mac-brightstar --override-input vantage github:GDR/vantage
+	sudo darwin-rebuild switch --flake .#mac-brightstar --override-input vantage git+ssh://git@github.com/GDR/vantage
 
 # ── NixOS hosts (SSH + nixos-rebuild) ─────────────────────────────────────────
 # SSH into the remote host, pull latest config, and nixos-rebuild switch.
@@ -55,7 +55,7 @@ mac-brightstar:
 # Hosts that need infra override vantage with the real private repo.
 nix-oldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-oldstar…\033[0m\n"
-	ssh -t nix-oldstar 'cd $${DOTFILES_DIR:-$$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar --override-input vantage github:GDR/vantage'
+	ssh -t nix-oldstar 'cd $${DOTFILES_DIR:-$$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar --override-input vantage git+ssh://git@github.com/GDR/vantage
 
 nix-goldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-goldstar…\033[0m\n"
