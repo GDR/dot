@@ -42,6 +42,14 @@ in
         user = "git";
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
+      {
+        host = "nix-oldstar";
+        forwardAgent = true;
+      }
+      {
+        host = "nix-goldstar";
+        forwardAgent = true;
+      }
     ];
     # Minimal home modules - CLI tools and shell
     modules = {

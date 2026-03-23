@@ -37,6 +37,14 @@ in
         user = "git";
         identityFile = "~/.ssh/brightstar_id_ed25519";
       }
+      {
+        host = "nix-oldstar";
+        forwardAgent = true;
+      }
+      {
+        host = "nix-goldstar";
+        forwardAgent = true;
+      }
     ];
     # Hierarchical module enables
     modules = {

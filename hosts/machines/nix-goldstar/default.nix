@@ -33,6 +33,14 @@ in
         user = "git";
         identityFile = "~/.ssh/goldstar_id_rsa";
       }
+      {
+        host = "nix-oldstar";
+        forwardAgent = true;
+      }
+      {
+        host = "nix-goldstar";
+        forwardAgent = true;
+      }
     ];
     # Hierarchical module enables
     modules = {
