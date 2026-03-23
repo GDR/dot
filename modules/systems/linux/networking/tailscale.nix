@@ -15,6 +15,7 @@ lib.my.mkSystemModuleV2 args {
     # Tailscale service
     services.tailscale = {
       enable = true;
+      autostart = true;
       useRoutingFeatures = "client";
     };
 
