@@ -15,8 +15,22 @@ lib.my.mkSystemModuleV2 args {
     # Tailscale service
     services.tailscale = {
       enable = true;
-      autostart = true;
       useRoutingFeatures = "client";
+    };
+
+    # Auto-reconnect on boot using persisted auth state in /var/lib/tailscale
+    systemd.services.tailscale-autoconnect = {
+      description = "Tailscale auto-connect on boot";
+      after = [ "network-online.target" "tailscaled.service" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        ${pkgs.tailscale}/bin/tailscale up
+      '';
     };
 
     # Firewall settings
