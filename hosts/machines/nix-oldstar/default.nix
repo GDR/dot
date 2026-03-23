@@ -18,7 +18,7 @@ in
   ];
 
   networking.hostName = "nix-oldstar";
-  environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
+  environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/nix-dots";
 
   # Enable user via hostUsers (system user account only, no home modules)
   hostUsers.dgarifullin = importUser "dgarifullin" // {
