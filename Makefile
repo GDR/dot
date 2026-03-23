@@ -55,7 +55,7 @@ mac-brightstar:
 # Hosts that need infra override vantage with the real private repo.
 nix-oldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-oldstar…\033[0m\n"
-	ssh -t nix-oldstar 'cd $${DOTFILES_DIR:-$$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar --override-input vantage git+ssh://git@github.com/GDR/vantage
+	ssh -t nix-oldstar 'cd $${DOTFILES_DIR:-$$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar --override-input vantage git+ssh://git@github.com/GDR/vantage'
 
 nix-goldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-goldstar…\033[0m\n"
