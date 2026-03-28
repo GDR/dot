@@ -14,6 +14,8 @@
 creation_rules:
   - path_regex: hosts/machines/nix-oldstar/secrets/.*
     age:
-      # TODO: replace with the real age pubkey from nix-oldstar
-      # Run on nix-oldstar: nix-shell -p ssh-to-age --run 'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
+      # nix-oldstar host key (derived from SSH host key with ssh-to-age):
+      #   ssh nix-oldstar 'nix-shell -p ssh-to-age --run "ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub"'
       - age1squjsv382d0dchnpv57jr3ev8ldjk4g5rp4y474s4jxals9pm9cs04q68c
+      # mac-brightstar local age key (~/.config/sops/age/keys.txt):
+      - age1wa37p3gvk7p0m0rwzg43xlnhdm75luqu2n7h5yw83g7tq3j26prs6ye3xw
