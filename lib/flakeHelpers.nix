@@ -3,7 +3,7 @@
 { inputs, lib, self, overlays }:
 
 let
-  inherit (inputs) nixpkgs nix-darwin home-manager nixvim vscode-server hardware charon-key;
+  inherit (inputs) nixpkgs nix-darwin home-manager nixvim vscode-server hardware charon-key sops-nix;
 
   # Helper to wrap a module file and filter out 'meta' attribute
   # NixOS modules don't allow arbitrary top-level attributes
@@ -128,6 +128,7 @@ in
         nixvim.nixosModules.nixvim
         vscode-server.nixosModules.default
         charon-key.nixosModules.default
+        sops-nix.nixosModules.sops
       ]
         ++ mkConfigurationModules [
         ../modules/home

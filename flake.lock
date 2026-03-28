@@ -216,8 +216,29 @@
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs",
         "nixvim": "nixvim",
+        "sops-nix": "sops-nix",
         "vantage": "vantage",
         "vscode-server": "vscode-server"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1774303811,
+        "narHash": "sha256-fhG4JAcLgjKwt+XHbjs8brpWnyKUfU4LikLm3s0Q/ic=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "614e256310e0a4f8a9ccae3fa80c11844fba7042",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
       }
     },
     "systems": {
@@ -268,11 +289,11 @@
     "vantage": {
       "locked": {
         "dir": "vantage",
-        "lastModified": 1774115489,
-        "narHash": "sha256-U+MkQICWqcFiHex0Eol1F8sumVnTgKvDUUDalmAzWsw=",
+        "lastModified": 1774682478,
+        "narHash": "sha256-NNLEdyNB4NF/l9sLi6JUvtdh3RE3csIdAcWGbbyZcak=",
         "owner": "GDR",
         "repo": "dot-stubs",
-        "rev": "8f4e9f1bb43f4b21e488a10a071b4009c416adc3",
+        "rev": "d4f1ebfc500bb59234a90146bd2df122de048290",
         "type": "github"
       },
       "original": {

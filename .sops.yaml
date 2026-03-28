@@ -1,0 +1,19 @@
+---
+# .sops.yaml — sops creation rules for GDR/dot
+#
+# Key derivation:
+#   nix-oldstar age key (derived from SSH host key):
+#     nix-shell -p ssh-to-age --run 'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
+#
+# To add a new secret:
+#   sops hosts/machines/<host>/secrets/<name>
+#
+# IMPORTANT: replace the placeholder age key below with the real one before
+# running `sops` to create/edit secrets.
+
+creation_rules:
+  - path_regex: hosts/machines/nix-oldstar/secrets/.*
+    age:
+      # TODO: replace with the real age pubkey from nix-oldstar
+      # Run on nix-oldstar: nix-shell -p ssh-to-age --run 'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
+      - age1squjsv382d0dchnpv57jr3ev8ldjk4g5rp4y474s4jxals9pm9cs04q68c

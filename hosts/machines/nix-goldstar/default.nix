@@ -86,7 +86,7 @@ in
 
   systemLinux = {
     networking = {
-      firewall.allowedTCPPorts = [ 8888 ];
+      firewall.allowedTCPPorts = [ 8080 ];
       networkmanager.enable = true;
       openssh = {
         enable = true; # SSH server + charon-key AuthorizedKeysCommand

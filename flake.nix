@@ -30,6 +30,10 @@
       url = "github:GDR/charon-key";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Stub by default — override with the real repo for infra hosts:
     # --override-input vantage github:GDR/vantage
     vantage = {
