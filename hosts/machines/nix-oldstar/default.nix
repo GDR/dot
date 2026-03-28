@@ -150,7 +150,7 @@ in
     clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
     gcpKms = {
       enable = true;
-      project = ""; # TODO: fill in your GCP project ID
+      project = "vantage-491607";
       region = "global";
       keyRing = "vault";
       cryptoKey = "unseal";
