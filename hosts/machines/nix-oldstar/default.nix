@@ -169,18 +169,18 @@ in
     mode = "0400";
   };
 
-  # nomad-vault-token-env: VAULT_TOKEN=<nomad-cluster-token>
-  # Created by: just vault-seal-secrets (reads terraform output)
-  sops.secrets."nomad-vault-token-env" = {
-    sopsFile = ./secrets/nomad-vault-token-env;
-    format = "binary"; # raw encrypted file, not YAML/JSON
-    owner = "root";
-    mode = "0400";
-  };
+  # # nomad-vault-token-env: VAULT_TOKEN=<nomad-cluster-token>
+  # # Created by: just vault-seal-secrets (reads terraform output)
+  # sops.secrets."nomad-vault-token-env" = {
+  #   sopsFile = ./secrets/nomad-vault-token-env;
+  #   format = "binary"; # raw encrypted file, not YAML/JSON
+  #   owner = "root";
+  #   mode = "0400";
+  # };
 
-  # Inject VAULT_TOKEN into the Nomad systemd service
-  systemd.services.nomad.serviceConfig.EnvironmentFile =
-    config.sops.secrets."nomad-vault-token-env".path;
+  # # Inject VAULT_TOKEN into the Nomad systemd service
+  # systemd.services.nomad.serviceConfig.EnvironmentFile =
+  #   config.sops.secrets."nomad-vault-token-env".path;
 
   # ── Tailscale: connect manually with `tailscale up` ─────────────────
   # Run: sudo tailscale up --auth-key=<key>
