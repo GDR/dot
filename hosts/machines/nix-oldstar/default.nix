@@ -148,14 +148,7 @@ in
   services.vantage.vault = {
     enable = true;
     clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
-    gcpKms = {
-      enable = true;
-      project = "vantage-491607";
-      region = "global";
-      keyRing = "vault";
-      cryptoKey = "unseal";
-      credentialsFile = config.sops.secrets."gcp-vault-sa".path;
-    };
+    gcpKms.enable = false;
   };
 
   # ── sops secrets ───────────────────────────────────────────────────
