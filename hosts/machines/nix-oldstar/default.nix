@@ -148,7 +148,7 @@ in
   #   5. Run `just vault-seal-secrets` → encrypts Nomad token into sops
   services.vantage.vault = {
     enable = true;
-    clusterAddr = "consul.service.consul"; # Tailscale MagicDNS hostname
+    clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
     gcpKms.enable = false;
     serviceAddr = "100.64.100.3";
   };
