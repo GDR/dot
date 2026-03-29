@@ -148,7 +148,7 @@ in
   #   5. Run `just vault-seal-secrets` → encrypts Nomad token into sops
   services.vantage.vault = {
     enable = true;
-    clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
+    clusterAddr = "consul.service.consul"; # TEMPORARY: must match stored Raft peer ID
     gcpKms.enable = false;
     serviceAddr = "100.64.100.3";
   };
