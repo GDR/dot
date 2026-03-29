@@ -86,6 +86,7 @@ in
 
   systemLinux = {
     networking = {
+      firewall.enable = true;
       firewall.allowedTCPPorts = [ 8080 ];
       networkmanager.enable = true;
       openssh = {
