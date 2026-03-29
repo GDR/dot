@@ -10,6 +10,7 @@ in
 
     # ── Vantage infra modules (consul + nomad) ──
     inputs.vantage.nixosModules.infra-server # consul + nomad server+client
+    inputs.vantage.nixosModules.vault # standalone vault stub (adds serviceAddr option)
     inputs.vantage.nixosModules.consul-dns # *.consul DNS forwarding via systemd-resolved
 
     # ── Vantage remote-builder module ──
@@ -147,8 +148,9 @@ in
   #   5. Run `just vault-seal-secrets` → encrypts Nomad token into sops
   services.vantage.vault = {
     enable = true;
-    clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
+    clusterAddr = "consul.service.consul"; # Tailscale MagicDNS hostname
     gcpKms.enable = false;
+    serviceAddr = "100.64.100.1";
   };
 
 
