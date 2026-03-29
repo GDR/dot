@@ -150,7 +150,7 @@ in
     enable = true;
     clusterAddr = "consul.service.consul"; # Tailscale MagicDNS hostname
     gcpKms.enable = false;
-    serviceAddr = "100.64.100.1";
+    serviceAddr = "100.64.100.3";
   };
 
 
