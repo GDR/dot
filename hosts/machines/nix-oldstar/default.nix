@@ -122,8 +122,8 @@ in
     enableUi = true; # UI at http://<tailscale-ip>:8500
     # Uncomment after gossip key is provisioned in vantage/secrets/shared/cluster.yaml:
     # gossipKeyFile = config.sops.secrets.consul_gossip_key.path;
-    # mTLS — enabled once vault-agent confirms certs in /run/certs/consul/
-    tls.enable = true;
+    # mTLS — enable after vault-agent is running and /run/certs/consul/ is populated
+    tls.enable = false;
   };
 
   # ── Nomad: server + client on homelab ──────────────────────────────
@@ -135,8 +135,8 @@ in
     # gossipKeyFile = config.sops.secrets.nomad_gossip_key.path;
     # Switch vaultAddr to https:// in Commit 9 once Vault TLS is on.
     vaultAddr = "http://127.0.0.1:8200";
-    # mTLS — enabled once vault-agent confirms certs in /run/certs/nomad/
-    tls.enable = true;
+    # mTLS — enable after vault-agent is running and /run/certs/nomad/ is populated
+    tls.enable = false;
   };
 
   # ── Consul DNS: *.consul forwarding via local Consul agent ────────────
@@ -178,23 +178,24 @@ in
   #   6. sops -e --input-type=binary --output-type=binary \
   #        <(echo -n "<secret-id>") \
   #        > hosts/machines/nix-oldstar/secrets/vault-agent-secret-id
-  sops.secrets."vault-agent-secret-id" = {
-    sopsFile = ./secrets/vault-agent-secret-id;
-    format = "binary"; # raw secret-id, not YAML/JSON envelope
-    owner = "root";
-    mode = "0400";
-  };
+  # vault-agent-secret-id: created by sops after AppRole is set up in Vault.
+  # Uncomment once the file exists at hosts/machines/nix-oldstar/secrets/vault-agent-secret-id
+  # sops.secrets."vault-agent-secret-id" = {
+  #   sopsFile = ./secrets/vault-agent-secret-id;
+  #   format = "binary";
+  #   owner = "root";
+  #   mode = "0400";
+  # };
 
   services.vantage.vault-agent = {
-    enable = true;
-    # Switch to https:// in Commit 9 once vault.tls.enable = true.
+    enable = false; # ← enable after: 1) PKI bootstrap  2) AppRole created  3) secret-id encrypted+committed
     vaultAddr = "http://127.0.0.1:8200";
-    # Replace after step 4 above:
-    appRoleId = "REPLACE_WITH_ROLE_ID";
-    appRoleSecretIdFile = config.sops.secrets."vault-agent-secret-id".path;
+    appRoleId = "REPLACE_WITH_ROLE_ID"; # vault read auth/approle/role/vault-agent-server/role-id
+    # appRoleSecretIdFile = config.sops.secrets."vault-agent-secret-id".path;  # uncomment with sops block above
+    appRoleSecretIdFile = "/run/secrets/vault-agent-secret-id";
     consulCert = true;
     nomadCert = true;
-    vaultCert = true; # needed only here (Vault server node)
+    vaultCert = true;
   };
 
 
