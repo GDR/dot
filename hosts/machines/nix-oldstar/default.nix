@@ -8,10 +8,15 @@ in
     hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
 
-    # ── Vantage infra modules (consul + nomad) ──
+    # ── Vantage infra modules (consul + nomad + vault) ──
     inputs.vantage.nixosModules.infra-server # consul + nomad server+client
     inputs.vantage.nixosModules.vault # standalone vault stub (adds serviceAddr option)
     inputs.vantage.nixosModules.consul-dns # *.consul DNS forwarding via systemd-resolved
+
+    # ── Vantage mTLS: cert delivery sidecar ──
+    # vault-agent fetches leaf certs from Vault PKI and writes them to /run/certs/
+    # Must run before consul.service and nomad.service (ordering handled by the module).
+    inputs.vantage.nixosModules.vault-agent
 
     # ── Vantage remote-builder module ──
     # Sets trusted-users, max-jobs = "auto", and system-features (kvm, big-parallel)
@@ -117,6 +122,8 @@ in
     enableUi = true; # UI at http://<tailscale-ip>:8500
     # Uncomment after gossip key is provisioned in vantage/secrets/shared/cluster.yaml:
     # gossipKeyFile = config.sops.secrets.consul_gossip_key.path;
+    # mTLS — enabled once vault-agent confirms certs in /run/certs/consul/
+    tls.enable = true;
   };
 
   # ── Nomad: server + client on homelab ──────────────────────────────
@@ -126,8 +133,10 @@ in
     client = true;
     datacenter = "homelab";
     # gossipKeyFile = config.sops.secrets.nomad_gossip_key.path;
-    # Point Nomad at the local Vault instance
+    # Switch vaultAddr to https:// in Commit 9 once Vault TLS is on.
     vaultAddr = "http://127.0.0.1:8200";
+    # mTLS — enabled once vault-agent confirms certs in /run/certs/nomad/
+    tls.enable = true;
   };
 
   # ── Consul DNS: *.consul forwarding via local Consul agent ────────────
@@ -151,6 +160,41 @@ in
     clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
     gcpKms.enable = false;
     serviceAddr = "100.64.100.3";
+    # mTLS (Commit 9 — enable AFTER vault-agent is confirmed delivering certs)
+    # tls.enable = true;
+  };
+
+  # ── Vault Agent: mTLS cert delivery sidecar ────────────────────────────
+  # ONE-TIME SETUP after vault-init + PKI bootstrap:
+  #   1. vault auth enable approle
+  #   2. vault policy write pki-consul infra/vault-policies/pki-consul.hcl
+  #      vault policy write pki-nomad  infra/vault-policies/pki-nomad.hcl
+  #      vault policy write pki-vault  infra/vault-policies/pki-vault.hcl
+  #   3. vault write auth/approle/role/vault-agent-server \
+  #        token_policies="pki-consul,pki-nomad,pki-vault" \
+  #        secret_id_ttl=0 token_ttl=720h
+  #   4. Get role-id:  vault read auth/approle/role/vault-agent-server/role-id
+  #   5. Get secret-id: vault write -f auth/approle/role/vault-agent-server/secret-id
+  #   6. sops -e --input-type=binary --output-type=binary \
+  #        <(echo -n "<secret-id>") \
+  #        > hosts/machines/nix-oldstar/secrets/vault-agent-secret-id
+  sops.secrets."vault-agent-secret-id" = {
+    sopsFile = ./secrets/vault-agent-secret-id;
+    format = "binary"; # raw secret-id, not YAML/JSON envelope
+    owner = "root";
+    mode = "0400";
+  };
+
+  services.vantage.vault-agent = {
+    enable = true;
+    # Switch to https:// in Commit 9 once vault.tls.enable = true.
+    vaultAddr = "http://127.0.0.1:8200";
+    # Replace after step 4 above:
+    appRoleId = "REPLACE_WITH_ROLE_ID";
+    appRoleSecretIdFile = config.sops.secrets."vault-agent-secret-id".path;
+    consulCert = true;
+    nomadCert = true;
+    vaultCert = true; # needed only here (Vault server node)
   };
 
 

@@ -289,11 +289,11 @@
     "vantage": {
       "locked": {
         "dir": "vantage",
-        "lastModified": 1774792448,
-        "narHash": "sha256-5lTdhRSyWVGCPhO9FXQSi6a1YfvgPAzyZSg6UhRUdvk=",
+        "lastModified": 1775239641,
+        "narHash": "sha256-2VSOQmgM78rcQQ65N9sna0Tf1YZn74Q8aOBoJF+47aw=",
         "owner": "GDR",
         "repo": "dot-stubs",
-        "rev": "a81a1237183fd0233ab3d7f9bf24aec6a2aa2150",
+        "rev": "0880358d73843a4d8be68dfb42c354fe704ee409",
         "type": "github"
       },
       "original": {
