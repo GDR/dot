@@ -18,6 +18,14 @@ lib.my.mkSystemModuleV2 args {
       useRoutingFeatures = "client";
     };
 
+    # after = ordering guarantee (tailscaled starts AFTER network is up)
+    # wants = soft dependency (won't kill tailscaled if network-online fails)
+    # requires alone doesn't enforce order — units can still start in parallel
+    systemd.services.tailscaled = {
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+    };
+
     # Auto-reconnect on boot using persisted auth state in /var/lib/tailscale
     systemd.services.tailscale-autoconnect = {
       description = "Tailscale auto-connect on boot";
