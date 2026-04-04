@@ -158,7 +158,7 @@ in
   services.vantage.vault = {
     enable = true;
     clusterAddr = "nix-oldstar"; # Tailscale MagicDNS hostname
-    gcpKms.enable = false;
+    gcpKms.enable = true;
     serviceAddr = "100.64.100.3";
     # mTLS (Commit 9 — enable AFTER vault-agent is confirmed delivering certs)
     # tls.enable = true;
