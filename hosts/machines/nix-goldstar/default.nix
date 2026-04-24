@@ -97,7 +97,7 @@ in
     };
     graphics.nvidia = {
       enable = true;
-      open = false;
+      open = true;
     };
     sound.enable = true;
   };

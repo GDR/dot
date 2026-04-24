@@ -40,7 +40,8 @@ lib.my.mkSystemModuleV2 args {
       powerManagement.finegrained = false;
       open = cfg.open;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      # Test newer branch for game freeze regressions on stable.
+      package = config.boot.kernelPackages.nvidiaPackages.beta;
       forceFullCompositionPipeline = cfg.forceCompositionPipeline;
     };
 
