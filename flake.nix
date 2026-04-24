@@ -64,7 +64,7 @@
 
       packages = forAllSystems (system:
         let
-          pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
+          pkgs = import nixpkgs { inherit system; config.allowUnfree = true; nvidia.acceptLicense = true; };
         in
         import ./packages.nix { inherit pkgs lib system charon-key; }
       );

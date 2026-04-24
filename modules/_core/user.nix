@@ -263,7 +263,7 @@ in
       users = mapAttrs
         (name: cfg: {
           home = {
-            stateVersion = "24.11";
+            stateVersion = "26.05";
             username = name;
             homeDirectory = if isDarwin then "/Users/${name}" else "/home/${name}";
           };

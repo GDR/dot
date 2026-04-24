@@ -8,8 +8,8 @@ lib.my.mkSystemModuleV2 args {
   extraOptions = {
     open = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Use open source kernel modules (recommended for newer GPUs)";
+      default = false;
+      description = "Use open source kernel modules";
     };
 
     powerManagement = lib.mkOption {
@@ -20,8 +20,8 @@ lib.my.mkSystemModuleV2 args {
 
     forceCompositionPipeline = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Force full composition pipeline to prevent tearing";
+      default = false;
+      description = "Force full composition pipeline (mainly useful for X11)";
     };
   };
 
@@ -43,12 +43,6 @@ lib.my.mkSystemModuleV2 args {
       package = config.boot.kernelPackages.nvidiaPackages.stable;
       forceFullCompositionPipeline = cfg.forceCompositionPipeline;
     };
-
-    # Force Vulkan to use NVIDIA ICD. Fixes "Found no drivers" when AMD iGPU
-    # (Driver None) causes loader to fail before reaching NVIDIA ICD.
-    # Use environment.variables (system-wide) so Lutris and subprocesses inherit.
-    environment.variables.VK_ICD_FILENAMES =
-      "/run/opengl-driver/share/vulkan/icd.d/nvidia_icd.x86_64.json";
 
     environment.systemPackages = [ pkgs.vulkan-tools ];
   };

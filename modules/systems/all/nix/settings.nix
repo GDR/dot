@@ -10,16 +10,18 @@ lib.my.mkSystemModuleV2 args {
 
     # Nixpkgs configuration
     nixpkgs.config.allowUnfree = true;
+    nixpkgs.config.nvidia.acceptLicense = true;
     nixpkgs.overlays = [
       overlays.${system}.additions
       overlays.${system}.ollama
       overlays.${system}.code-cursor
+      overlays.${system}.proton-ge-bin
     ];
   };
 
   # Platform-specific additions
   moduleLinux = _: {
-    system.stateVersion = "25.11";
+    system.stateVersion = "26.05";
   };
 
   moduleDarwin = _: {

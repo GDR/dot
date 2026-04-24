@@ -11,7 +11,7 @@ lib.my.mkModuleV2 args {
       programs.lutris.enable = true;
       programs.lutris = {
         extraPackages = with pkgs; [
-
+          gamemode
         ];
       };
 

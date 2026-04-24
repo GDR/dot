@@ -7,4 +7,5 @@
   # Package modifications
   ollama = import ./ollama;
   code-cursor = import ./code-cursor { inherit lib system; };
+  proton-ge-bin = import ./proton-ge-bin;
 }
