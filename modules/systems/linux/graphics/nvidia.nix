@@ -8,7 +8,7 @@ lib.my.mkSystemModuleV2 args {
   extraOptions = {
     open = lib.mkOption {
       type = lib.types.bool;
-      default = false;
+      default = true;
       description = "Use open source kernel modules";
     };
 
@@ -40,8 +40,8 @@ lib.my.mkSystemModuleV2 args {
       powerManagement.finegrained = false;
       open = cfg.open;
       nvidiaSettings = true;
-      # Test newer branch for game freeze regressions on stable.
-      package = config.boot.kernelPackages.nvidiaPackages.beta;
+      # Try Vulkan-focused beta branch for DXVK/VKD3D stability.
+      package = config.boot.kernelPackages.nvidiaPackages.vulkan_beta;
       forceFullCompositionPipeline = cfg.forceCompositionPipeline;
     };
 
