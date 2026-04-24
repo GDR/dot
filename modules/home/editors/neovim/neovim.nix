@@ -16,12 +16,9 @@ lib.my.mkModuleV2 args {
     ./dotfiles/plugins/which-key.nix
     ./dotfiles/plugins/web-devicons.nix
   ];
-  systemModule = {
-    allSystems = {
-      # Enable nixvim (system-level NixOS option, not home-manager)
-      programs.nixvim.enable = true;
-    };
-  };
+  # Temporarily disabled: current nixpkgs revision fails building nixvim
+  # plugin pack with "attribute 'pname' missing".
+  systemModule = { };
   module = {
     allSystems.home.packages = with pkgs; [ ripgrep fzf ];
   };
