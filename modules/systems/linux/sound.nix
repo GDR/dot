@@ -18,6 +18,15 @@ lib.my.mkSystemModuleV2 args {
       wireplumber.enable = true;
     };
 
+    # Keep manually selected default sink instead of auto-restoring
+    # previously active device/routes (helps with game audio rerouting).
+    environment.etc."wireplumber/wireplumber.conf.d/10-default-audio.conf".text = ''
+      wireplumber.settings = {
+        "device.restore-profile" = false
+        "device.restore-routes" = false
+      }
+    '';
+
     # Realtime priority for audio
     security.rtkit.enable = true;
 

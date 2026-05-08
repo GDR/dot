@@ -59,7 +59,9 @@ in
       };
       home.downloads.enable = true;
       home.editors.enable = true;
-      home.games.enable = true;
+      home.editors.neovim.enable = true;
+      home.games.steam.enable = true;
+      home.games.lutris.enable = true;
       home.media.enable = true;
       home.messengers.enable = true;
       home.security.enable = true;

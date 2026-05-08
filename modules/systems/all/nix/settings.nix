@@ -16,6 +16,7 @@ lib.my.mkSystemModuleV2 args {
       overlays.${system}.ollama
       overlays.${system}.code-cursor
       overlays.${system}.proton-ge-bin
+      overlays.${system}.openldap
     ];
   };
 
