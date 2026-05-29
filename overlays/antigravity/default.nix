@@ -1,24 +1,12 @@
-# Antigravity editor overlay
+# Antigravity overlay — no-op passthrough.
+#
+# Antigravity 2.x packages (google-antigravity, google-antigravity-ide,
+# google-antigravity-cli) are injected into pkgs via overlays/additions.nix
+# using inputs.antigravity-nix.packages.${system}.*.
+#
+# The old local information.json pin (Antigravity 1.x IDE) is superseded
+# by the upstream flake input. This overlay is retained for structural
+# consistency but performs no overrides.
 { lib, system, ... }:
 
-final: prev:
-let
-  inherit (prev.stdenv) hostPlatform;
-
-  information = lib.importJSON ./information.json;
-  sourceInfo = information.sources.${hostPlatform.system};
-
-  pname = "antigravity";
-  version = information.version;
-  vscodeVersion = information.vscodeVersion;
-in
-{
-  antigravity = prev.antigravity.overrideAttrs (_oldAttrs: {
-    inherit version vscodeVersion;
-
-    src = prev.fetchurl {
-      inherit (sourceInfo) url;
-      sha256 = sourceInfo.sha256;
-    };
-  });
-}
+_final: _prev: { }

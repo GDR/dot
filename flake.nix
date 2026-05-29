@@ -39,6 +39,11 @@
     vantage = {
       url = "github:GDR/dot-stubs?dir=vantage";
     };
+
+    antigravity-nix = {
+      url = "github:jacopone/antigravity-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, charon-key, ... }:

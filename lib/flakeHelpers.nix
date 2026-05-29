@@ -3,7 +3,7 @@
 { inputs, lib, self, overlays }:
 
 let
-  inherit (inputs) nixpkgs nix-darwin home-manager nixvim vscode-server hardware charon-key sops-nix;
+  inherit (inputs) nixpkgs nix-darwin home-manager nixvim vscode-server hardware charon-key sops-nix antigravity-nix;
 
   # Helper to wrap a module file and filter out 'meta' attribute
   # NixOS modules don't allow arbitrary top-level attributes
@@ -98,6 +98,8 @@ in
         home-manager.darwinModules.home-manager
         nixvim.nixDarwinModules.nixvim
         charon-key.darwinModules.default
+        # antigravity-nix exposes only packages/overlays (no darwinModules);
+        # google-antigravity* are injected via overlays/additions.nix
       ]
         ++ mkConfigurationModules [
         ../modules/home
