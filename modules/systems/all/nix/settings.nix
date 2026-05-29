@@ -13,6 +13,8 @@ lib.my.mkSystemModuleV2 args {
     nixpkgs.config.nvidia.acceptLicense = true;
     nixpkgs.overlays = [
       overlays.${system}.additions
+      overlays.${system}.patches
+      overlays.${system}.antigravity
       overlays.${system}.ollama
       overlays.${system}.code-cursor
       overlays.${system}.proton-ge-bin
