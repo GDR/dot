@@ -29,18 +29,19 @@ lib.my.mkSystemModuleV2 args {
         };
 
         # Populate the directory with app aliases after files are written
-        home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           app_folder="/Users/${username}/Applications/${cfg.folder}"
           # Remove existing aliases to avoid duplicates
           if [ -d "$app_folder" ]; then
             find "$app_folder" -type f -delete
           fi
-          # Create aliases for home-manager apps
+          # Create aliases for home-manager apps from the newly linked generation
           if [ -d "$genProfilePath/home-path/Applications" ]; then
             find "$genProfilePath/home-path/Applications" -type l -print | while read -r app; do
               app_target="$app_folder/$(basename "$app")"
               real_app="$(readlink "$app")"
-              $DRY_RUN_CMD ${pkgs.mkalias}/bin/mkalias "$real_app" "$app_target"
+              # Use || true so a single bookmark failure doesn't abort the whole activation
+              $DRY_RUN_CMD ${pkgs.mkalias}/bin/mkalias "$real_app" "$app_target" || true
             done
           fi
         '';
