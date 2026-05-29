@@ -1,11 +1,11 @@
-# Zsh shell configuration with oh-my-zsh and zplug
+# Zsh shell configuration with oh-my-zsh and nix-native plugins
 { lib, pkgs, config, system, self, _modulePath, ... }@args: with lib;
 let
   isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
 in
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
-  description = "Zsh shell configuration with oh-my-zsh and zplug";
+  description = "Zsh shell configuration with oh-my-zsh and nix-native plugins";
   extraOptions = {
     showHostname = mkOption {
       default = true;
@@ -47,26 +47,44 @@ lib.my.mkModuleV2 args {
       programs.zsh = {
         enable = true;
         enableCompletion = true;
-        autosuggestion.enable = true;
 
         oh-my-zsh.enable = true;
 
-        zplug = {
-          enable = true;
-          plugins = [
-            { name = "romkatv/powerlevel10k"; tags = [ "as:theme" "depth:1" ]; }
-            { name = "zsh-users/zsh-autosuggestions"; }
-            { name = "zsh-users/zsh-syntax-highlighting"; }
-            { name = "zsh-users/zsh-history-substring-search"; }
-            { name = "zsh-users/zsh-completions"; }
-          ];
-        };
+        # Disable p10k instant prompt before it loads (via .zshenv, which runs before plugins).
+        # instant_prompt=verbose hangs in VSCode/Antigravity integrated terminals.
+        envExtra = ''
+          typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+        '';
+
+        # Nix-native plugin loading — no Python, no network, no startup hang.
+        # Plugins are sourced directly from the nix store in declaration order.
+        plugins = [
+          {
+            name = "powerlevel10k";
+            src = pkgs.zsh-powerlevel10k;
+            file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
+          }
+          {
+            name = "zsh-autosuggestions";
+            src = pkgs.zsh-autosuggestions;
+            file = "share/zsh-autosuggestions/zsh-autosuggestions.zsh";
+          }
+          {
+            name = "zsh-syntax-highlighting";
+            src = pkgs.zsh-syntax-highlighting;
+            file = "share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh";
+          }
+          {
+            name = "zsh-history-substring-search";
+            src = pkgs.zsh-history-substring-search;
+            file = "share/zsh-history-substring-search/zsh-history-substring-search.zsh";
+          }
+        ];
 
         initContent = ''
           # Source p10k config if it exists
           [[ -f ~/.config/zsh/.p10k.zsh ]] && source ~/.config/zsh/.p10k.zsh
           source ~/.config/zsh/common.zsh
-
 
           # Ctrl+E edits command line in nvim (last cmd if empty)
           export EDITOR=nvim
@@ -96,6 +114,10 @@ lib.my.mkModuleV2 args {
           "dotfiles" = "cd ~/Workspaces/gdr/dot";
         };
       };
+
+      # zsh-completions provides only fpath completion scripts (no plugin entrypoint).
+      # home-manager automatically adds its share/zsh/site-functions to fpath.
+      home.packages = [ pkgs.zsh-completions ];
     };
   };
   dotfiles = {
