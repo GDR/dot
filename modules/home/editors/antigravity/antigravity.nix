@@ -21,7 +21,7 @@ lib.my.mkModuleV2 args {
     # macOS: .app bundle only — use the wrapper script instead
     darwinSystems.home.packages = [
       antigravityIdeWrapper
-      pkgs.google-antigravity-ide  # still needed for the .app in ~/Applications
+      pkgs.google-antigravity-ide # still needed for the .app in ~/Applications
       pkgs.google-antigravity-cli
     ];
   };

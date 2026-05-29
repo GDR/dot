@@ -6,7 +6,7 @@ final: _prev:
   charon-key = inputs.charon-key.packages.${system}.default;
 
   # Antigravity 2.x packages from the upstream flake
-  google-antigravity     = inputs.antigravity-nix.packages.${system}.google-antigravity;
+  google-antigravity = inputs.antigravity-nix.packages.${system}.google-antigravity;
   google-antigravity-ide = inputs.antigravity-nix.packages.${system}.google-antigravity-ide;
   google-antigravity-cli = inputs.antigravity-nix.packages.${system}.google-antigravity-cli;
 }
