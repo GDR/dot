@@ -36,6 +36,8 @@ lib.my.mkModuleV2 args {
         gnome-tweaks
         # gnome-utils # baobab, gucharmap, etc.
         gnome-extension-manager
+        # File manager
+        nautilus
       ];
     };
   };

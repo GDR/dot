@@ -55,7 +55,7 @@ in
         # Window manager (pick one)
         hyprland.enable = true;
         # awesomewm.enable = true;
-        # gnome.enable = true;
+        gnome.enable = true;
       };
       home.downloads.enable = true;
       home.editors.enable = true;
