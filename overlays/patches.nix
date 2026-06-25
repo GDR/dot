@@ -9,9 +9,14 @@ _: prev:
   });
 
   # vte-0.84.0 fails to build in nixpkgs-unstable: unused-variable warnings in
-  # vte.cc are promoted to errors by -Werror. Disable werror until upstream fixes it.
-  # Affects: termite, gnome-terminal, and any other VTE-based terminal.
+  # vte.cc are promoted to errors by -Werror. Use -Dwerror=false to disable it.
+  # (nixpkgs issue #525761)
   vte = prev.vte.overrideAttrs (old: {
-    mesonFlags = (old.mesonFlags or [ ]) ++ [ "--warnlevel=0" ];
+    mesonFlags = (old.mesonFlags or [ ]) ++ [ "-Dwerror=false" ];
   });
+
+  # termite is unmaintained (upstream archived) and broken against vte-0.84.0.
+  # Replace with an empty stub so the GNOME module's dependency on it doesn't
+  # block the build. (nixpkgs issue #525761)
+  termite = prev.runCommandNoCC "termite-stub" { } "mkdir -p $out";
 }
