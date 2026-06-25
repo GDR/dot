@@ -21,6 +21,13 @@ lib.my.mkModuleV2 args {
         };
       };
 
+      # Exclude VTE-based terminals: vte-0.84.0 has an upstream build failure
+      # in nixpkgs-unstable; Ghostty is used instead anyway.
+      environment.gnome.excludePackages = with pkgs; [
+        gnome-terminal
+        termite
+      ];
+
       # Disable GNOME SSH agent (use system ssh-agent)
       services.gnome.gcr-ssh-agent.enable = false;
 
@@ -29,16 +36,15 @@ lib.my.mkModuleV2 args {
     };
   };
 
-  # User-level GNOME utilities
+  # User-level GNOME utilities (nautilus lives in utils/nautilus.nix)
   module = {
     nixosSystems = {
       home.packages = with pkgs; [
         gnome-tweaks
-        # gnome-utils # baobab, gucharmap, etc.
         gnome-extension-manager
-        # File manager
-        nautilus
       ];
     };
   };
 }
+
+

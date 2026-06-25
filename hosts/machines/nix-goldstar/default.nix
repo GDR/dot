@@ -52,6 +52,7 @@ in
         services.enable = true;
         widgets.enable = true;
         utils.enable = true;
+        utils.nautilus.enable = true;
         # Window manager (pick one)
         hyprland.enable = true;
         # awesomewm.enable = true;

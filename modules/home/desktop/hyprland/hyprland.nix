@@ -25,6 +25,10 @@ lib.my.mkModuleV2 args {
         };
       };
 
+      # Unlock gnome-keyring at login via PAM so tuigreet auto-unlocks it
+      # using the user's login password — no separate keyring password prompt.
+      security.pam.services.greetd.enableGnomeKeyring = true;
+
       # XDG portal for screen sharing and file dialogs
       xdg.portal = {
         enable = true;
@@ -53,6 +57,21 @@ lib.my.mkModuleV2 args {
         nerd-fonts.jetbrains-mono
         nerd-fonts.fira-code
       ];
+    };
+  };
+
+  module = {
+    nixosSystems = {
+      # Start gnome-keyring daemon as a user systemd service.
+      # Provides the Secret Service D-Bus API that Electron apps use
+      # to store credentials (VS Code, Antigravity IDE, Chrome, etc.).
+      services.gnome-keyring = {
+        enable = true;
+        components = [ "secrets" "ssh" ];
+      };
+
+      # gcr provides the GUI unlock prompter (fallback if PAM didn't unlock)
+      home.packages = [ pkgs.gcr ];
     };
   };
 
