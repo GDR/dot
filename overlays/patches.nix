@@ -16,7 +16,12 @@ _: prev:
   });
 
   # termite is unmaintained (upstream archived) and broken against vte-0.84.0.
-  # Replace with an empty stub so the GNOME module's dependency on it doesn't
-  # block the build. (nixpkgs issue #525761)
-  termite = prev.runCommandNoCC "termite-stub" { } "mkdir -p $out";
+  # Replace with an empty stub. The stub needs a passthru.terminfo output
+  # because NixOS terminfo.nix does `map (x: x.terminfo)` over all GNOME
+  # terminal packages — without it evaluation fails. (nixpkgs issue #525761)
+  termite =
+    let
+      terminfo = prev.runCommand "termite-stub-terminfo" { } "mkdir -p $out";
+    in
+    prev.runCommand "termite-stub" { passthru = { inherit terminfo; }; } "mkdir -p $out";
 }
