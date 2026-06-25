@@ -21,13 +21,6 @@ lib.my.mkModuleV2 args {
         };
       };
 
-      # Exclude VTE-based terminals: vte-0.84.0 has an upstream build failure
-      # in nixpkgs-unstable; Ghostty is used instead anyway.
-      environment.gnome.excludePackages = with pkgs; [
-        gnome-terminal
-        termite
-      ];
-
       # Disable GNOME SSH agent (use system ssh-agent)
       services.gnome.gcr-ssh-agent.enable = false;
 
