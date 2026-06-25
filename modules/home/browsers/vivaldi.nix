@@ -85,6 +85,7 @@ lib.my.mkModuleV2 args {
           "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder"
           "--enable-accelerated-video-decode"
           "--ozone-platform-hint=auto"
+          "--force-device-scale-factor=1.25"
           # "--enable-logging=stderr"  # Uncomment for debugging
         ];
 
@@ -120,4 +121,3 @@ lib.my.mkModuleV2 args {
     };
   };
 }
-
