@@ -8,16 +8,20 @@ lib.my.mkModuleV2 args {
   systemModule = {
     nixosSystems = {
       # X server with GDM and GNOME
-      services.xserver = {
-        enable = true;
+
+      services = {
         displayManager.gdm.enable = true;
         desktopManager.gnome.enable = true;
 
-        # Keyboard layout
-        xkb = {
-          layout = "us,ru";
-          variant = ",mac";
-          options = "grp:alt_space_toggle";
+        xserver = {
+          enable = true;
+
+          # Keyboard layout
+          xkb = {
+            layout = "us,ru";
+            variant = ",mac";
+            options = "grp:alt_space_toggle";
+          };
         };
       };
 
@@ -39,5 +43,3 @@ lib.my.mkModuleV2 args {
     };
   };
 }
-
-
