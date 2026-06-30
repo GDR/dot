@@ -2,6 +2,19 @@
   # Import module registry functions
   moduleRegistry = import ./moduleRegistry.nix { inherit lib; };
 
+  # ── Theme system ─────────────────────────────────────────────────────────
+  # Theme registry: lib.my.themes.getTheme "rose-pine-moon"
+  themes = import ./themes { inherit lib; };
+
+  # Active theme: set via config.theme.name in host config.
+  # Usage in any module: lib.my.getTheme config
+  # Returns the full theme attrset (colors, roles, terminal, fonts).
+  getTheme = config:
+    let
+      name = config.theme.name or "rose-pine-moon";
+    in
+    themes.getTheme name;
+
   # Factory function to create flake helpers
   # Call with: lib.my.mkFlakeHelpers { inherit self overlays; }
   # Returns: { mkDarwinConfiguration, mkNixosConfiguration, ... }

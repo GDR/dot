@@ -109,6 +109,7 @@ in
         ++ [
         # Import foundational modules separately (not package modules)
         ../modules/_core/user.nix
+        ../modules/_core/theme.nix
       ];
     };
 
@@ -140,6 +141,7 @@ in
         ++ [
         # Import foundational modules separately (not package modules)
         ../modules/_core/user.nix
+        ../modules/_core/theme.nix
       ];
     };
 }
