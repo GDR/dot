@@ -40,10 +40,10 @@ lib.my.mkModuleV2 args {
         gamescopeSession.enable = cfg.enableGamescope;
         extraPackages = with pkgs; (optionals cfg.enableGamescope [
           gamescope
-          xorg.libXcursor
-          xorg.libXi
-          xorg.libXinerama
-          xorg.libXScrnSaver
+          libxcursor
+          libxi
+          libxinerama
+          libxscrnsaver
           libpng
           libpulseaudio
           libvorbis
