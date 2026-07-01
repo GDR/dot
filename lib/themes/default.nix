@@ -8,10 +8,11 @@ let
   # All available themes (add new themes here)
   themeFiles = {
     "rose-pine-moon" = ./rose-pine-moon.nix;
-    # "catppuccin-mocha" = ./catppuccin-mocha.nix;
-    # "gruvbox-dark"     = ./gruvbox-dark.nix;
-    # "tokyo-night"      = ./tokyo-night.nix;
-    # "base2tone-earth"  = ./base2tone-earth.nix;
+    "rose-pine-dawn" = ./rose-pine-dawn.nix;
+    "catppuccin-macchiato" = ./catppuccin-macchiato.nix;
+    # "catppuccin-mocha"  = ./catppuccin-mocha.nix;
+    # "gruvbox-dark"      = ./gruvbox-dark.nix;
+    # "tokyo-night"       = ./tokyo-night.nix;
   };
 
   # Load a theme by name — throws a clear error if name is unknown

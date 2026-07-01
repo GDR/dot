@@ -331,10 +331,17 @@
   mkDotfilesSymlink = { config, self, path, source, target ? null }:
     let
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
-      # Use self.outPath to get actual repo path (not nix store)
-      # In flakes, self.outPath should point to the source directory
-      # Validate that self.outPath exists
-      repoPath = self.outPath or (throw "self.outPath must be available for dotfiles symlinks. Ensure 'self' is passed via specialArgs.");
+      # Use DOTFILES_DIR (set per-host) to get the mutable repo path on disk.
+      # self.outPath always resolves to the Nix store (read-only), even with a
+      # dirty tree, so symlinks built from it cannot be written to.
+      # DOTFILES_DIR is the actual checkout path where live edits work.
+      repoPath =
+        config.environment.variables.DOTFILES_DIR or
+          (throw ''
+            DOTFILES_DIR is not set. Add it to your host config:
+              environment.variables.DOTFILES_DIR = "/home/<user>/path/to/dot";
+            This is required for live-editable dotfile symlinks.
+          '');
       fullPath = "${repoPath}/${source}";
 
       # Determine target path: if not specified, default to ~/.config/${path}

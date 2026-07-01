@@ -108,5 +108,5 @@ in
   time.timeZone = "Europe/Moscow";
 
   # Active color theme — consumed by all modules via lib.my.getTheme config
-  theme.name = "rose-pine-moon";
+  theme.name = "catppuccin-macchiato";
 }

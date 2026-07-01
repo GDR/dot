@@ -122,6 +122,9 @@ in
 
   time.timeZone = "Europe/Moscow";
 
+  # Active color theme — consumed by all modules via lib.my.getTheme config
+  theme.name = "rose-pine-moon";
+
   # *.consul DNS forwarding — queries nix-oldstar's Consul over Tailscale
   services.vantage.consul-dns = {
     enable = true;
