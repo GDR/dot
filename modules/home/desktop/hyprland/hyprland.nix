@@ -35,6 +35,7 @@ lib.my.mkModuleV2 args {
       # Enable Wayland and Hyprland
       programs.hyprland = {
         enable = true;
+        withUWSM = true;
         xwayland.enable = true;
       };
 
@@ -43,7 +44,7 @@ lib.my.mkModuleV2 args {
         enable = true;
         settings = {
           default_session = {
-            command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd Hyprland";
+            command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd 'uwsm start hyprland-uwsm.desktop'";
             user = "greeter";
           };
         };
