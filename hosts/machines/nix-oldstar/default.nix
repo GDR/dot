@@ -60,10 +60,10 @@ in
     # Minimal home modules - CLI tools and shell
     modules = {
       home.cli.enable = true;
-      home.shell.zsh.enable = true;
       home.editors.neovim.enable = true;
       home.shell.ssh.enable = true;
       home.shell.tmux.enable = true;
+      home.shell.zsh.enable = true;
       home.virtualisation.docker.enable = true;
     };
     # deploy-rs (and any other automation) can sudo without a password

@@ -47,22 +47,22 @@ in
       home.browsers.vivaldi.enable = true;
       home.cli.enable = true;
       home.desktop = {
+        # awesomewm.enable = true;
         # Desktop utilities (appearance, services, widgets)
+        # Window manager (pick one)
         appearance.enable = true;
+        gnome.enable = true;
+        hyprland.enable = true;
         services.enable = true;
-        widgets.enable = true;
         utils.enable = true;
         utils.nautilus.enable = true;
-        # Window manager (pick one)
-        hyprland.enable = true;
-        # awesomewm.enable = true;
-        gnome.enable = true;
+        widgets.enable = true;
       };
       home.downloads.enable = true;
       home.editors.enable = true;
       home.editors.neovim.enable = true;
-      home.games.steam.enable = true;
       home.games.lutris.enable = true;
+      home.games.steam.enable = true;
       home.media.enable = true;
       home.messengers.enable = true;
       home.security.enable = true;
