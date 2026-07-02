@@ -13,8 +13,17 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Kernel
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # Kernel — pinned to 7.0.1
+  boot.kernelPackages = pkgs.linuxPackagesFor (pkgs.linux_latest.override {
+    argsOverride = rec {
+      version = "7.0.1";
+      modDirVersion = version;
+      src = pkgs.fetchurl {
+        url = "mirror://kernel/linux/kernel/v7.x/linux-${version}.tar.xz";
+        hash = "";
+      };
+    };
+  });
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
