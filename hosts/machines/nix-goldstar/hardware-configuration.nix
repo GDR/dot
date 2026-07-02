@@ -20,7 +20,7 @@
       modDirVersion = version;
       src = pkgs.fetchurl {
         url = "mirror://kernel/linux/kernel/v7.x/linux-${version}.tar.xz";
-        hash = "";
+        hash = "sha256-ssk1o20kmA4R5ZvtPKVY6m1nYZ7ABl+qM1zcC2TYh78=";
       };
     };
   });
