@@ -1,5 +1,5 @@
 # Neovim editor with nixvim configuration
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, inputs, ... }@args:
 
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
@@ -18,7 +18,13 @@ lib.my.mkModuleV2 args {
   ];
   systemModule = {
     # Enable nixvim (system-level NixOS option, not home-manager)
-    programs.nixvim.enable = true;
+    # Must be wrapped in allSystems so mkModuleV2 unwraps it correctly
+    allSystems.programs.nixvim = {
+      enable = true;
+      # Suppress the nixpkgs.follows mismatch warning — we intentionally
+      # use our pinned nixpkgs rather than nixvim's bundled one.
+      nixpkgs.source = inputs.nixpkgs;
+    };
   };
   module = {
     # Keep plain Neovim available while nixvim plugin pack is disabled.
