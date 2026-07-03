@@ -40,15 +40,8 @@ lib.my.mkSystemModuleV2 args {
       powerManagement.finegrained = false;
       open = cfg.open;
       nvidiaSettings = true;
-      # Pinned to 595.44.05
-      package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
-        version = "595.44.05";
-        sha256_64bit = "";
-        sha256_aarch64 = "";
-        openSha256 = "";
-        settingsSha256 = "";
-        persistencedSha256 = "";
-      };
+      # Try Vulkan-focused beta branch for DXVK/VKD3D stability.
+      package = config.boot.kernelPackages.nvidiaPackages.vulkan_beta;
       forceFullCompositionPipeline = cfg.forceCompositionPipeline;
     };
 
