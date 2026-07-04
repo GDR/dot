@@ -49,10 +49,6 @@ opt.confirm = true -- confirm to save changes before closing buffer
 
 -- Fill chars
 opt.fillchars = {
-  foldopen = "",
-  foldclose = "",
-  fold = " ",
-  foldsep = " ",
   diff = "╱",
   eob = " ",
 }
