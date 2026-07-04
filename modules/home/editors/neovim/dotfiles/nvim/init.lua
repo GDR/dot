@@ -1,18 +1,35 @@
--- LazyVim-like Neovim configuration
--- Plugins are pre-installed by Nix (nix-wrapper-modules)
--- Edit these Lua files and restart nvim — no nixos-rebuild needed!
---
--- Phase 3 will populate this with full config:
---   lua/config/options.lua   — vim.opt settings
---   lua/config/keymaps.lua   — keybindings
---   lua/config/autocmds.lua  — autocommands
---   lua/plugins/             — plugin setup() calls
+-- ╭──────────────────────────────────────────────────────────╮
+-- │  LazyVim-like Neovim Configuration                      │
+-- │  Plugins are pre-installed by Nix (nix-wrapper-modules) │
+-- │  Edit these Lua files → restart nvim — no rebuild!      │
+-- ╰──────────────────────────────────────────────────────────╯
 
--- For now, just set the leader key and enable basic settings
+-- Leader key must be set before any plugin loads
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
--- Enable the byte-compiled loader for faster startup
+-- Enable byte-compiled loader for faster startup
 vim.loader.enable()
 
-print("✅ Neovim loaded — nix-wrapper-modules working! Phase 3 will add full config.")
+-- Load core configuration
+require("config.options")
+require("config.keymaps")
+require("config.autocmds")
+
+-- Auto-load all plugin configs from lua/plugins/**/*.lua
+local function load_plugin_configs(base_dir)
+  local config_path = vim.fn.stdpath("config") .. "/lua/" .. base_dir
+  if vim.fn.isdirectory(config_path) == 0 then
+    return
+  end
+
+  for _, file in ipairs(vim.fn.glob(config_path .. "/**/*.lua", false, true)) do
+    local module = file:match("lua/(.+)%.lua$"):gsub("/", ".")
+    local ok, err = pcall(require, module)
+    if not ok then
+      vim.notify("Error loading " .. module .. ":\n" .. err, vim.log.levels.ERROR)
+    end
+  end
+end
+
+load_plugin_configs("plugins")
