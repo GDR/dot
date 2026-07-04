@@ -15,8 +15,8 @@
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
-    nixvim = {
-      url = "github:nix-community/nixvim";
+    nix-wrapper-modules = {
+      url = "github:BirdeeHub/nix-wrapper-modules";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hardware = {
