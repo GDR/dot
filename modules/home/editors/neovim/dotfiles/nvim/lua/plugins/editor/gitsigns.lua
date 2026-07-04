@@ -29,6 +29,13 @@ require("gitsigns").setup({
     map("n", "<leader>ghR", gs.reset_buffer, "Reset buffer")
     map("n", "<leader>ghp", gs.preview_hunk_inline, "Preview hunk inline")
     map("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, "Blame line")
+    map("n", "<leader>ghB", gs.toggle_current_line_blame, "Toggle inline blame")
     map("n", "<leader>ghd", gs.diffthis, "Diff this")
   end,
+  current_line_blame = true,
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = "eol",
+    delay = 300,
+  },
 })

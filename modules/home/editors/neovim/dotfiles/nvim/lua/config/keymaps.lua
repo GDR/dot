@@ -16,8 +16,8 @@ map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase window w
 -- ── Buffer navigation ──
 map("n", "<S-h>", "<cmd>bprevious<cr>", { desc = "Prev buffer" })
 map("n", "<S-l>", "<cmd>bnext<cr>", { desc = "Next buffer" })
-map("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Delete buffer" })
-map("n", "<leader>bD", "<cmd>bdelete!<cr>", { desc = "Delete buffer (force)" })
+map("n", "<leader>bd", function() Snacks.bufdelete() end, { desc = "Close buffer" })
+map("n", "<leader>bD", "<cmd>bdelete!<cr>", { desc = "Close buffer (force)" })
 
 -- ── Move lines ──
 map("n", "<A-j>", "<cmd>move .+1<cr>==", { desc = "Move line down" })
@@ -52,4 +52,13 @@ map("n", "<leader>cd", vim.diagnostic.open_float, { desc = "Line diagnostics" })
 map("t", "<esc><esc>", "<c-\\><c-n>", { desc = "Enter Normal Mode" })
 
 -- ── Misc ──
-map("n", "<leader>L", "<cmd>Lazy<cr>", { desc = "Lazy" })
+map("n", "<leader>R", function()
+  -- Clear Lua module cache for our config
+  for name, _ in pairs(package.loaded) do
+    if name:match("^config%.") or name:match("^plugins%.") then
+      package.loaded[name] = nil
+    end
+  end
+  dofile(vim.fn.stdpath("config") .. "/init.lua")
+  vim.notify("Config reloaded!", vim.log.levels.INFO)
+end, { desc = "Reload config" })
