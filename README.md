@@ -1,6 +1,6 @@
 # 🏠 Nix Configuration
 
-[![NixOS](https://img.shields.io/badge/NixOS-25.11-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org/)
+[![NixOS](https://img.shields.io/badge/NixOS-26.11-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org/)
 [![nix-darwin](https://img.shields.io/badge/nix--darwin-aarch64-000000?style=flat-square&logo=apple&logoColor=white)](https://github.com/LnL7/nix-darwin)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/check-runs/gdr/dot/master?style=flat-square&label=CI)](https://github.com/GDR/dot/actions)
