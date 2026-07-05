@@ -7,10 +7,6 @@ let
   # Import plugin/LSP declarations
   pluginConfig = import ./dotfiles/plugins.nix { inherit pkgs lib; };
 
-  # Build a wrapped neovim with all plugins and runtime tools baked in
-  # NOTE: NixOS pkgs can have _type = "if" (from mkIf in nixpkgs.config),
-  # which causes nix-wrapper-modules to misinterpret pkgs as a conditional.
-  # Override _type back to "pkgs" to fix the type check.
   wrappedNeovim = inputs.nix-wrapper-modules.wrappers.neovim.wrap {
     pkgs = pkgs // { _type = "pkgs"; };
     inherit (pluginConfig) specs runtimePkgs;
@@ -24,6 +20,8 @@ lib.my.mkModuleV2 args {
     # The wrapped neovim has plugins + LSPs on its PATH.
     # ripgrep/fzf/fd also added globally for shell usage.
     allSystems.home.packages = [ wrappedNeovim ] ++ (with pkgs; [ ripgrep fzf fd ]);
+    # wl-clipboard is the Wayland clipboard provider; pbcopy/pbpaste are built-in on Darwin
+    nixosSystems.home.packages = [ pkgs.wl-clipboard ];
   };
 
   # Symlink dotfiles/nvim → ~/.config/nvim for live editing

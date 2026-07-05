@@ -81,6 +81,5 @@
     ripgrep # fast grep (telescope backend)
     fd # fast find (telescope backend)
     tree-sitter # tree-sitter CLI (grammar compilation)
-    wl-clipboard # clipboard provider (Wayland)
   ];
 }
