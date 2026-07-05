@@ -12,3 +12,6 @@ require("tokyonight").setup({
 })
 
 vim.cmd.colorscheme("tokyonight")
+
+-- Make window split borders brighter
+vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#7aa2f7", bold = true })

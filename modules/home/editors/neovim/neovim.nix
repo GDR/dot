@@ -1,16 +1,24 @@
 # Neovim editor with nix-wrapper-modules (Lua-first config)
 # Plugins and LSPs are managed by Nix; configuration lives as standard Lua files
 # that can be edited and reloaded instantly without nixos-rebuild.
-{ lib, pkgs, inputs, system, ... }@args:
+{ lib, pkgs, inputs, system, overlays ? [], ... }@args:
 
 let
   # Import plugin/LSP declarations
   pluginConfig = import ./dotfiles/plugins.nix { inherit pkgs lib; };
 
+  # Build a fresh pkgs for the wrapper module to avoid NixOS module system
+  # pkgs type-check issues (nix-wrapper-modules expects raw nixpkgs)
+  wrapperPkgs = import inputs.nixpkgs {
+    inherit system;
+    config = { allowUnfree = true; };
+  };
+
   # Build a wrapped neovim with all plugins and runtime tools baked in
-  wrappedNeovim = inputs.nix-wrapper-modules.wrappers.neovim.wrap ({
-    inherit pkgs;
-  } // pluginConfig);
+  wrappedNeovim = inputs.nix-wrapper-modules.wrappers.neovim.wrap {
+    pkgs = wrapperPkgs;
+    inherit (pluginConfig) specs runtimePkgs;
+  };
 in
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
