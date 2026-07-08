@@ -107,6 +107,15 @@ in
 
   time.timeZone = "Europe/Moscow";
 
+  # Enable systemd linger for dgarifullin so user services (including
+  # auto-fix-vscode-server from the vscode-server module) start at boot
+  # even without an active login session.
+  # This is required for Antigravity IDE / VS Code Remote SSH, which connect
+  # via non-login `bash -s` sessions that don't trigger user@.service.
+  systemd.tmpfiles.rules = [
+    "f /var/lib/systemd/linger/dgarifullin - - - -"
+  ];
+
   # Active color theme — consumed by all modules via lib.my.getTheme config
   theme.name = "catppuccin-macchiato";
 }
