@@ -11,6 +11,12 @@ lib.my.mkSystemModuleV2 args {
     services.vscode-server = {
       enable = true;
 
+      # Run server in a FHS-compatible environment.
+      # The auto-fix patcher is a *user* systemd service that doesn't start
+      # during non-login SSH sessions (what Antigravity IDE uses).
+      # enableFHS wraps node in buildFHSEnv — no runtime patching needed.
+      enableFHS = true;
+
       # Watch all remote-server install paths:
       #   ~/.vscode-server          – VS Code / Cursor
       #   ~/.antigravity-ide-server – Antigravity IDE (current)
@@ -22,7 +28,7 @@ lib.my.mkSystemModuleV2 args {
       ];
 
       # The Antigravity server startup script calls /usr/bin/pgrep (hardcoded).
-      # Make procps available so pgrep resolves correctly on NixOS.
+      # Make procps available inside the FHS environment.
       extraRuntimeDependencies = [ pkgs.procps ];
     };
 
