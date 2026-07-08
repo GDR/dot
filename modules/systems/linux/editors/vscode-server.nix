@@ -26,14 +26,13 @@ lib.my.mkSystemModuleV2 args {
       extraRuntimeDependencies = [ pkgs.procps ];
     };
 
-    # Expose pgrep at /usr/bin/pgrep for the Antigravity server startup script.
-    # The script hardcodes this path and cannot be reconfigured.
-    # Use tmpfiles to create the symlink — environment.etc only manages /etc.
-    systemd.tmpfiles.rules = [
-      "L+ /usr/bin/pgrep - - - - ${pkgs.procps}/bin/pgrep"
-    ];
 
     # Required for VS Code server / Antigravity IDE server to work properly
     programs.nix-ld.enable = true;
+
+    # The Antigravity server startup script calls pgrep (sometimes as /usr/bin/pgrep).
+    # Adding procps to system packages puts pgrep in /run/current-system/sw/bin,
+    # which is on PATH for all sessions. /usr/bin is read-only on NixOS.
+    environment.systemPackages = [ pkgs.procps ];
   };
 }

@@ -103,6 +103,7 @@ in
       open = true;
     };
     sound.enable = true;
+    editors.vscode-server.enable = true; # Antigravity IDE / VS Code Remote SSH
   };
 
   time.timeZone = "Europe/Moscow";
