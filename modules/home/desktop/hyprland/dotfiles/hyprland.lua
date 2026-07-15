@@ -19,7 +19,7 @@ hl.monitor({
     scale = 1,
     bitdepth = 10,
     -- cm = "hdr",
-    -- sdrbrightness = 1.0,
+    sdrbrightness = 1.5,
     -- sdr_min_luminance = 0,
     -- sdr_max_luminance = 203,
 })
@@ -31,8 +31,8 @@ hl.monitor({
     position = "0x2160",
     scale = 1,
     bitdepth = 10,
-    -- cm = "hdr",
-    -- sdrbrightness = 1.0,
+    cm = "hdr",
+    sdrbrightness = 1.5,
     -- sdr_min_luminance = 0,
     -- sdr_max_luminance = 203,
 })
@@ -81,8 +81,9 @@ hl.config({
 
 hl.env("XCURSOR_THEME", "WhiteSur-cursors")
 hl.env("XCURSOR_SIZE", "24")
-hl.env("GBM_BACKEND", "nvidia-drm")
-hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+-- NVIDIA env vars — uncomment if re-enabling the NVIDIA GPU
+-- hl.env("GBM_BACKEND", "nvidia-drm")
+-- hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 hl.env("ENABLE_HDR_WSI", "1")
 
 ------------------------------------------------------------
@@ -246,6 +247,14 @@ hl.bind("XF86AudioMute", hl.dsp.exec_cmd("pamixer -t"))
 -- Brightness controls
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +5%"), { repeating = true })
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), { repeating = true })
+
+------------------------------------------------------------
+-- Soundpad: play sounds through virtual mic (Super+F1 – Super+F12)
+------------------------------------------------------------
+
+for i = 1, 12 do
+    hl.bind(mainMod .. " + F" .. i, hl.dsp.exec_cmd("soundpad " .. i))
+end
 
 ------------------------------------------------------------
 -- Autostart
