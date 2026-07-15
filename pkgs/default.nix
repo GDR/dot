@@ -8,6 +8,7 @@ let
 
   common = {
     apple-emoji-ttf = pkgs.callPackage ./apple-emoji-ttf { };
+    caveman-skills = pkgs.callPackage ./caveman-skills { };
     # Custom pre-commit to avoid Swift dependency on Darwin
     pre-commit = pkgs.callPackage ./pre-commit { };
   };
