@@ -82,10 +82,11 @@ lib.my.mkModuleV2 args {
           "--ignore-gpu-blocklist"
           "--enable-gpu-rasterization"
           "--enable-zero-copy"
-          "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,UseHDRTransferFunction"
+          "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,UseHDRTransferFunction,WebRTCPipeWireCapturer"
           "--enable-accelerated-video-decode"
           "--ozone-platform-hint=auto"
           "--force-device-scale-factor=1.25"
+          "--use-pulseaudio"
           # "--enable-logging=stderr"  # Uncomment for debugging
         ];
 
