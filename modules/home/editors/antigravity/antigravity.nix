@@ -35,19 +35,19 @@ let
   # to avoid infinite recursion (cfg evaluation triggers module re-evaluation)
   modulePath = args._modulePath;
   pathParts = lib.splitString "." modulePath;
-  cfg = lib.foldl' (acc: part: acc.${part} or {}) config.modules pathParts;
+  cfg = lib.foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
 
-  allSkillPaths = (cfg.skillPaths or [])
+  allSkillPaths = (cfg.skillPaths or [ ])
     ++ lib.optional (cfg.cavemanEnable or false) "${pkgs.caveman-skills}";
 
   hasRules = (cfg.rules or "") != "";
-  hasSkills = allSkillPaths != [];
+  hasSkills = allSkillPaths != [ ];
 
   skillsJson = builtins.toJSON {
     entries = map (p: { path = p; }) allSkillPaths;
   };
 
-  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or {});
+  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
 in
 lib.my.mkModuleV2 args {
   description = "Antigravity IDE - VS Code-based AI editor (1.x legacy branch)";
@@ -91,14 +91,18 @@ lib.my.mkModuleV2 args {
   systemModule = {
     allSystems = lib.mkMerge [
       (lib.mkIf hasRules {
-        home-manager.users = lib.mapAttrs (_: _: {
-          home.file.".gemini/config/AGENTS.md".text = cfg.rules;
-        }) enabledUsers;
+        home-manager.users = lib.mapAttrs
+          (_: _: {
+            home.file.".gemini/config/AGENTS.md".text = cfg.rules;
+          })
+          enabledUsers;
       })
       (lib.mkIf hasSkills {
-        home-manager.users = lib.mapAttrs (_: _: {
-          home.file.".gemini/config/skills.json".text = skillsJson;
-        }) enabledUsers;
+        home-manager.users = lib.mapAttrs
+          (_: _: {
+            home.file.".gemini/config/skills.json".text = skillsJson;
+          })
+          enabledUsers;
       })
     ];
   };
