@@ -6,40 +6,100 @@
 # looks like a fresh install: no login, no conversation history.
 # --password-store=basic tells Electron to store credentials as plain text inside
 # the app's --user-data-dir (~/.antigravity-ide), which persists normally.
-{ lib, pkgs, ... }@args:
+#
+# Config management: when enabled, also manages ~/.gemini/config/ files
+# (AGENTS.md rules, skills.json for external skills like caveman).
+{ lib, pkgs, config, system, ... }@args:
 
 let
+  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+  isLinux = system == "aarch64-linux" || system == "x86_64-linux";
+
   # Wrap the Linux binary to force plain-text credential storage.
-  # This is a thin symlinkJoin wrapper — no extra downloads.
   ideLinux = pkgs.symlinkJoin {
     name = "google-antigravity-ide-with-basic-store";
     paths = [ pkgs.google-antigravity-ide ];
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/antigravity-ide \
-        --add-flags "--password-store=basic"
+        --add-flags "--password-store=basic" \
+        --add-flags "--force-color-profile=srgb"
     '';
   };
 
-  # On macOS the package ships only an .app bundle (no bin/ wrapper).
-  # Build a tiny shell wrapper so 'antigravity-ide' lands on $PATH.
   antigravityIdeWrapper = pkgs.writeShellScriptBin "antigravity-ide" ''
     exec "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app/Contents/MacOS/Antigravity IDE" "$@"
   '';
+
+  # Read cfg lazily via config.modules — not through the cfg parameter
+  # to avoid infinite recursion (cfg evaluation triggers module re-evaluation)
+  modulePath = args._modulePath;
+  pathParts = lib.splitString "." modulePath;
+  cfg = lib.foldl' (acc: part: acc.${part} or {}) config.modules pathParts;
+
+  allSkillPaths = (cfg.skillPaths or [])
+    ++ lib.optional (cfg.cavemanEnable or false) "${pkgs.caveman-skills}";
+
+  hasRules = (cfg.rules or "") != "";
+  hasSkills = allSkillPaths != [];
+
+  skillsJson = builtins.toJSON {
+    entries = map (p: { path = p; }) allSkillPaths;
+  };
+
+  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or {});
 in
 lib.my.mkModuleV2 args {
   description = "Antigravity IDE - VS Code-based AI editor (1.x legacy branch)";
+
+  extraOptions = {
+    rules = lib.mkOption {
+      type = lib.types.lines;
+      default = "";
+      description = "Content for ~/.gemini/config/AGENTS.md (global rules).";
+    };
+
+    skillPaths = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Absolute paths to external skill directories for skills.json.";
+    };
+
+    cavemanEnable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Add caveman skills (pkgs.caveman-skills) to skill paths.";
+    };
+  };
+
+  # module without cfg parameter — avoids the recursion entirely.
+  # Package installation doesn't depend on cfg values.
   module = {
     nixosSystems.home.packages = [
       ideLinux
       pkgs.google-antigravity-cli
     ];
 
-    # macOS: .app bundle only — use the wrapper script instead
     darwinSystems.home.packages = [
       antigravityIdeWrapper
-      pkgs.google-antigravity-ide # still needed for the .app in ~/Applications
+      pkgs.google-antigravity-ide
       pkgs.google-antigravity-cli
+    ];
+  };
+
+  # Config file management via systemModule — reads cfg lazily from config.modules
+  systemModule = {
+    allSystems = lib.mkMerge [
+      (lib.mkIf hasRules {
+        home-manager.users = lib.mapAttrs (_: _: {
+          home.file.".gemini/config/AGENTS.md".text = cfg.rules;
+        }) enabledUsers;
+      })
+      (lib.mkIf hasSkills {
+        home-manager.users = lib.mapAttrs (_: _: {
+          home.file.".gemini/config/skills.json".text = skillsJson;
+        }) enabledUsers;
+      })
     ];
   };
 }

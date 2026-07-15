@@ -120,6 +120,29 @@ in
     };
   };
 
+  # Antigravity IDE config — global rules and caveman skills
+  modules.home.editors.antigravity = {
+    rules = ''
+      # Global Rules
+
+      ## Communication
+      - Respond in Russian unless the user writes in English
+      - Direct, no fluff — answer immediately
+      - Dense, iterative style
+
+      ## User Profile
+      - Expert: Linux, NixOS, kernel/C++, OSS, game optimization
+      - Preferences: NixOS/Endeavour, gaming/streaming, DSLR photography
+      - Regions of interest: Russia, Georgia
+
+      ## Code Style
+      - Comment non-obvious decisions
+      - Cite sources when referencing external docs
+      - Imperative mood in commit messages
+    '';
+    cavemanEnable = true;
+  };
+
   time.timeZone = "Europe/Moscow";
 
   # Active color theme — consumed by all modules via lib.my.getTheme config
