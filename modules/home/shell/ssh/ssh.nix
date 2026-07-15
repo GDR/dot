@@ -47,6 +47,18 @@ let
         settings = settings;
         includes = includes;
       };
+
+      # SSH refuses symlinks to world-readable Nix store files.
+      # Replace the symlink with a proper copy at 0600 after each switch.
+      home.activation.fixSshConfigPerms = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        sshConfig="$HOME/.ssh/config"
+        if [ -L "$sshConfig" ]; then
+          target=$(readlink "$sshConfig")
+          rm "$sshConfig"
+          cp "$target" "$sshConfig"
+          chmod 600 "$sshConfig"
+        fi
+      '';
     };
 in
 lib.my.mkModuleV2 args {
