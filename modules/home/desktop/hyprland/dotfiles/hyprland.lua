@@ -11,37 +11,31 @@ local theme = dofile(config_home .. "/hypr-theme.lua")
 -- Monitors
 ------------------------------------------------------------
 
--- Top 144 Hz (10-bit, HDR)
+-- Top 144 Hz (10-bit)
+-- P275MV MAX: 1600 nit peak brightness
 hl.monitor({
     output = "DP-2",
     mode = "3840x2160@144",
-    position = "0x0",
+    position = "2160x0",
     scale = 1,
     bitdepth = 10,
-    -- cm = "hdr",
-    sdrbrightness = 1.5,
-    -- sdr_min_luminance = 0,
-    -- sdr_max_luminance = 203,
 })
 
--- Middle 170 Hz (10-bit, HDR)
+-- Middle 170 Hz (10-bit)
+-- P275MV MAX: 1600 nit peak brightness
 hl.monitor({
     output = "DP-3",
     mode = "3840x2160@170",
-    position = "0x2160",
+    position = "2160x2160",
     scale = 1,
     bitdepth = 10,
-    cm = "hdr",
-    sdrbrightness = 1.5,
-    -- sdr_min_luminance = 0,
-    -- sdr_max_luminance = 203,
 })
 
 -- Bottom 60 Hz LG (10-bit, rotated)
 hl.monitor({
     output = "DP-1",
     mode = "3840x2160@60",
-    position = "-2160x1320",
+    position = "0x1320",
     scale = 1,
     bitdepth = 10,
     transform = 1,
@@ -235,9 +229,10 @@ hl.bind(mainMod .. " + SHIFT + 0", hl.dsp.window.move({ workspace = 10 }))
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- Screenshot bindings
-hl.bind("Print", hl.dsp.exec_cmd('grim -g "$(slurp)" - | wl-copy'))
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grim - | wl-copy"))
+-- Screenshot bindings (save to ~/Screenshots + copy to clipboard)
+local screenshot = config_home .. "/hypr/hypr-screenshot.sh"
+hl.bind("Print", hl.dsp.exec_cmd(screenshot .. " region"))
+hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(screenshot .. " full"))
 
 -- Audio controls
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pamixer -i 5"), { repeating = true })
