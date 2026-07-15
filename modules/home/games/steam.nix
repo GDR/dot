@@ -4,7 +4,6 @@
 lib.my.mkModuleV2 args {
   platforms = [ "linux" ];
   description = "Steam gaming platform with Gamescope support";
-  requires = [ "systemLinux.graphics.nvidia" ]; # Better gaming with proper GPU drivers
   extraOptions = {
     enableGamescope = mkOption {
       default = true;

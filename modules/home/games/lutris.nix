@@ -4,7 +4,6 @@
 lib.my.mkModuleV2 args {
   platforms = [ "linux" ];
   description = "Lutris gaming platform";
-  requires = [ "systemLinux.graphics.nvidia" ]; # Better gaming with proper GPU drivers
 
   module = cfg: {
     nixosSystems = {
