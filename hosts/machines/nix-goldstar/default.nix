@@ -63,6 +63,7 @@ in
       home.editors.neovim.enable = true;
       home.games.lutris.enable = true;
       home.games.steam.enable = true;
+      home.games.soundpad.enable = true;
       home.media.enable = true;
       home.messengers.enable = true;
       home.security.enable = true;
