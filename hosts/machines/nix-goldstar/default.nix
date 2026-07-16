@@ -60,6 +60,7 @@ in
       };
       home.downloads.enable = true;
       home.editors.enable = true;
+      home.editors.ghidra.enable = true;
       home.editors.neovim.enable = true;
       home.games.lutris.enable = true;
       home.games.steam.enable = true;

@@ -61,6 +61,7 @@ in
     modules = {
       home.cli.enable = true;
       home.editors.neovim.enable = true;
+      home.editors.ghidra.enable = true;
       home.shell.ssh.enable = true;
       home.shell.tmux.enable = true;
       home.shell.zsh.enable = true;
@@ -108,7 +109,8 @@ in
     networking.firewall = {
       enable = true;
       # Vault API (8200) and Raft (8201) exposed on Tailscale
-      allowedTCPPorts = [ 22 53 80 443 8080 8001 8081 8200 8201 ];
+      # 8089: GhidraMCP HTTP server (goldstar bridge → oldstar Ghidra)
+      allowedTCPPorts = [ 22 53 80 443 8080 8001 8081 8089 8200 8201 ];
       allowedUDPPorts = [ 22 53 80 443 8080 8001 8081 ];
     };
     sound.enable = true;
