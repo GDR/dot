@@ -20,6 +20,8 @@ let
     lmstudio = pkgs.callPackage ./lmstudio { };
     inherit python-mcp;
     ghidra-mcp = pkgs.callPackage ./ghidra-mcp { inherit python-mcp; };
+    # GhidraMCP Java extension — pre-built zip committed to repo (Maven+Ghidra JARs required)
+    ghidra-mcp-extension = pkgs.callPackage ./ghidra-mcp-extension { };
   };
   darwin = {
     vfkit = pkgs.callPackage ./vfkit { };

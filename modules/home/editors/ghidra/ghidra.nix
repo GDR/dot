@@ -8,18 +8,32 @@
 #
 # To start Ghidra headlessly (managed manually or via systemd unit):
 #   ghidra --headless <project-dir> <project-name> -import <binary>
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, config, ... }@args:
 
+let
+  # Ghidra writes its config under a version+variant-specific subdirectory.
+  # NixOS uses the "_NIX" variant suffix.
+  ghidraConfigDir = ".config/ghidra/ghidra_12.1.2_NIX";
+in
 lib.my.mkModuleV2 args {
   description = "Ghidra reverse-engineering suite + GhidraMCP bridge";
   platforms = [ "linux" ];
 
   module = {
-    nixosSystems.home.packages = [
-      pkgs.ghidra # Ghidra 12.1.2 — required by GhidraMCP extension
-      # ghidra-mcp is a custom overlay package (Linux-only); guard against cross-system
-      # evaluation where the overlay may not be applied (e.g., Darwin flake check).
-    ] ++ lib.optional (pkgs ? ghidra-mcp) pkgs.ghidra-mcp
-    ++ lib.optional (pkgs ? maven) pkgs.maven;
+    nixosSystems.home = {
+      packages = [
+        pkgs.ghidra # Ghidra 12.1.2 — required by GhidraMCP extension
+        # ghidra-mcp is a custom overlay package (Linux-only); guard against cross-system
+        # evaluation where the overlay may not be applied (e.g., Darwin flake check).
+      ] ++ lib.optional (pkgs ? ghidra-mcp) pkgs.ghidra-mcp
+      ++ lib.optional (pkgs ? maven) pkgs.maven;
+
+      # Deploy Java extension into Ghidra's user Extensions directory.
+      # Ghidra scans this dir on startup and loads GhidraMCP automatically.
+      file."\${ghidraConfigDir}/Extensions/GhidraMCP" = lib.mkIf (pkgs ? ghidra-mcp-extension) {
+        source = pkgs.ghidra-mcp-extension;
+        recursive = true;
+      };
+    };
   };
 }
