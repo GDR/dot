@@ -66,7 +66,19 @@ lib.my.mkModuleV2 args {
   extraOptions = {
     rules = lib.mkOption {
       type = lib.types.lines;
-      default = "";
+      default = ''
+        # Global Rules
+
+        ## Communication
+        - Direct, no fluff — answer immediately
+        - Dense, iterative style
+        - Always use caveman ultra mode (see caveman skill)
+
+        ## Code Style
+        - Comment non-obvious decisions
+        - Cite sources when referencing external docs
+        - Imperative mood in commit messages
+      '';
       description = "Content for ~/.gemini/config/AGENTS.md (global rules).";
     };
 
@@ -78,7 +90,7 @@ lib.my.mkModuleV2 args {
 
     cavemanEnable = lib.mkOption {
       type = lib.types.bool;
-      default = false;
+      default = true;
       description = "Add caveman skills (pkgs.caveman-skills) to skill paths.";
     };
   };
