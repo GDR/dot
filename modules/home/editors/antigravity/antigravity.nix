@@ -132,6 +132,13 @@ lib.my.mkModuleV2 args {
       (lib.mkIf hasMcp {
         ".gemini/antigravity/mcp_config.json".text =
           builtins.toJSON { mcpServers = cfg.mcpServers; };
+        home-manager.users = lib.mapAttrs
+          (_: _: {
+            # Global MCP config — read by Antigravity from ~/.gemini/config/mcp_config.json
+            home.file.".gemini/config/mcp_config.json".text =
+              builtins.toJSON { mcpServers = cfg.mcpServers; };
+          })
+          enabledUsers;
       })
     ];
   };
