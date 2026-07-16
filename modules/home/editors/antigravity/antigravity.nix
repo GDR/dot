@@ -116,6 +116,7 @@ lib.my.mkModuleV2 args {
       ideLinux
       antigravityLinux
       pkgs.google-antigravity-cli
+      pkgs.mcp-nixos  # nixos MCP server — called directly (avoids slow nix run github:...)
     ];
 
     darwinSystems.home.packages = [
@@ -123,6 +124,7 @@ lib.my.mkModuleV2 args {
       pkgs.google-antigravity-ide
       pkgs.google-antigravity
       pkgs.google-antigravity-cli
+      pkgs.mcp-nixos
     ];
 
     # Config files — routed to all enabled users automatically via home.* auto-routing

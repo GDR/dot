@@ -62,8 +62,9 @@ in
         # Applies to ALL workspaces opened in Antigravity IDE
         mcpServers = {
           nixos = {
-            command = "nix";
-            args = [ "run" "github:utensils/mcp-nixos" "--" ];
+            # pkgs.mcp-nixos installed by antigravity module — direct binary, no nix run overhead
+            command = "mcp-nixos";
+            args = [ ];
           };
           context7 = {
             url = "https://mcp.context7.com/mcp";
