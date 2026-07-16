@@ -68,12 +68,13 @@ in
           };
           context7 = {
             url = "https://mcp.context7.com/mcp";
-            headers.CONTEXT7_API_KEY = "\${env.CONTEXT7_API_KEY}";
+            headers.CONTEXT7_API_KEY = "${env.CONTEXT7_API_KEY}";
           };
           ghidra = {
             command = "bridge-mcp-ghidra";
             args = [ ];
-            env.GHIDRA_MCP_URL = "http://nix-goldstar:8089";
+            # Ghidra runs locally on goldstar — MCP plugin listens on :8089
+            env.GHIDRA_MCP_URL = "http://127.0.0.1:8089";
           };
         };
       };
