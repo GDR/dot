@@ -1,5 +1,5 @@
-# Antigravity IDE (1.x) - AI-powered code editor built on VS Code
-# Tracks latest 1.x via the upstream antigravity-nix flake (auto-updates 3x/week).
+# Antigravity IDE & standalone Antigravity 2.0
+# Tracks latest via the upstream antigravity-nix flake (auto-updates 3x/week).
 #
 # On NixOS without a keyring daemon (typical on bare Hyprland), Electron's default
 # credential backend silently fails — auth tokens are never saved, so every launch
@@ -15,13 +15,24 @@ let
   isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
   isLinux = system == "aarch64-linux" || system == "x86_64-linux";
 
-  # Wrap the Linux binary to force plain-text credential storage.
+  # Wrap Linux binaries to force plain-text credential storage.
   ideLinux = pkgs.symlinkJoin {
     name = "google-antigravity-ide-with-basic-store";
     paths = [ pkgs.google-antigravity-ide ];
     buildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/antigravity-ide \
+        --add-flags "--password-store=basic" \
+        --add-flags "--force-color-profile=srgb"
+    '';
+  };
+
+  antigravityLinux = pkgs.symlinkJoin {
+    name = "google-antigravity-with-basic-store";
+    paths = [ pkgs.google-antigravity ];
+    buildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/antigravity \
         --add-flags "--password-store=basic" \
         --add-flags "--force-color-profile=srgb"
     '';
@@ -50,7 +61,7 @@ let
   enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
 in
 lib.my.mkModuleV2 args {
-  description = "Antigravity IDE - VS Code-based AI editor (1.x legacy branch)";
+  description = "Antigravity IDE & standalone Antigravity 2.0";
 
   extraOptions = {
     rules = lib.mkOption {
@@ -77,12 +88,14 @@ lib.my.mkModuleV2 args {
   module = {
     nixosSystems.home.packages = [
       ideLinux
+      antigravityLinux
       pkgs.google-antigravity-cli
     ];
 
     darwinSystems.home.packages = [
       antigravityIdeWrapper
       pkgs.google-antigravity-ide
+      pkgs.google-antigravity
       pkgs.google-antigravity-cli
     ];
   };
