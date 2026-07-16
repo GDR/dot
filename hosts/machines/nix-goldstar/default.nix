@@ -60,6 +60,16 @@ in
       };
       home.downloads.enable = true;
       home.editors.enable = true;
+      home.editors.antigravity = {
+        enable = true;
+        # Global MCP servers — written to ~/.gemini/antigravity/mcp_config.json
+        # Applies to ALL workspaces opened in Antigravity IDE
+        mcpServers.ghidra = {
+          command = "bridge-mcp-ghidra";
+          args = [ ];
+          env.GHIDRA_MCP_URL = "http://nix-oldstar:8089";
+        };
+      };
       home.editors.ghidra.enable = true;
       home.editors.neovim.enable = true;
       home.games.lutris.enable = true;

@@ -8,7 +8,8 @@
 # the app's --user-data-dir (~/.antigravity-ide), which persists normally.
 #
 # Config management: when enabled, also manages ~/.gemini/config/ files
-# (AGENTS.md rules, skills.json for external skills like caveman).
+# (AGENTS.md rules, skills.json for external skills like caveman)
+# and ~/.gemini/antigravity/mcp_config.json (global MCP servers).
 { lib, pkgs, config, system, ... }@args:
 
 let
@@ -53,6 +54,7 @@ let
 
   hasRules = (cfg.rules or "") != "";
   hasSkills = allSkillPaths != [ ];
+  hasMcp = (cfg.mcpServers or { }) != { };
 
   skillsJson = builtins.toJSON {
     entries = map (p: { path = p; }) allSkillPaths;
@@ -93,6 +95,19 @@ lib.my.mkModuleV2 args {
       default = true;
       description = "Add caveman skills (pkgs.caveman-skills) to skill paths.";
     };
+
+    mcpServers = lib.mkOption {
+      type = lib.types.attrsOf lib.types.anything;
+      default = { };
+      description = "MCP servers written to ~/.gemini/antigravity/mcp_config.json (global, all workspaces).";
+      example = {
+        ghidra = {
+          command = "bridge-mcp-ghidra";
+          args = [ ];
+          env.GHIDRA_MCP_URL = "http://nix-oldstar:8089";
+        };
+      };
+    };
   };
 
   # module without cfg parameter — avoids the recursion entirely.
@@ -126,6 +141,15 @@ lib.my.mkModuleV2 args {
         home-manager.users = lib.mapAttrs
           (_: _: {
             home.file.".gemini/config/skills.json".text = skillsJson;
+          })
+          enabledUsers;
+      })
+      (lib.mkIf hasMcp {
+        home-manager.users = lib.mapAttrs
+          (_: _: {
+            # Global MCP config — applies to all workspaces in Antigravity
+            home.file.".gemini/antigravity/mcp_config.json".text =
+              builtins.toJSON { mcpServers = cfg.mcpServers; };
           })
           enabledUsers;
       })

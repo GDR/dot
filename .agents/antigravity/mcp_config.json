@@ -13,13 +13,6 @@
       "headers": {
         "CONTEXT7_API_KEY": "${env.CONTEXT7_API_KEY}"
       }
-    },
-    "ghidra": {
-      "command": "bridge-mcp-ghidra",
-      "args": [],
-      "env": {
-        "GHIDRA_MCP_URL": "http://nix-oldstar:8089"
-      }
     }
   }
 }
