@@ -157,7 +157,7 @@ in
 lib.my.mkModuleV2 args {
   platforms = [ "linux" ];
   description = "Virtual mic soundboard for Dota 2";
-  requires = [ "systemLinux.sound" ];
+  requires = [ "home.desktop.services.audio" ];
 
   module = {
     nixosSystems = {
