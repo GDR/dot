@@ -1,8 +1,8 @@
 { inputs, lib, config, pkgs, home-manager, hardware, ... }:
 let
-  # Import user defaults by name
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
+  profile = import ../../../profiles/server.nix;
 in
 {
   imports = [
@@ -27,17 +27,14 @@ in
   networking.hostName = "nix-oldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  # Enable user via hostUsers (system user account only, no home modules)
   hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
-    # Host-specific: SSH key for this machine
     keys = [{
       name = "oldstar";
       type = "ed25519";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # SSH client configuration — host-specific key entries + shared topology
     ssh = [
       {
         host = "*";
@@ -50,44 +47,24 @@ in
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    # Minimal home modules - CLI tools and shell
-    modules = {
-      home.cli.enable = true;
-      home.editors.neovim.enable = true;
+    modules = lib.recursiveUpdate profile.userModules {
       home.editors.ghidra.enable = true;
-      home.shell.ssh.enable = true;
-      home.shell.tmux.enable = true;
-      home.shell.zsh.enable = true;
-      home.virtualisation.docker.enable = true;
     };
-    # deploy-rs (and any other automation) can sudo without a password
     sudo.nopasswd = true;
   };
 
   time.timeZone = "Europe/Moscow";
 
-  # System-scope modules (server-side only)
-  modules.system.all = {
-    fonts.enable = true;
-    nix.settings.enable = true;
-    nix.gc.enable = true;
+  modules.system.all = lib.recursiveUpdate profile.system.all {
     sops.enable = true;
-    shell = {
-      ssh.enable = true;
-      git.enable = true;
-    };
   };
 
-  modules.system.linux = {
-    networking = {
-      networkmanager.enable = true;
-      openssh = {
-        enable = true; # SSH server + charon-key AuthorizedKeysCommand
-        userMap = { "dgarifullin" = "gdr"; }; # NixOS user -> GitHub username for charon-key
-      };
-      tailscale.enable = true;
+  modules.system.linux = lib.recursiveUpdate profile.system.linux {
+    networking.networkmanager.enable = true;
+    networking.openssh = {
+      enable = true;
+      userMap = { "dgarifullin" = "gdr"; };
     };
-    editors.vscode-server.enable = true;
     graphics.intel = {
       enable = true;
       enableHybridCodec = true;

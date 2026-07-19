@@ -24,6 +24,30 @@
   # Re-export module registry functions for convenience
   pathToConfigParts = moduleRegistry.pathToConfigParts;
 
+  # Merge a list of profile attrsets into one.
+  # Each profile may declare: userModules, system.all, system.linux, system.darwin.
+  # Uses recursiveUpdate so nested enables from different profiles don't clobber each other.
+  # Usage:
+  #   profiles = lib.my.mergeProfiles [
+  #     (import ../../profiles/developer.nix)
+  #     (import ../../profiles/desktop.nix)
+  #   ];
+  #   hostUsers.x.modules = lib.recursiveUpdate profiles.userModules { home.browsers.vivaldi.enable = true; };
+  #   modules.system.all   = profiles.system.all   // { sops.enable = true; };
+  #   modules.system.linux = profiles.system.linux // { graphics.nvidia.enable = true; };
+  mergeProfiles = profiles:
+    foldl
+      (acc: p: {
+        userModules = recursiveUpdate (acc.userModules or { }) (p.userModules or { });
+        system = {
+          all = recursiveUpdate (acc.system.all or { }) (p.system.all or { });
+          linux = recursiveUpdate (acc.system.linux or { }) (p.system.linux or { });
+          darwin = recursiveUpdate (acc.system.darwin or { }) (p.system.darwin or { });
+        };
+      })
+      { }
+      profiles;
+
   # Build module registry from a directory
   # This scans modules and extracts metadata, returning a registry structure
   buildModuleRegistry = modulesDir: prefix:

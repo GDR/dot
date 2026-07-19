@@ -1,29 +1,27 @@
 # mcp Python SDK 1.28.1
 # Nixpkgs ships 1.27.0 but ghidra-mcp-bridge requires >=1.28.1,<2.0.0.
 # Same dependency set as the upstream nixpkgs derivation; version bump only.
-{
-  lib,
-  buildPythonPackage,
-  fetchFromGitHub,
-
-  # build-system
-  hatchling,
-  uv-dynamic-versioning,
-
-  # runtime deps (same as nixpkgs mcp)
-  anyio,
-  httpx,
-  httpx-sse,
-  jsonschema,
-  pydantic,
-  pydantic-settings,
-  pyjwt,
-  python-multipart,
-  sse-starlette,
-  starlette,
-  uvicorn,
-  typing-extensions,
-  typing-inspection,
+{ lib
+, buildPythonPackage
+, fetchFromGitHub
+, # build-system
+  hatchling
+, uv-dynamic-versioning
+, # runtime deps (same as nixpkgs mcp)
+  anyio
+, httpx
+, httpx-sse
+, jsonschema
+, pydantic
+, pydantic-settings
+, pyjwt
+, python-multipart
+, sse-starlette
+, starlette
+, uvicorn
+, typing-extensions
+, typing-inspection
+,
 }:
 
 buildPythonPackage {

@@ -5,11 +5,11 @@
 # Pinned to main HEAD (2026-07-16) — the v5.14.x tags predate pyproject.toml
 # introduction; main has the hatchling-based build with proper pyproject.toml.
 # Version string tracks upstream pyproject.toml at that commit.
-{
-  lib,
-  python3Packages,
-  fetchFromGitHub,
-  python-mcp, # local override at 1.28.1 (nixpkgs has 1.27.0)
+{ lib
+, python3Packages
+, fetchFromGitHub
+, python-mcp
+, # local override at 1.28.1 (nixpkgs has 1.27.0)
 }:
 
 python3Packages.buildPythonApplication {

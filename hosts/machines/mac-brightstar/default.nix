@@ -1,8 +1,11 @@
 { self, inputs, pkgs, lib, overlays, ... }:
 let
-  # Import user defaults by name
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+  ];
 in
 {
   imports = [
@@ -10,28 +13,21 @@ in
   ];
 
   nix.enable = true;
-
-  # Fix GID mismatch for existing Nix installation
   ids.gids.nixbld = 30000;
 
-
-  # Enable user via hostUsers (new system)
-  # Defaults from hosts/users/<name>.nix, host-specific overrides here
   hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
-    # Host-specific: SSH key for this machine
     keys = [{
       name = "brightstar";
       type = "ed25519";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # SSH client configuration — host-specific key entries + shared topology
     ssh = [
       {
         host = "*";
         identityFile = "~/.ssh/brightstar_id_ed25519";
-        extraOptions.AddKeysToAgent = "yes"; # Darwin: use Touch ID prompt each time
+        extraOptions.AddKeysToAgent = "yes";
       }
       {
         host = "github.com";
@@ -39,20 +35,9 @@ in
         identityFile = "~/.ssh/brightstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    # Hierarchical module enables
-    modules = {
+    modules = lib.recursiveUpdate profiles.userModules {
       home.ai-tools.enable = true;
-      home.browsers.enable = true;
-      home.cli.enable = true;
-      home.desktop.enable = true; # was desktop-utils
-      home.downloads.enable = true;
-      home.editors.enable = true;
-      home.messengers.enable = true;
-      home.security.enable = true;
-      home.shell.enable = true;
-      home.terminal.enable = true;
       # home.utils.raycast.enable = true; # disabled: nixpkgs download URL broken
-      home.virtualisation.docker.enable = true;
     };
   };
 
@@ -60,13 +45,10 @@ in
   environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
 
   # ── Remote builder: nix-oldstar (x86_64-linux) ─────────────────────
-  # Offloads x86_64-linux builds (e.g. Vantage infra-image-test qcow2) to nix-oldstar.
-  # nix-oldstar imports vantage.nixosModules.remote-builder (trusted-users, kvm, max-jobs).
   nix.distributedBuilds = true;
-
   nix.buildMachines = [
     {
-      hostName = "nix-goldstar"; # Tailscale MagicDNS — desktop workstation
+      hostName = "nix-goldstar";
       sshUser = "dgarifullin";
       sshKey = "/etc/nix/brightstar-nixd_id_ed25519";
       system = "x86_64-linux";
@@ -76,7 +58,7 @@ in
       supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
     }
     {
-      hostName = "nix-oldstar"; # Tailscale MagicDNS — ThinkPad T480
+      hostName = "nix-oldstar";
       sshUser = "dgarifullin";
       sshKey = "/etc/nix/brightstar-nixd_id_ed25519";
       system = "x86_64-linux";
@@ -87,43 +69,31 @@ in
     }
   ];
 
-  # System-scope modules
-  modules.system.all = {
-    # fonts.enable = true;
-    nix.settings.enable = true;
-    nix.gc.enable = true;
+  modules.system.all = lib.recursiveUpdate profiles.system.all {
     sops.enable = true;
-    shell = {
-      ssh.enable = true;
-      git.enable = true;
-    };
+    # fonts.enable = true;  # disabled on Darwin
   };
 
-  # Darwin-specific system modules
   modules.system.darwin = {
     macos-settings.enable = true;
     homebrew = {
       enable = true;
       user = "dgarifullin";
     };
-    app-aliases.enable = true; # Spotlight aliases for home-manager apps
+    app-aliases.enable = true;
     openssh = {
       enable = true;
       userMap = { "dgarifullin" = "gdr"; };
     };
   };
 
-  # Antigravity IDE config — global rules from user defaults
   modules.home.editors.antigravity = userDefaults.antigravity;
 
   time.timeZone = "Europe/Moscow";
-
-  # Active color theme — consumed by all modules via lib.my.getTheme config
   theme.name = "rose-pine-moon";
 
-  # *.consul DNS forwarding — queries nix-oldstar's Consul over Tailscale
   services.vantage.consul-dns = {
     enable = true;
-    nameserver = "100.64.100.3"; # nix-oldstar Tailscale IP
+    nameserver = "100.64.100.3";
   };
 }

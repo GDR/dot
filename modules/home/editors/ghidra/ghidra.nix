@@ -16,9 +16,9 @@ lib.my.mkModuleV2 args {
 
   module = {
     nixosSystems.home.packages = [
-      pkgs.ghidra     # Ghidra 12.1.2 — required by GhidraMCP extension
+      pkgs.ghidra # Ghidra 12.1.2 — required by GhidraMCP extension
       pkgs.ghidra-mcp # MCP bridge (bridge-mcp-ghidra binary)
-      pkgs.maven      # needed to build/update GhidraMCP extension from source
+      pkgs.maven # needed to build/update GhidraMCP extension from source
     ];
   };
 }
