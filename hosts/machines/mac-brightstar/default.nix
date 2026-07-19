@@ -5,6 +5,7 @@ let
   profiles = lib.my.mergeProfiles [
     (import ../../../profiles/developer.nix)
     (import ../../../profiles/desktop.nix)
+    (import ../../../profiles/macos.nix)
   ];
 in
 {
@@ -74,13 +75,11 @@ in
     # fonts.enable = true;  # disabled on Darwin
   };
 
-  modules.system.darwin = {
-    macos-settings.enable = true;
+  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
     homebrew = {
       enable = true;
       user = "dgarifullin";
     };
-    app-aliases.enable = true;
     openssh = {
       enable = true;
       userMap = { "dgarifullin" = "gdr"; };
