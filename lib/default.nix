@@ -66,26 +66,31 @@
       # Try to extract metadata from modules
       # Use the lib.my that's already available (passed from flake)
       # Note: We use a dummy system for metadata extraction - modules should
-      # not depend on system-specific pkgs during registry building
+      # not depend on system-specific pkgs during registry building.
+      # We pass common specialArgs (inputs, self, hardware, overlays) so that
+      # modules which declare them as required args don't fail with "missing
+      # required argument" — builtins.tryEval only catches throw/assert, not
+      # argument matching errors.
       tryImportMeta = path:
         let
-          # lib.my should already be available since this is called from lib.my context
           libWithMy = lib // { inherit (lib) my; };
-          # Use dummy system - modules should extract metadata without evaluating
-          # platform-specific code. If a module fails here, it's likely accessing
-          # pkgs or system in its top-level, which should be avoided.
           moduleResult = builtins.tryEval (import path {
             config = { };
             options = { };
             pkgs = { };
             lib = libWithMy;
-            system = "x86_64-linux"; # Dummy system for metadata extraction
+            system = "x86_64-linux";
+            inherit inputs;
+            self = null;
+            hardware = null;
+            overlays = { };
+            modulesRegistry = null;
+            _modulePath = ""; # required by mkModuleV2; dummy value for metadata extraction
           });
         in
         if moduleResult.success then
           (moduleResult.value._meta or moduleResult.value.meta or null)
         else
-        # Log failures for debugging but don't break registry building
           builtins.trace "Warning: Failed to extract metadata from ${toString path}: ${toString moduleResult.value}" null;
 
       modulesWithMeta = map
@@ -254,13 +259,36 @@
   #   - Its own .enable is true (modules.home.browsers.vivaldi.enable)
   #   - OR any parent path .enable is true (modules.home.browsers.enable, modules.home.enable)
   #   - OR any user has it enabled via hostUsers.<user>.modules.<path>.enable
+  #   - OR any explicitly-enabled module lists this path in its requires (auto-dep)
   #
   # Usage (inside config block):
   #   shouldEnable = lib.my.shouldEnableModule {
-  #     inherit config;
+  #     inherit config modulesRegistry;
   #     modulePath = "home.media.vlc";
   #   };
-  shouldEnableModule = { config, modulePath, moduleTags ? [ ] }:
+
+  # Raw enable check — no cascade, no requires. Used internally when resolving
+  # requires chains to avoid circular evaluation.
+  isExplicitlyEnabled = { config, modulePath }:
+    let
+      pathParts = splitString "." modulePath;
+      generatePaths = parts:
+        let indices = genList (i: i + 1) (length parts);
+        in map (i: take i parts) indices;
+      allPaths = generatePaths pathParts;
+      checkPathEnable = parts:
+        (foldl' (acc: part: acc.${part} or { }) config.modules parts).enable or false;
+      anyGlobal = any checkPathEnable allPaths;
+      enabledUsers = filterAttrs (_: u: u.enable or false) (config.hostUsers or { });
+      checkUserPath = userModules: parts:
+        (foldl' (acc: part: acc.${part} or { }) userModules parts).enable or false;
+      anyUser = any
+        (u: any (checkUserPath (u.modules or { })) allPaths)
+        (attrValues enabledUsers);
+    in
+    anyGlobal || anyUser;
+
+  shouldEnableModule = { config, modulePath, moduleTags ? [ ], modulesRegistry ? null }:
     let
       pathParts = splitString "." modulePath;
 
@@ -300,8 +328,23 @@
           any (path: checkUserPathEnable userModules path) allPaths
         )
         (attrValues enabledUsers);
+
+      # Requires check: enabled if any explicitly-enabled module lists this path in requires.
+      # Uses isExplicitlyEnabled (not shouldEnableModule) to avoid circular evaluation.
+      isRequiredByEnabled =
+        if modulesRegistry == null then false
+        else
+          let
+            regModules = modulesRegistry.modules or [ ];
+          in
+          any
+            (m:
+              elem modulePath (m.meta.requires or [ ]) &&
+              isExplicitlyEnabled { inherit config; modulePath = m.path; }
+            )
+            regModules;
     in
-    anyGlobalPathEnabled || anyUserHasPathEnabled;
+    anyGlobalPathEnabled || anyUserHasPathEnabled || isRequiredByEnabled;
 
   # Get list of users who have a module enabled (via any path level)
   # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath; };
@@ -457,6 +500,7 @@
       inherit (args) config pkgs system _modulePath;
       inherit (args) lib;
       self = args.self or null;
+      modulesRegistry = args.modulesRegistry or null;
       modulePath = _modulePath;
 
       # Get module config (for accessing options)
@@ -486,7 +530,7 @@
 
       config =
         let
-          shouldEnable = shouldEnableModule { inherit config modulePath; };
+          shouldEnable = shouldEnableModule { inherit config modulePath modulesRegistry; };
         in
         mkIf shouldEnable (
           let

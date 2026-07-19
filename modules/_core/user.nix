@@ -15,9 +15,10 @@ let
   # Build module options structure from registry
   # Creates options like hostUsers.<name>.modules.<module_path>.enable
   # Uses attrs to allow nested paths like home.media.vlc.enable = true
-  buildModuleOptions = registry:
-    # Use attrs to allow any nested structure
-    # We'll check for .enable in shouldEnableModule by traversing the path
+  # types.attrs is intentional — generating typed options per module path would
+  # require a deeply nested option set from the registry. The registry metadata
+  # is used for requires/dependency resolution in shouldEnableModule instead.
+  buildModuleOptions = _registry:
     types.attrs;
 
   # SSH key submodule
