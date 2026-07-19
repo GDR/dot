@@ -130,6 +130,17 @@ let
       };
 
       # Linux-specific
+      uid = mkOption {
+        type = types.nullOr types.int;
+        default = null;
+        description = ''
+          Fixed UID for this user (Linux only). If null, assigned by
+          alphabetical order starting from 1000 — fragile if a second
+          user whose name sorts earlier is added. Prefer setting this
+          explicitly in hosts/users/<name>.nix.
+        '';
+      };
+
       extraGroups = mkOption {
         type = types.listOf types.str;
         default = [ "wheel" ];
@@ -238,7 +249,7 @@ in
             isNormalUser = true;
             home = "/home/${name}";
             group = "users";
-            uid = uidMap.${name};
+            uid = if cfg.uid != null then cfg.uid else uidMap.${name};
             extraGroups = cfg.extraGroups;
           } else {
             # Darwin: minimal user config, home-manager handles the rest

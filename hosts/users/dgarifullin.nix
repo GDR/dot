@@ -11,6 +11,7 @@
     email = "gosugdr@gmail.com";
     github = "gdr";
     extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
+    uid = 1000;
   };
 
   # SSH topology — host-invariant entries appended to each machine's ssh list.
