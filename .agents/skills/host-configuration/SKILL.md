@@ -12,71 +12,93 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
 { inputs, lib, config, pkgs, home-manager, hardware, ... }:
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
+  userDefaults = importUser "dgarifullin";
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+    # (import ../../../profiles/gaming.nix)
+  ];
 in
 {
   imports = [ ./hardware-configuration.nix ];
 
-  # User configuration
-  hostUsers.dgarifullin = importUser "dgarifullin" // {
+  hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
     keys = [{
       name = "<hostname>";
-      type = "rsa";           # rsa | ed25519
+      type = "ed25519";       # rsa | ed25519
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    modules = {
-      home.browsers.enable = true;
-      home.cli.enable = true;
-      home.desktop = {
-        appearance.enable = true;
-        services.enable = true;
-        widgets.enable = true;
-        utils.enable = true;
-        hyprland.enable = true;
-      };
-      home.downloads.enable = true;
-      home.editors.enable = true;
-      home.games.enable = true;
-      home.media.enable = true;
-      home.messengers.enable = true;
-      home.security.enable = true;
-      home.shell.enable = true;
-      home.terminal.enable = true;
-      home.virtualisation.enable = true;
+    ssh = [
+      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
+      { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
+    ] ++ userDefaults.ssh.knownHosts;
+    modules = lib.recursiveUpdate profiles.userModules {
+      home.desktop.hyprland.enable = true;  # WM choice is host-specific
     };
+    sudo.nopasswd = true;                   # remove if not needed
   };
 
   networking.hostName = "<hostname>";
+  environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  systemAll = {
+  modules.system.all = lib.recursiveUpdate profiles.system.all {
     fonts.enable = true;
-    nix.settings.enable = true;
-    nix.gc.enable = true;
-    shell = { ssh.enable = true; git.enable = true; };
   };
 
-  systemLinux = {
-    networking = {
-      networkmanager.enable = true;
-      tailscale.enable = true;
-    };
-    graphics.nvidia.enable = true;
-    sound.enable = true;
+  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+    networking.openssh = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
+    graphics.nvidia   = { enable = true; open = true; };
   };
 
+  modules.home.editors.antigravity = userDefaults.antigravity;
   time.timeZone = "Europe/Moscow";
+  theme.name = "catppuccin-macchiato";
 }
 ```
 
 ## Host Template (Darwin)
 
-Same structure but replace `systemLinux` with `systemDarwin`:
 ```nix
-systemDarwin = {
-  homebrew.enable = true;
-  macos-settings.enable = true;
-};
+{ self, inputs, pkgs, lib, overlays, ... }:
+let
+  importUser = name: import ../../users/${name}.nix { inherit lib; };
+  userDefaults = importUser "dgarifullin";
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+    (import ../../../profiles/macos.nix)
+  ];
+in
+{
+  nix.enable = true;
+
+  hostUsers.dgarifullin = userDefaults.user // {
+    enable = true;
+    keys = [{ name = "<hostname>"; type = "ed25519"; purpose = [ "git" "ssh" ]; isDefault = true; }];
+    ssh = [
+      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
+      { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
+    ] ++ userDefaults.ssh.knownHosts;
+    modules = lib.recursiveUpdate profiles.userModules {
+      home.ai-tools.enable = true;
+    };
+  };
+
+  networking.hostName = "<hostname>";
+  environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
+
+  modules.system.all = lib.recursiveUpdate profiles.system.all { sops.enable = true; };
+  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
+    homebrew = { enable = true; user = "dgarifullin"; };
+    openssh  = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
+  };
+
+  modules.home.editors.antigravity = userDefaults.antigravity;
+  time.timeZone = "Europe/Moscow";
+  theme.name = "rose-pine-moon";
+}
 ```
 
 ## Hardware Configuration
@@ -101,19 +123,25 @@ Generate: `nixos-generate-config --show-hardware-config`
 ## User Defaults
 
 ```nix
-# hosts/users/<username>.nix
+# hosts/users/<username>.nix — host-invariant user data
 { lib, ... }: {
-  fullName = lib.mkDefault "Full Name";
-  email = lib.mkDefault "email@example.com";
-  github = lib.mkDefault "github-username";
-  extraGroups = lib.mkDefault [ "wheel" "networkmanager" "docker" ];
-  # Keys are NOT in defaults — they are host-specific
+  user = {
+    fullName = "Full Name";
+    email    = "email@example.com";
+    github   = "github-username";
+    extraGroups = [ "wheel" "networkmanager" "docker" ];
+    uid = 1000;                       # explicit UID prevents drift if second user added
+  };
+  ssh.knownHosts = [                  # topology entries shared across all hosts
+    { host = "nix-oldstar"; forwardAgent = true; }
+  ];
+  antigravity = { rules = ''...''; cavemanEnable = true; };
 }
 ```
 
 ## Adding a New Host
 
-1. Create `hosts/machines/<hostname>/default.nix`
+1. Create `hosts/machines/<hostname>/default.nix` using the template above
 2. Create `hosts/machines/<hostname>/hardware-configuration.nix`
 3. Add to `flake.nix`:
    ```nix
@@ -121,36 +149,36 @@ Generate: `nixos-generate-config --show-hardware-config`
    # or for Darwin:
    darwinConfigurations.<hostname> = flakeHelpers.mkDarwinConfiguration ./hosts/machines/<hostname>;
    ```
-4. Add Makefile target (optional)
+4. Pick profiles — `developer` for any machine, `desktop` for GUI, `server` for headless
+5. Add Makefile target (optional)
 
 ## SSH Keys
 
-Defined per-host in `hostUsers.<user>.keys`:
+Defined per-host in `hostUsers.<user>.keys`. Path convention: `~/.ssh/<name>_id_<type>`.
+
 ```nix
 keys = [{
   name = "goldstar";       # Key identifier
-  type = "rsa";            # rsa | ed25519
-  purpose = [ "git" "ssh" ];  # "git" for signing, "ssh" for auth
-  isDefault = true;        # Default key for this host
+  type = "ed25519";        # rsa | ed25519
+  purpose = [ "git" "ssh" ];
+  isDefault = true;
 }];
 ```
-Path convention: `~/.ssh/<name>_id_<type>` (e.g., `~/.ssh/goldstar_id_rsa`)
-
-## Current Hosts
-
-| Host | Platform | Flake attr | Rebuild command |
-|------|----------|-----------|-----------------|
-| `nix-goldstar` | NixOS | `nixosConfigurations.nix-goldstar` | `make nix-goldstar` (SSH) |
-| `nix-oldstar` | NixOS | `nixosConfigurations.nix-oldstar` | `make nix-oldstar` (SSH, vantage override) |
-| `mac-brightstar` | Darwin | `darwinConfigurations.mac-brightstar` | `make mac-brightstar` (local) |
 
 ## What Goes Where
 
 | Setting | File |
 |---------|------|
-| User modules & keys | `default.nix` → `hostUsers.<user>.modules` |
-| System modules | `default.nix` → `systemAll`/`systemLinux`/`systemDarwin` |
-| Hostname, timezone | `default.nix` |
+| User modules & keys | `default.nix` → `hostUsers.<user>.modules` (via profiles) |
+| System modules | `default.nix` → `modules.system.{all,linux,darwin}` (via profiles) |
+| Hostname, timezone, theme | `default.nix` |
 | Boot loader, kernel | `hardware-configuration.nix` |
-| Filesystems | `hardware-configuration.nix` |
-| Hardware drivers | `hardware-configuration.nix` or `systemLinux` modules |
+| Filesystems, hardware drivers | `hardware-configuration.nix` |
+
+## Current Hosts
+
+| Host | Platform | Profiles | Rebuild command |
+|------|----------|----------|-----------------|
+| `nix-goldstar` | NixOS | developer + desktop + gaming | `make nix-goldstar` |
+| `nix-oldstar` | NixOS | server | `make nix-oldstar` |
+| `mac-brightstar` | Darwin | developer + desktop + macos | `make mac-brightstar` |

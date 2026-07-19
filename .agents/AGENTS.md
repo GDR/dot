@@ -43,7 +43,44 @@ dot/
 └── templates/                # Flake templates
 ```
 
-## Module System
+## Profiles
+
+Role-based bundles of module enables. Compose multiple profiles per host.
+
+```
+profiles/
+  developer.nix   # home: cli, editors, shell, terminal, docker + nix/git system baseline
+  desktop.nix     # home: browsers, desktop infrastructure, downloads, media, messengers, security
+                  # system.linux: sound, networkmanager, tailscale, firewall
+  gaming.nix      # home: games.*
+  server.nix      # home: cli, shell, neovim, docker + system openssh/tailscale/vscode-server
+  macos.nix       # system.darwin: macos-settings, app-aliases
+```
+
+### Using profiles in a host
+
+```nix
+let
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+    (import ../../../profiles/gaming.nix)
+  ];
+in {
+  hostUsers.x.modules = lib.recursiveUpdate profiles.userModules {
+    home.browsers.vivaldi.enable = true;  # host-specific additions
+  };
+
+  modules.system.all   = lib.recursiveUpdate profiles.system.all   { fonts.enable = true; };
+  modules.system.linux = lib.recursiveUpdate profiles.system.linux { graphics.nvidia.enable = true; };
+}
+```
+
+Use `lib.recursiveUpdate` (not `//`) to merge nested attrsets without clobbering siblings.
+
+### Module dependency requires
+
+Modules can declare `requires = [ "home.other.module" ]` in `mkModuleV2`. Enabling a module auto-enables its full transitive dependency tree — if A requires B and B requires C, enabling A auto-enables B and C. Inspect the registry: `nix eval '.#moduleRegistry.modules' --json`.
 
 ### Two module types
 
