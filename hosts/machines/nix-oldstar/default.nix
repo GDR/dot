@@ -2,6 +2,7 @@
 let
   # Import user defaults by name
   importUser = name: import ../../users/${name}.nix { inherit lib; };
+  userDefaults = importUser "dgarifullin";
 in
 {
   imports = [
@@ -27,7 +28,7 @@ in
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
   # Enable user via hostUsers (system user account only, no home modules)
-  hostUsers.dgarifullin = importUser "dgarifullin" // {
+  hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
     # Host-specific: SSH key for this machine
     keys = [{
@@ -36,7 +37,7 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # SSH configuration
+    # SSH client configuration — host-specific key entries + shared topology
     ssh = [
       {
         host = "*";
@@ -48,15 +49,7 @@ in
         user = "git";
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
-      {
-        host = "nix-oldstar";
-        forwardAgent = true;
-      }
-      {
-        host = "nix-goldstar";
-        forwardAgent = true;
-      }
-    ];
+    ] ++ userDefaults.ssh.knownHosts;
     # Minimal home modules - CLI tools and shell
     modules = {
       home.cli.enable = true;
@@ -74,7 +67,7 @@ in
   time.timeZone = "Europe/Moscow";
 
   # System-scope modules (server-side only)
-  systemAll = {
+  modules.system.all = {
     fonts.enable = true;
     nix.settings.enable = true;
     nix.gc.enable = true;
@@ -85,7 +78,7 @@ in
     };
   };
 
-  systemLinux = {
+  modules.system.linux = {
     networking = {
       networkmanager.enable = true;
       openssh = {

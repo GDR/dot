@@ -2,6 +2,7 @@
 let
   # Import user defaults by name
   importUser = name: import ../../users/${name}.nix { inherit lib; };
+  userDefaults = importUser "dgarifullin";
 in
 {
   imports = [
@@ -10,7 +11,7 @@ in
 
   # Enable user via hostUsers (new system)
   # Defaults from hosts/users/<name>.nix, host-specific overrides here
-  hostUsers.dgarifullin = importUser "dgarifullin" // {
+  hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
     # Passwordless sudo for remote deployment via SSH + nixos-rebuild
     sudo.nopasswd = true;
@@ -21,7 +22,7 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # SSH client configuration
+    # SSH client configuration — host-specific key entries + shared topology
     ssh = [
       {
         host = "*";
@@ -33,15 +34,7 @@ in
         user = "git";
         identityFile = "~/.ssh/goldstar_id_rsa";
       }
-      {
-        host = "nix-oldstar";
-        forwardAgent = true;
-      }
-      {
-        host = "nix-goldstar";
-        forwardAgent = true;
-      }
-    ];
+    ] ++ userDefaults.ssh.knownHosts;
     # Hierarchical module enables
     modules = {
       home.browsers.vivaldi.enable = true;
@@ -88,8 +81,8 @@ in
   networking.hostName = "nix-goldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  # System-scope modules (top-level, not in modules.*)
-  systemAll = {
+  # System-scope modules
+  modules.system.all = {
     fonts.enable = true;
     nix.settings.enable = true;
     nix.gc.enable = true;
@@ -99,7 +92,7 @@ in
     };
   };
 
-  systemLinux = {
+  modules.system.linux = {
     networking = {
       firewall.enable = true;
       firewall.allowedTCPPorts = [ 8080 ];

@@ -50,9 +50,9 @@ dot/
 | Type | Location | Created with | Enabled via | Auto-discovered |
 |------|----------|-------------|-------------|-----------------|
 | User | `modules/home/` | `mkModuleV2` | `hostUsers.<user>.modules.<path>.enable` | Yes |
-| System | `modules/systems/` | `mkSystemModuleV2` | `systemAll.*` / `systemLinux.*` / `systemDarwin.*` | No (needs import) |
+| System | `modules/systems/` | `mkSystemModuleV2` | `modules.system.all.*` / `modules.system.linux.*` / `modules.system.darwin.*` | Yes |
 
-### Hierarchical enables
+### Hierarchical enables — home modules
 
 Module enabled if ANY of these is true:
 - `modules.home.browsers.vivaldi.enable = true` (specific)
@@ -61,6 +61,19 @@ Module enabled if ANY of these is true:
 - `hostUsers.<user>.modules.home.browsers.enable = true` (per-user)
 
 Path follows directory structure: `modules/home/<category>/<module>` → `modules.home.<category>.<module>`
+
+### Tier-level enables — system modules
+
+System modules support a tier-level cascade. Setting the tier enables all modules within that platform:
+- `modules.system.all.enable = true` — enables all cross-platform system modules
+- `modules.system.linux.enable = true` — enables all Linux system modules
+- `modules.system.darwin.enable = true` — enables all Darwin system modules
+
+Individual module enables still work as before (and take precedence for opt-outs when the tier is on):
+- `modules.system.all.fonts.enable = true` (specific module)
+- `modules.system.linux.networking.openssh.enable = true` (specific module)
+
+Path follows directory structure: `modules/systems/<platform>/<module>` → `modules.system.<platform>.<module>`
 
 ### Platform sections in modules
 

@@ -2,6 +2,7 @@
 let
   # Import user defaults by name
   importUser = name: import ../../users/${name}.nix { inherit lib; };
+  userDefaults = importUser "dgarifullin";
 in
 {
   imports = [
@@ -16,7 +17,7 @@ in
 
   # Enable user via hostUsers (new system)
   # Defaults from hosts/users/<name>.nix, host-specific overrides here
-  hostUsers.dgarifullin = importUser "dgarifullin" // {
+  hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
     # Host-specific: SSH key for this machine
     keys = [{
@@ -25,7 +26,7 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # SSH configuration
+    # SSH client configuration — host-specific key entries + shared topology
     ssh = [
       {
         host = "*";
@@ -37,15 +38,7 @@ in
         user = "git";
         identityFile = "~/.ssh/brightstar_id_ed25519";
       }
-      {
-        host = "nix-oldstar";
-        forwardAgent = true;
-      }
-      {
-        host = "nix-goldstar";
-        forwardAgent = true;
-      }
-    ];
+    ] ++ userDefaults.ssh.knownHosts;
     # Hierarchical module enables
     modules = {
       home.ai-tools.enable = true;
@@ -94,8 +87,8 @@ in
     }
   ];
 
-  # System-scope modules (top-level, not in modules.*)
-  systemAll = {
+  # System-scope modules
+  modules.system.all = {
     # fonts.enable = true;
     nix.settings.enable = true;
     nix.gc.enable = true;
@@ -107,7 +100,7 @@ in
   };
 
   # Darwin-specific system modules
-  systemDarwin = {
+  modules.system.darwin = {
     macos-settings.enable = true;
     homebrew = {
       enable = true;
@@ -120,28 +113,8 @@ in
     };
   };
 
-  # Antigravity IDE config — global rules and caveman skills
-  modules.home.editors.antigravity = {
-    rules = ''
-      # Global Rules
-
-      ## Communication
-      - Respond in Russian unless the user writes in English
-      - Direct, no fluff — answer immediately
-      - Dense, iterative style
-
-      ## User Profile
-      - Expert: Linux, NixOS, kernel/C++, OSS, game optimization
-      - Preferences: NixOS/Endeavour, gaming/streaming, DSLR photography
-      - Regions of interest: Russia, Georgia
-
-      ## Code Style
-      - Comment non-obvious decisions
-      - Cite sources when referencing external docs
-      - Imperative mood in commit messages
-    '';
-    cavemanEnable = true;
-  };
+  # Antigravity IDE config — global rules from user defaults
+  modules.home.editors.antigravity = userDefaults.antigravity;
 
   time.timeZone = "Europe/Moscow";
 

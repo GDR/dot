@@ -8,7 +8,7 @@
 { lib, config, ... }@args:
 
 let
-  cfg = config.systemDarwin.openssh or { };
+  cfg = config.modules.system.darwin.openssh or { };
   userMap = cfg.userMap or { };
 in
 lib.my.mkSystemModuleV2 args {

@@ -555,9 +555,9 @@
         else false;
 
       # Build option path from _modulePath
-      # e.g., "systemAll.nix-settings" or "systemDarwin.homebrew"
-      # _modulePath comes in as e.g., "systems.all.nix-settings"
-      # We transform "systems.all" -> "systemAll", "systems.darwin" -> "systemDarwin", etc.
+      # e.g., "modules.system.all.nix.settings" or "modules.system.darwin.homebrew"
+      # _modulePath comes in as e.g., "systems.all.nix.settings"
+      # We transform "systems.<platform>.*" -> "modules.system.<platform>.*"
       transformedPath =
         let
           parts = splitString "." _modulePath;
@@ -566,16 +566,10 @@
           # Get platform part (all/darwin/linux) and rest of path
           platformPart = if startsWithSystems then elemAt parts 1 else null;
           restParts = if startsWithSystems then drop 2 parts else tail parts;
-          # Transform systems.all -> systemAll, systems.darwin -> systemDarwin, systems.linux -> systemLinux
-          newFirstPart =
-            if startsWithSystems then
-              if platformPart == "all" then "systemAll"
-              else if platformPart == "darwin" then "systemDarwin"
-              else if platformPart == "linux" then "systemLinux"
-              else "system${platformPart}"
-            else head parts;
         in
-        concatStringsSep "." ([ newFirstPart ] ++ restParts);
+        if startsWithSystems then
+          concatStringsSep "." ([ "modules" "system" platformPart ] ++ restParts)
+        else _modulePath;
 
       pathParts = splitString "." transformedPath;
 
@@ -596,26 +590,31 @@
         };
       } // extraOptions);
 
-      config = mkIf (platformActive && (cfg.enable or false)) (
+      config =
         let
-          # module can be attrset or function (cfg -> attrset)
-          resolvedModule = if isFunction module then module cfg else module;
-
-          # Platform-specific additions
-          resolvedLinux =
-            if moduleLinux != null && isLinux then
-              (if isFunction moduleLinux then moduleLinux cfg else moduleLinux)
-            else { };
-          resolvedDarwin =
-            if moduleDarwin != null && isDarwin then
-              (if isFunction moduleDarwin then moduleDarwin cfg else moduleDarwin)
-            else { };
+          # Tier-level cascade: modules.system.linux.enable = true activates all linux modules
+          tierEnable = config.modules.system.${namespace}.enable or false;
         in
-        mkMerge [
-          resolvedModule
-          resolvedLinux
-          resolvedDarwin
-        ]
-      );
+        mkIf (platformActive && ((cfg.enable or false) || tierEnable)) (
+          let
+            # module can be attrset or function (cfg -> attrset)
+            resolvedModule = if isFunction module then module cfg else module;
+
+            # Platform-specific additions
+            resolvedLinux =
+              if moduleLinux != null && isLinux then
+                (if isFunction moduleLinux then moduleLinux cfg else moduleLinux)
+              else { };
+            resolvedDarwin =
+              if moduleDarwin != null && isDarwin then
+                (if isFunction moduleDarwin then moduleDarwin cfg else moduleDarwin)
+              else { };
+          in
+          mkMerge [
+            resolvedModule
+            resolvedLinux
+            resolvedDarwin
+          ]
+        );
     };
 }

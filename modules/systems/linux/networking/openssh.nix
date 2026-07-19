@@ -8,7 +8,7 @@
 { lib, config, ... }@args:
 
 let
-  cfg = config.systemLinux.networking.openssh or { };
+  cfg = config.modules.system.linux.networking.openssh or { };
   userMap = cfg.userMap or { };
 in
 lib.my.mkSystemModuleV2 args {
