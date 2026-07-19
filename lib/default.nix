@@ -48,6 +48,22 @@
       { }
       profiles;
 
+  # Dummy specialArgs for metadata extraction — used by both tryImportMeta and
+  # wrapModuleFile (see flakeHelpers.nix). Add new specialArgs here so both
+  # sites stay in sync automatically.
+  dummySpecialArgs = {
+    config = { };
+    options = { };
+    pkgs = { };
+    system = "x86_64-linux";
+    inherit inputs;
+    self = null;
+    hardware = null;
+    overlays = { };
+    modulesRegistry = null;
+    _modulePath = "";
+  };
+
   # Build module registry from a directory
   # This scans modules and extracts metadata, returning a registry structure
   buildModuleRegistry = modulesDir: prefix:
@@ -63,30 +79,10 @@
         )
         moduleFiles;
 
-      # Try to extract metadata from modules
-      # Use the lib.my that's already available (passed from flake)
-      # Note: We use a dummy system for metadata extraction - modules should
-      # not depend on system-specific pkgs during registry building.
-      # We pass common specialArgs (inputs, self, hardware, overlays) so that
-      # modules which declare them as required args don't fail with "missing
-      # required argument" — builtins.tryEval only catches throw/assert, not
-      # argument matching errors.
       tryImportMeta = path:
         let
           libWithMy = lib // { inherit (lib) my; };
-          moduleResult = builtins.tryEval (import path {
-            config = { };
-            options = { };
-            pkgs = { };
-            lib = libWithMy;
-            system = "x86_64-linux";
-            inherit inputs;
-            self = null;
-            hardware = null;
-            overlays = { };
-            modulesRegistry = null;
-            _modulePath = ""; # required by mkModuleV2; dummy value for metadata extraction
-          });
+          moduleResult = builtins.tryEval (import path (dummySpecialArgs // { lib = libWithMy; }));
         in
         if moduleResult.success then
           (moduleResult.value._meta or moduleResult.value.meta or null)
@@ -329,18 +325,22 @@
         )
         (attrValues enabledUsers);
 
-      # Requires check: enabled if any explicitly-enabled module lists this path in requires.
+      # Requires check: enabled if any explicitly-enabled module's transitive
+      # dependency tree includes this path. Uses resolveDeps for full transitivity
+      # (A requires B, B requires C → enabling A auto-enables both B and C).
       # Uses isExplicitlyEnabled (not shouldEnableModule) to avoid circular evaluation.
       isRequiredByEnabled =
         if modulesRegistry == null then false
         else
           let
             regModules = modulesRegistry.modules or [ ];
+            moduleMap = listToAttrs (map (m: { name = m.path; value = m.meta; }) regModules);
           in
           any
             (m:
-              elem modulePath (m.meta.requires or [ ]) &&
-              isExplicitlyEnabled { inherit config; modulePath = m.path; }
+              m.path != modulePath &&
+              isExplicitlyEnabled { inherit config; modulePath = m.path; } &&
+              elem modulePath (moduleRegistry.resolveDeps moduleMap m.path [ ])
             )
             regModules;
     in
