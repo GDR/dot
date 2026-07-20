@@ -17,8 +17,9 @@ lib.my.mkModuleV2 args {
   module = {
     nixosSystems.home.packages = [
       pkgs.ghidra # Ghidra 12.1.2 — required by GhidraMCP extension
-      pkgs.ghidra-mcp # MCP bridge (bridge-mcp-ghidra binary)
-      pkgs.maven # needed to build/update GhidraMCP extension from source
-    ];
+      # ghidra-mcp is a custom overlay package (Linux-only); guard against cross-system
+      # evaluation where the overlay may not be applied (e.g., Darwin flake check).
+    ] ++ lib.optional (pkgs ? ghidra-mcp) pkgs.ghidra-mcp
+      ++ lib.optional (pkgs ? maven) pkgs.maven;
   };
 }
