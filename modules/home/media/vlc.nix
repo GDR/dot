@@ -1,8 +1,9 @@
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {
+  platforms = [ "linux" ];
   description = "VLC media player";
   module = {
-    allSystems.home.packages = [ pkgs.vlc ];
+    nixosSystems.home.packages = [ pkgs.vlc ];
   };
 }

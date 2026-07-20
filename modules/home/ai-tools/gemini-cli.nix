@@ -6,7 +6,7 @@ lib.my.mkModuleV2 args {
   description = "Gemini CLI - Google's AI coding assistant";
   module = {
     allSystems = {
-      programs.gemini-cli = {
+      programs.antigravity-cli = {
         enable = true;
       };
     };
