@@ -127,10 +127,12 @@ lib.my.mkModuleV2 args {
 
     # Config files — routed to all enabled users automatically via home.* auto-routing
     allSystems.home.file = lib.mkMerge [
-      (lib.mkIf hasRules  { ".gemini/config/AGENTS.md".text  = cfg.rules; })
+      (lib.mkIf hasRules { ".gemini/config/AGENTS.md".text = cfg.rules; })
       (lib.mkIf hasSkills { ".gemini/config/skills.json".text = skillsJson; })
-      (lib.mkIf hasMcp    { ".gemini/antigravity/mcp_config.json".text =
-          builtins.toJSON { mcpServers = cfg.mcpServers; }; })
+      (lib.mkIf hasMcp {
+        ".gemini/antigravity/mcp_config.json".text =
+          builtins.toJSON { mcpServers = cfg.mcpServers; };
+      })
     ];
   };
 }

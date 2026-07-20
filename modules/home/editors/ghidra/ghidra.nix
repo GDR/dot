@@ -20,6 +20,6 @@ lib.my.mkModuleV2 args {
       # ghidra-mcp is a custom overlay package (Linux-only); guard against cross-system
       # evaluation where the overlay may not be applied (e.g., Darwin flake check).
     ] ++ lib.optional (pkgs ? ghidra-mcp) pkgs.ghidra-mcp
-      ++ lib.optional (pkgs ? maven) pkgs.maven;
+    ++ lib.optional (pkgs ? maven) pkgs.maven;
   };
 }
