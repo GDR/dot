@@ -58,10 +58,22 @@ in
       home.editors.ghidra.enable = true;
       home.editors.antigravity = {
         enable = true;
-        mcpServers.ghidra = {
-          command = "bridge-mcp-ghidra";
-          args = [ ];
-          env.GHIDRA_MCP_URL = "http://nix-oldstar:8089";
+        # Global MCP servers — written to ~/.gemini/antigravity/mcp_config.json
+        # Applies to ALL workspaces opened in Antigravity IDE
+        mcpServers = {
+          nixos = {
+            command = "nix";
+            args = [ "run" "github:utensils/mcp-nixos" "--" ];
+          };
+          context7 = {
+            url = "https://mcp.context7.com/mcp";
+            headers.CONTEXT7_API_KEY = "\${env.CONTEXT7_API_KEY}";
+          };
+          ghidra = {
+            command = "bridge-mcp-ghidra";
+            args = [ ];
+            env.GHIDRA_MCP_URL = "http://nix-goldstar:8089";
+          };
         };
       };
     };
