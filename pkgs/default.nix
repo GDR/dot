@@ -22,10 +22,13 @@ let
     ghidra-mcp = pkgs.callPackage ./ghidra-mcp { inherit python-mcp; };
     # GhidraMCP Java extension — pre-built zip committed to repo (Maven+Ghidra JARs required)
     ghidra-mcp-extension = pkgs.callPackage ./ghidra-mcp-extension { };
+    # AEON R2 processor Sleigh extension — compiled via ghidra/support/sleigh
+    ghidra-aeon = pkgs.callPackage ./ghidra-aeon {
+      buildGhidraExtension = pkgs.ghidra.buildGhidraExtension;
+    };
   };
   darwin = {
     vfkit = pkgs.callPackage ./vfkit { };
   };
 in
 common // (if isLinux then linux else { }) // (if isDarwin then darwin else { })
-

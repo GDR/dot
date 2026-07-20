@@ -14,6 +14,7 @@ let
   # Ghidra writes its config under a version+variant-specific subdirectory.
   # NixOS uses the "_NIX" variant suffix.
   ghidraConfigDir = ".config/ghidra/ghidra_12.1.2_NIX";
+  ghidraPkg = if pkgs ? ghidra-aeon then pkgs.ghidra.withExtensions (exts: [ pkgs.ghidra-aeon ]) else pkgs.ghidra;
 in
 lib.my.mkModuleV2 args {
   description = "Ghidra reverse-engineering suite + GhidraMCP bridge";
@@ -22,7 +23,7 @@ lib.my.mkModuleV2 args {
   module = {
     nixosSystems.home = {
       packages = [
-        pkgs.ghidra # Ghidra 12.1.2 — required by GhidraMCP extension
+        ghidraPkg # Ghidra 12.1.2 (with AEON R2 if available)
         # ghidra-mcp is a custom overlay package (Linux-only); guard against cross-system
         # evaluation where the overlay may not be applied (e.g., Darwin flake check).
       ] ++ lib.optional (pkgs ? ghidra-mcp) pkgs.ghidra-mcp

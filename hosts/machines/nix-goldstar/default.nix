@@ -58,7 +58,7 @@ in
       home.editors.ghidra.enable = true;
       home.editors.antigravity = {
         enable = true;
-        # Global MCP servers — written to ~/.gemini/config/mcp_config.json
+        # Global MCP servers — written to ~/.gemini/antigravity/mcp_config.json
         # Applies to ALL workspaces opened in Antigravity IDE
         mcpServers = {
           nixos = {
@@ -68,7 +68,7 @@ in
           };
           context7 = {
             url = "https://mcp.context7.com/mcp";
-            headers.CONTEXT7_API_KEY = "\${env.CONTEXT7_API_KEY}";
+            headers.CONTEXT7_API_KEY = builtins.getEnv "CONTEXT7_API_KEY";
           };
           ghidra = {
             command = "bridge-mcp-ghidra";
