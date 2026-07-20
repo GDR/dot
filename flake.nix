@@ -82,6 +82,13 @@
         import ./devShells.nix { inherit pkgs customPkgs; }
       );
 
+      checks = forAllSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        import ./checks.nix { inherit self pkgs lib system; }
+      );
+
       # Host configurations
       darwinConfigurations.mac-brightstar = flakeHelpers.mkDarwinConfiguration ./hosts/machines/mac-brightstar;
       nixosConfigurations.nix-oldstar = flakeHelpers.mkNixosConfiguration ./hosts/machines/nix-oldstar;

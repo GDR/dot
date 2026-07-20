@@ -537,10 +537,14 @@
             # module can be attrset or function (cfg -> attrset)
             resolvedModule = if isFunction module then module cfg else module;
 
-            rawConfig =
-              if isLinux then (resolvedModule.nixosSystems or { }) // (resolvedModule.allSystems or { })
-              else if isDarwin then (resolvedModule.darwinSystems or { }) // (resolvedModule.allSystems or { })
-              else { };
+            # Keep common and platform-specific definitions as separate module
+            # fragments. A shallow attrset merge would discard an entire
+            # top-level subtree (for example, nixosSystems.home when
+            # allSystems.home is also present).
+            selectedConfigs =
+              (optional (resolvedModule ? allSystems) resolvedModule.allSystems)
+              ++ (optional (isLinux && resolvedModule ? nixosSystems) resolvedModule.nixosSystems)
+              ++ (optional (isDarwin && resolvedModule ? darwinSystems) resolvedModule.darwinSystems);
 
             # Home-manager user-level attributes (routed to home-manager.users.*)
             # Note: systemd, gtk, qt, dconf, wayland, xresources, xsession are Linux-only
@@ -549,25 +553,37 @@
             hmUserAttrs = hmUserAttrsBase ++ (if isLinux then hmUserAttrsLinux else [ ]);
 
             # Extract home-manager attrs from config
-            userConfig = filterAttrs (name: _: elem name hmUserAttrs) rawConfig;
-            hasUserConfig = userConfig != { };
+            userConfigs = map
+              (fragment: filterAttrs (name: _: elem name hmUserAttrs) fragment)
+              selectedConfigs;
+            hasUserConfig = any (fragment: fragment != { }) userConfigs;
+            userConfig = mkMerge userConfigs;
 
             # Remove home-manager attrs from system config
-            systemConfig = filterAttrs (name: _: !(elem name hmUserAttrs)) rawConfig;
+            systemConfig = mkMerge (map
+              (fragment: filterAttrs (name: _: !(elem name hmUserAttrs)) fragment)
+              selectedConfigs);
 
             # systemModule can be attrset or function (cfg -> attrset)
             # Supports platform sections: allSystems, nixosSystems, darwinSystems
             resolvedSystemModuleRaw = if isFunction systemModule then systemModule cfg else systemModule;
             resolvedSystemModule =
-              if isLinux then (resolvedSystemModuleRaw.nixosSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
-              else if isDarwin then (resolvedSystemModuleRaw.darwinSystems or { }) // (resolvedSystemModuleRaw.allSystems or { })
-              else resolvedSystemModuleRaw;
+              if isLinux || isDarwin then
+                mkMerge
+                  (
+                    (optional (resolvedSystemModuleRaw ? allSystems) resolvedSystemModuleRaw.allSystems)
+                    ++ (optional (isLinux && resolvedSystemModuleRaw ? nixosSystems) resolvedSystemModuleRaw.nixosSystems)
+                    ++ (optional (isDarwin && resolvedSystemModuleRaw ? darwinSystems) resolvedSystemModuleRaw.darwinSystems)
+                  )
+              else
+                resolvedSystemModuleRaw;
           in
           mkMerge [
             resolvedSystemModule
-            (systemConfig // (optionalAttrs hasUserConfig {
+            systemConfig
+            (optionalAttrs hasUserConfig {
               home-manager.users = mapAttrs (name: _: userConfig) enabledUsers;
-            }))
+            })
             (optionalAttrs (dotfiles != null && self != null) {
               home-manager.users = mkDotfilesSymlink {
                 inherit config self;
