@@ -86,7 +86,7 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
         in
-        import ./checks.nix { inherit self pkgs lib system; }
+        import ./checks.nix { inherit self inputs pkgs lib system; }
       );
 
       # Host configurations

@@ -4,12 +4,8 @@
 { lib, pkgs, inputs, ... }@args:
 
 let
-  # Import plugin/LSP declarations
-  pluginConfig = import ./dotfiles/plugins.nix { inherit pkgs lib; };
-
-  wrappedNeovim = inputs.nix-wrapper-modules.wrappers.neovim.wrap {
-    pkgs = pkgs // { _type = "pkgs"; };
-    inherit (pluginConfig) specs runtimePkgs;
+  wrappedNeovim = import ./dotfiles/package.nix {
+    inherit inputs pkgs lib;
   };
 in
 lib.my.mkModuleV2 args {

@@ -73,6 +73,8 @@
     black # Python
     gofumpt # Go
     prettier # TS/JS/HTML/CSS
+    rustfmt # Rust
+    shfmt # Bash/Shell
 
     # ── Linters ──
     shellcheck # Bash/Shell
