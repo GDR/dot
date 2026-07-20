@@ -29,12 +29,26 @@ in
         identityFile = "~/.ssh/goldstar_id_rsa";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    profiles = {
-      developer.enable = true;
-      desktop.enable = true;
-      gaming.enable = true;
-    };
     modules = {
+      # developer profile
+      home.cli.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+      home.virtualisation.docker.enable = true;
+      # desktop profile
+      home.browsers.enable = true;
+      home.desktop.appearance.enable = true;
+      home.desktop.services.enable = true;
+      home.desktop.utils.enable = true;
+      home.desktop.widgets.enable = true;
+      home.downloads.enable = true;
+      home.media.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.utils.enable = true;
+      # gaming profile
+      home.games.enable = true;
+      # host-specific
       home.browsers.vivaldi.enable = true;
       home.desktop = {
         gnome.enable = true;
@@ -62,8 +76,19 @@ in
     fonts.enable = true;
   };
 
+  modules.system.all = {
+    shell.git.enable = true;
+    shell.ssh.enable = true;
+  };
+
   modules.system.linux = {
-    networking.firewall.allowedTCPPorts = [ 8080 ];
+    sound.enable = true;
+    networking.networkmanager.enable = true;
+    networking.tailscale.enable = true;
+    networking.firewall = {
+      enable = true;
+      allowedTCPPorts = [ 8080 ];
+    };
     networking.openssh = {
       enable = true;
       userMap = { "*" = "gdr"; };

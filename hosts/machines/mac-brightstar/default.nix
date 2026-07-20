@@ -31,12 +31,25 @@ in
         identityFile = "~/.ssh/brightstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    profiles = {
-      developer.enable = true;
-      desktop.enable = true;
-      macos.enable = true;
-    };
     modules = {
+      # developer profile
+      home.cli.enable = true;
+      home.editors.neovim.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+      home.virtualisation.docker.enable = true;
+      # desktop profile
+      home.browsers.enable = true;
+      home.desktop.appearance.enable = true;
+      home.desktop.services.enable = true;
+      home.desktop.utils.enable = true;
+      home.desktop.widgets.enable = true;
+      home.downloads.enable = true;
+      home.media.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.utils.enable = true;
+      # host-specific
       home.ai-tools.enable = true;
       # home.utils.raycast.enable = true; # disabled: nixpkgs download URL broken
     };
@@ -73,11 +86,15 @@ in
   modules.system.all = {
     nix.settings.enable = true;
     nix.gc.enable = true;
+    shell.git.enable = true;
+    shell.ssh.enable = true;
     sops.enable = true;
     # fonts.enable = true;  # disabled on Darwin
   };
 
   modules.system.darwin = {
+    macos-settings.enable = true;
+    app-aliases.enable = true;
     homebrew = {
       enable = true;
       user = "dgarifullin";

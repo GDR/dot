@@ -46,8 +46,14 @@ in
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    profiles.server.enable = true;
     modules = {
+      # server profile
+      home.cli.enable = true;
+      home.editors.neovim.enable = true;
+      home.editors.vscode-server.enable = true;
+      home.shell.enable = true;
+      home.virtualisation.docker.enable = true;
+      # host-specific
       home.editors.ghidra.enable = true;
     };
     sudo.nopasswd = true;
@@ -58,6 +64,9 @@ in
   modules.system.all = {
     nix.settings.enable = true;
     nix.gc.enable = true;
+    fonts.enable = true;
+    shell.git.enable = true;
+    shell.ssh.enable = true;
     sops.enable = true;
   };
 
