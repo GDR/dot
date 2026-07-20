@@ -93,9 +93,5 @@
           description = "A template for a Python project using poetry";
         };
       };
-
-      # Queryable module catalog: nix eval '.#moduleRegistry.modules' --json
-      # Each entry: { file, path, meta: { requires, platforms, scope, description } }
-      moduleRegistry = (import ./modules/_core/registry.nix { inherit lib; }).moduleRegistry;
     };
 }
