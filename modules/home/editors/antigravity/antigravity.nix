@@ -43,8 +43,8 @@ let
     exec "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app/Contents/MacOS/Antigravity IDE" "$@"
   '';
 
-  # Read cfg lazily via config.modules — not through the cfg parameter
-  # to avoid infinite recursion (cfg evaluation triggers module re-evaluation)
+  # cfg read via config.modules path-walking so it's available at the top-level let
+  # (for hasRules/hasSkills/hasMcp guards used in allSystems.home.file below).
   modulePath = args._modulePath;
   pathParts = lib.splitString "." modulePath;
   cfg = lib.foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
@@ -60,7 +60,6 @@ let
     entries = map (p: { path = p; }) allSkillPaths;
   };
 
-  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
 in
 lib.my.mkModuleV2 args {
   description = "Antigravity IDE & standalone Antigravity 2.0";
@@ -125,34 +124,13 @@ lib.my.mkModuleV2 args {
       pkgs.google-antigravity
       pkgs.google-antigravity-cli
     ];
-  };
 
-  # Config file management via systemModule — reads cfg lazily from config.modules
-  systemModule = {
-    allSystems = lib.mkMerge [
-      (lib.mkIf hasRules {
-        home-manager.users = lib.mapAttrs
-          (_: _: {
-            home.file.".gemini/config/AGENTS.md".text = cfg.rules;
-          })
-          enabledUsers;
-      })
-      (lib.mkIf hasSkills {
-        home-manager.users = lib.mapAttrs
-          (_: _: {
-            home.file.".gemini/config/skills.json".text = skillsJson;
-          })
-          enabledUsers;
-      })
-      (lib.mkIf hasMcp {
-        home-manager.users = lib.mapAttrs
-          (_: _: {
-            # Global MCP config — applies to all workspaces in Antigravity
-            home.file.".gemini/antigravity/mcp_config.json".text =
-              builtins.toJSON { mcpServers = cfg.mcpServers; };
-          })
-          enabledUsers;
-      })
+    # Config files — routed to all enabled users automatically via home.* auto-routing
+    allSystems.home.file = lib.mkMerge [
+      (lib.mkIf hasRules  { ".gemini/config/AGENTS.md".text  = cfg.rules; })
+      (lib.mkIf hasSkills { ".gemini/config/skills.json".text = skillsJson; })
+      (lib.mkIf hasMcp    { ".gemini/antigravity/mcp_config.json".text =
+          builtins.toJSON { mcpServers = cfg.mcpServers; }; })
     ];
   };
 }
