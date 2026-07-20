@@ -80,6 +80,7 @@
     shellcheck # Bash/Shell
 
     # ── Tools ──
+    git # gitsigns backend
     ripgrep # fast grep (telescope backend)
     fd # fast find (telescope backend)
     tree-sitter # tree-sitter CLI (grammar compilation)

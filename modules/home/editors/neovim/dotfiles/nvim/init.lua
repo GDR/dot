@@ -8,6 +8,11 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
+-- Headless checks use this state because Neovim may exit successfully even when
+-- an init file raises an error.
+vim.g.dotfiles_config_status = "loading"
+vim.g.dotfiles_config_errors = {}
+
 -- Enable byte-compiled loader for faster startup
 vim.loader.enable()
 
@@ -17,6 +22,8 @@ require("config.keymaps")
 require("config.autocmds")
 
 -- Auto-load all plugin configs from lua/plugins/**/*.lua
+local plugin_config_errors = {}
+
 local function load_plugin_configs(base_dir)
   local config_path = vim.fn.stdpath("config") .. "/lua/" .. base_dir
   if vim.fn.isdirectory(config_path) == 0 then
@@ -27,9 +34,14 @@ local function load_plugin_configs(base_dir)
     local module = file:match("lua/(.+)%.lua$"):gsub("/", ".")
     local ok, err = pcall(require, module)
     if not ok then
-      vim.notify("Error loading " .. module .. ":\n" .. err, vim.log.levels.ERROR)
+      local message = "Error loading " .. module .. ":\n" .. err
+      table.insert(plugin_config_errors, message)
+      vim.notify(message, vim.log.levels.ERROR)
     end
   end
 end
 
 load_plugin_configs("plugins")
+
+vim.g.dotfiles_config_errors = plugin_config_errors
+vim.g.dotfiles_config_status = #plugin_config_errors == 0 and "ok" or "failed"

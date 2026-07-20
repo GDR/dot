@@ -16,6 +16,29 @@ local function save_session()
   vim.cmd("mksession! " .. vim.fn.fnameescape(session_file()))
 end
 
+local function restore_session(options)
+  options = options or {}
+  local file = session_file()
+
+  if vim.fn.filereadable(file) ~= 1 then
+    if options.notify_missing then
+      vim.notify("No session found for " .. vim.fn.getcwd(), vim.log.levels.WARN)
+    end
+    return false
+  end
+
+  local ok, err = pcall(vim.cmd, "source " .. vim.fn.fnameescape(file))
+  if not ok then
+    vim.notify("Failed to restore session " .. file .. ":\n" .. err, vim.log.levels.ERROR)
+    return false
+  end
+
+  if options.notify_success then
+    vim.notify("Session restored for " .. vim.fn.getcwd())
+  end
+  return true
+end
+
 vim.keymap.set("n", "<leader>qs", function()
   save_session()
   vim.notify("Session saved for " .. vim.fn.getcwd())
@@ -31,10 +54,9 @@ vim.keymap.set("n", "<leader>qr", function()
         vim.api.nvim_buf_delete(buf, { force = true })
       end
     end
-    vim.cmd("source " .. vim.fn.fnameescape(f))
-    vim.notify("Session restored for " .. vim.fn.getcwd())
+    restore_session({ notify_success = true })
   else
-    vim.notify("No session found for " .. vim.fn.getcwd(), vim.log.levels.WARN)
+    restore_session({ notify_missing = true })
   end
 end, { desc = "Restore session" })
 
@@ -83,7 +105,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
           vim.api.nvim_buf_delete(buf, { force = true })
         end
       end
-      vim.cmd("silent! source " .. vim.fn.fnameescape(f))
+      restore_session()
     end)
   end,
 })

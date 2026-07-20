@@ -53,12 +53,5 @@ map("t", "<esc><esc>", "<c-\\><c-n>", { desc = "Enter Normal Mode" })
 
 -- ── Misc ──
 map("n", "<leader>R", function()
-  -- Clear Lua module cache for our config
-  for name, _ in pairs(package.loaded) do
-    if name:match("^config%.") or name:match("^plugins%.") then
-      package.loaded[name] = nil
-    end
-  end
-  dofile(vim.fn.stdpath("config") .. "/init.lua")
-  vim.notify("Config reloaded!", vim.log.levels.INFO)
-end, { desc = "Reload config" })
+  vim.cmd("restart")
+end, { desc = "Restart Neovim" })

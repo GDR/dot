@@ -13,22 +13,45 @@ let
     {
       nativeBuildInputs = [ neovim ];
     } ''
-    export HOME="$TMPDIR/home"
-    export XDG_CONFIG_HOME="$TMPDIR/config"
-    export XDG_DATA_HOME="$TMPDIR/data"
-    export XDG_STATE_HOME="$TMPDIR/state"
-    export XDG_CACHE_HOME="$TMPDIR/cache"
-    export NVIM_LOG_FILE="$TMPDIR/nvim.log"
+    run_neovim_check() {
+      local root="$1"
 
-    mkdir -p \
-      "$HOME" \
-      "$XDG_CONFIG_HOME" \
-      "$XDG_DATA_HOME" \
-      "$XDG_STATE_HOME" \
-      "$XDG_CACHE_HOME"
-    ln -s ${./modules/home/editors/neovim/dotfiles/nvim} "$XDG_CONFIG_HOME/nvim"
+      export HOME="$root/home"
+      export XDG_CONFIG_HOME="$root/config"
+      export XDG_DATA_HOME="$root/data"
+      export XDG_STATE_HOME="$root/state"
+      export XDG_CACHE_HOME="$root/cache"
+      export NVIM_LOG_FILE="$root/nvim.log"
 
-    nvim --headless -l ${./modules/home/editors/neovim/tests/check.lua}
+      mkdir -p \
+        "$HOME" \
+        "$XDG_CONFIG_HOME" \
+        "$XDG_DATA_HOME" \
+        "$XDG_STATE_HOME" \
+        "$XDG_CACHE_HOME"
+
+      if [ ! -d "$XDG_CONFIG_HOME/nvim" ]; then
+        cp -R ${./modules/home/editors/neovim/dotfiles/nvim} "$XDG_CONFIG_HOME/nvim"
+        chmod -R u+w "$XDG_CONFIG_HOME/nvim"
+      fi
+
+      nvim --headless -c "luafile ${./modules/home/editors/neovim/tests/check.lua}"
+    }
+
+    run_neovim_check "$TMPDIR/valid"
+
+    broken_root="$TMPDIR/broken"
+    mkdir -p "$broken_root/config"
+    cp -R ${./modules/home/editors/neovim/dotfiles/nvim} "$broken_root/config/nvim"
+    chmod -R u+w "$broken_root/config/nvim"
+    printf 'error("intentional plugin configuration failure")\n' \
+      > "$broken_root/config/nvim/lua/plugins/zz-check-failure.lua"
+
+    if run_neovim_check "$broken_root"; then
+      echo "Neovim check accepted a broken plugin configuration" >&2
+      exit 1
+    fi
+
     touch "$out"
   '';
 in
