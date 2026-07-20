@@ -13,14 +13,15 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    # (import ../../../profiles/gaming.nix)
-  ];
 in
 {
   imports = [ ./hardware-configuration.nix ];
+
+  modules.profiles = {
+    developer.enable = true;
+    desktop.enable = true;
+    # gaming.enable = true;  # add if needed
+  };
 
   hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
@@ -34,7 +35,7 @@ in
       { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
       { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    modules = {
       home.desktop.hyprland.enable = true;  # WM choice is host-specific
     };
     sudo.nopasswd = true;                   # remove if not needed
@@ -43,11 +44,9 @@ in
   networking.hostName = "<hostname>";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
-    fonts.enable = true;
-  };
+  modules.system.all.fonts.enable = true;  # host-specific additions on top of profile
 
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+  modules.system.linux = {
     networking.openssh = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
     graphics.nvidia   = { enable = true; open = true; };
   };
@@ -65,14 +64,15 @@ in
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/macos.nix)
-  ];
 in
 {
   nix.enable = true;
+
+  modules.profiles = {
+    developer.enable = true;
+    desktop.enable = true;
+    macos.enable = true;
+  };
 
   hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
@@ -81,7 +81,7 @@ in
       { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
       { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    modules = {
       home.ai-tools.enable = true;
     };
   };
@@ -89,8 +89,8 @@ in
   networking.hostName = "<hostname>";
   environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all { sops.enable = true; };
-  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
+  modules.system.all = { sops.enable = true; };
+  modules.system.darwin = {
     homebrew = { enable = true; user = "dgarifullin"; };
     openssh  = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
   };
@@ -149,7 +149,7 @@ Generate: `nixos-generate-config --show-hardware-config`
    # or for Darwin:
    darwinConfigurations.<hostname> = flakeHelpers.mkDarwinConfiguration ./hosts/machines/<hostname>;
    ```
-4. Pick profiles — `developer` for any machine, `desktop` for GUI, `server` for headless
+4. Enable profiles — set `modules.profiles.developer.enable = true` (any machine), add `desktop` for GUI, `server` for headless, `gaming` for gaming, `macos` for Darwin
 5. Add Makefile target (optional)
 
 ## SSH Keys
@@ -169,8 +169,9 @@ keys = [{
 
 | Setting | File |
 |---------|------|
-| User modules & keys | `default.nix` → `hostUsers.<user>.modules` (via profiles) |
-| System modules | `default.nix` → `modules.system.{all,linux,darwin}` (via profiles) |
+| Profile selection | `default.nix` → `modules.profiles.*` (auto-discovered from `modules/profiles/`) |
+| User modules (host-specific) | `default.nix` → `hostUsers.<user>.modules` |
+| System modules (host-specific) | `default.nix` → `modules.system.{all,linux,darwin}` |
 | Hostname, timezone, theme | `default.nix` |
 | Boot loader, kernel | `hardware-configuration.nix` |
 | Filesystems, hardware drivers | `hardware-configuration.nix` |

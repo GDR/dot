@@ -165,6 +165,26 @@ let
         '';
       };
 
+      # Per-user profile selection — enables home modules for this user specifically.
+      # Set: profiles.developer.enable = true
+      # Available profiles: developer, desktop, gaming, server, macos
+      # Profile homeModules are defined in modules/profiles/*.nix and checked by shouldEnableModule.
+      profiles = mkOption {
+        type = types.attrs;
+        default = { };
+        description = ''
+          Profiles to activate for this user.
+          Unlike modules.*, profiles are named presets that enable a curated set of home modules.
+          Example: profiles.developer.enable = true (CLI tools, editors, shell, terminal, Docker)
+        '';
+        example = literalExpression ''
+          {
+            developer.enable = true;
+            desktop.enable = true;
+          }
+        '';
+      };
+
       # Sudo configuration (Linux only)
       sudo = {
         nopasswd = mkOption {

@@ -325,6 +325,22 @@
         )
         (attrValues enabledUsers);
 
+      # Per-user profile check: enabled if a user has a profile enabled whose
+      # homeModules attrset covers this module path (or a parent).
+      # Profile homeModules are exposed via config.modules.profiles.<name>.homeModules
+      # and are pure attrsets — not option-system paths.
+      anyUserProfilePathEnabled = any
+        (ucfg:
+          let
+            userProfiles = ucfg.profiles or { };
+            enabledProfileNames = attrNames (filterAttrs (_: p: p.enable or false) userProfiles);
+            combinedProfileModules = foldl' recursiveUpdate { }
+              (map (name: config.modules.profiles.${name}.homeModules or { }) enabledProfileNames);
+          in
+          any (path: checkUserPathEnable combinedProfileModules path) allPaths
+        )
+        (attrValues enabledUsers);
+
       # Requires check: enabled if any explicitly-enabled module's transitive
       # dependency tree includes this path. Uses resolveDeps for full transitivity
       # (A requires B, B requires C → enabling A auto-enables both B and C).
@@ -344,7 +360,7 @@
             )
             regModules;
     in
-    anyGlobalPathEnabled || anyUserHasPathEnabled || isRequiredByEnabled;
+    anyGlobalPathEnabled || anyUserHasPathEnabled || anyUserProfilePathEnabled || isRequiredByEnabled;
 
   # Get list of users who have a module enabled (via any path level)
   # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath; };

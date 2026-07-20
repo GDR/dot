@@ -2,7 +2,6 @@
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
-  profile = import ../../../profiles/server.nix;
 in
 {
   imports = [
@@ -47,7 +46,8 @@ in
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profile.userModules {
+    profiles.server.enable = true;
+    modules = {
       home.editors.ghidra.enable = true;
     };
     sudo.nopasswd = true;
@@ -55,11 +55,11 @@ in
 
   time.timeZone = "Europe/Moscow";
 
-  modules.system.all = lib.recursiveUpdate profile.system.all {
+  modules.system.all = {
     sops.enable = true;
   };
 
-  modules.system.linux = lib.recursiveUpdate profile.system.linux {
+  modules.system.linux = {
     networking.networkmanager.enable = true;
     networking.openssh = {
       enable = true;

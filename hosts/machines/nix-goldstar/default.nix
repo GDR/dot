@@ -2,11 +2,6 @@
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/gaming.nix)
-  ];
 in
 {
   imports = [
@@ -34,16 +29,16 @@ in
         identityFile = "~/.ssh/goldstar_id_rsa";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    profiles = {
+      developer.enable = true;
+      desktop.enable = true;
+      gaming.enable = true;
+    };
+    modules = {
       home.browsers.vivaldi.enable = true;
       home.desktop = {
-        appearance.enable = true;
         gnome.enable = true;
         hyprland.enable = true;
-        services.enable = true;
-        utils.enable = true;
-        utils.nautilus.enable = true;
-        widgets.enable = true;
       };
       home.editors.neovim.enable = true;
       home.editors.ghidra.enable = true;
@@ -61,11 +56,9 @@ in
   networking.hostName = "nix-goldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
-    fonts.enable = true;
-  };
+  modules.system.all.fonts.enable = true;
 
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+  modules.system.linux = {
     networking.firewall.allowedTCPPorts = [ 8080 ];
     networking.openssh = {
       enable = true;
@@ -75,7 +68,6 @@ in
       enable = true;
       open = true;
     };
-    editors.vscode-server.enable = true;
   };
 
   time.timeZone = "Europe/Moscow";

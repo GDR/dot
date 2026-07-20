@@ -2,11 +2,6 @@
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/macos.nix)
-  ];
 in
 {
   imports = [
@@ -36,7 +31,12 @@ in
         identityFile = "~/.ssh/brightstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    profiles = {
+      developer.enable = true;
+      desktop.enable = true;
+      macos.enable = true;
+    };
+    modules = {
       home.ai-tools.enable = true;
       # home.utils.raycast.enable = true; # disabled: nixpkgs download URL broken
     };
@@ -70,12 +70,12 @@ in
     }
   ];
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
+  modules.system.all = {
     sops.enable = true;
     # fonts.enable = true;  # disabled on Darwin
   };
 
-  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
+  modules.system.darwin = {
     homebrew = {
       enable = true;
       user = "dgarifullin";

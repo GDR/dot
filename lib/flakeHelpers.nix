@@ -105,11 +105,13 @@ in
       ]
         ++ mkSystemModules ../modules/systems/all
         ++ mkSystemModules ../modules/systems/darwin
+        ++ mkSystemModules ../modules/profiles
         ++ [
         # Import foundational modules separately (not package modules)
         ../modules/_core/user.nix
         ../modules/_core/theme.nix
         ../modules/_core/system.nix
+        ../modules/_core/home-enables.nix
       ];
     };
 
@@ -137,11 +139,13 @@ in
       ]
         ++ mkSystemModules ../modules/systems/all
         ++ mkSystemModules ../modules/systems/linux
+        ++ mkSystemModules ../modules/profiles
         ++ [
         # Import foundational modules separately (not package modules)
         ../modules/_core/user.nix
         ../modules/_core/theme.nix
         ../modules/_core/system.nix
+        ../modules/_core/home-enables.nix
       ];
     };
 }
