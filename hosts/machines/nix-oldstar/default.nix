@@ -56,6 +56,8 @@ in
   time.timeZone = "Europe/Moscow";
 
   modules.system.all = {
+    nix.settings.enable = true;
+    nix.gc.enable = true;
     sops.enable = true;
   };
 

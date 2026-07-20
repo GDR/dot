@@ -32,8 +32,6 @@ in
       {
         modules.system.all = {
           fonts.enable = true;
-          nix.settings.enable = true;
-          nix.gc.enable = true;
           shell.git.enable = true;
           shell.ssh.enable = true;
         };

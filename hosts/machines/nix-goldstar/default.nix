@@ -56,7 +56,11 @@ in
   networking.hostName = "nix-goldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all.fonts.enable = true;
+  modules.system.all = {
+    nix.settings.enable = true;
+    nix.gc.enable = true;
+    fonts.enable = true;
+  };
 
   modules.system.linux = {
     networking.firewall.allowedTCPPorts = [ 8080 ];

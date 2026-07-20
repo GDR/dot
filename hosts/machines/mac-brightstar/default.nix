@@ -71,6 +71,8 @@ in
   ];
 
   modules.system.all = {
+    nix.settings.enable = true;
+    nix.gc.enable = true;
     sops.enable = true;
     # fonts.enable = true;  # disabled on Darwin
   };
