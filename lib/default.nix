@@ -387,31 +387,28 @@
     attrNames usersWithModule;
 
   # Create symlink to repo dotfiles for all enabled users
-  # This allows editing config files without rebuild
+  # Create symlinks to repo dotfiles for all enabled users
+  # Modes:
+  #   - live = true (Development / Live mode): creates out-of-store symlinks directly to repo on disk ($DOTFILES_DIR).
+  #     Changes apply immediately without nixos-rebuild switch.
+  #   - live = false (Settled / Store mode): copies files into the Nix Store ($self/source).
+  #     Store paths are captured in NixOS / Home Manager generations, enabling GRUB / generation rollbacks
+  #     to restore exact historical dotfile revisions.
   # Usage:
   #   config.home-manager.users = lib.my.mkDotfilesSymlink {
   #     inherit config self;
   #     path = "ghostty";                                    # used as fallback if target not specified
   #     source = "modules/home/terminal/ghostty/dotfiles";  # relative path in repo
   #     target = "~/.config/ghostty";                        # explicit target path (defaults to ~/.config/${path})
+  #     live = true;                                         # optional mode override (defaults to config.dotfiles.live)
   #   };
-  mkDotfilesSymlink = { config, self, path, source, target ? null }:
+  mkDotfilesSymlink = { config, self, path, source, target ? null, live ? false }:
     let
-      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
-      # Use DOTFILES_DIR (set per-host) to get the mutable repo path on disk.
-      # self.outPath always resolves to the Nix store (read-only), even with a
-      # dirty tree, so symlinks built from it cannot be written to.
-      # DOTFILES_DIR is the actual checkout path where live edits work.
-      repoPath =
-        config.environment.variables.DOTFILES_DIR or
-          (throw ''
-            DOTFILES_DIR is not set. Add it to your host config:
-              environment.variables.DOTFILES_DIR = "/home/<user>/path/to/dot";
-            This is required for live-editable dotfile symlinks.
-          '');
-      fullPath = "${repoPath}/${source}";
+      isLive = if live == true then true else false;
 
-      # Determine target path: if not specified, default to ~/.config/${path}
+      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
+
+      # Target path calculation: if not specified, default to ~/.config/${path}
       targetPath = if target != null then target else "~/.config/${path}";
 
       # Parse target path to determine if it's in ~/.config or elsewhere
@@ -434,15 +431,38 @@
           else
             targetPath
         else null;
+
+      sourcePath =
+        if isLive then
+          let
+            repoPath = config.environment.variables.DOTFILES_DIR or
+              (throw ''
+                DOTFILES_DIR is not set. Add it to your host config:
+                  environment.variables.DOTFILES_DIR = "/home/<user>/path/to/dot";
+                This is required for live-editable dotfile symlinks.
+              '');
+          in
+          "${repoPath}/${source}"
+        else
+          if self != null then
+            "${self}/${source}"
+          else
+            throw "self must be passed to mkDotfilesSymlink for Nix store dotfiles mode.";
     in
     mapAttrs
       (name: _:
         if isConfigDir then {
           xdg.configFile.${configPath}.source =
-            config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink fullPath;
+            if isLive then
+              config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink sourcePath
+            else
+              sourcePath;
         } else {
           home.file.${homePath}.source =
-            config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink fullPath;
+            if isLive then
+              config.home-manager.users.${name}.lib.file.mkOutOfStoreSymlink sourcePath
+            else
+              sourcePath;
         }
       )
       enabledUsers;
@@ -512,6 +532,15 @@
 
       # Get enabled users for home config routing (needed for shouldEnable check)
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
+
+      # Automatically add `dotfilesLive` option if this module defines dotfiles
+      dotfilesExtraOptions = optionalAttrs (dotfiles != null) {
+        dotfilesLive = mkOption {
+          type = types.nullOr types.bool;
+          default = null;
+          description = "Override dotfile symlink mode for this module (true = live edit out-of-store, false = immutable nix store).";
+        };
+      };
     in
     {
       inherit imports;
@@ -526,7 +555,7 @@
           type = bool;
           description = description;
         };
-      } // extraOptions);
+      } // dotfilesExtraOptions // extraOptions);
 
       config =
         let
@@ -589,6 +618,9 @@
                 inherit config self;
                 inherit (dotfiles) path source;
                 target = dotfiles.target or null;
+                live =
+                  if (cfg.dotfilesLive or null) != null then cfg.dotfilesLive
+                  else (dotfiles.live or false);
               };
             })
           ]

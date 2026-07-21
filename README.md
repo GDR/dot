@@ -331,43 +331,30 @@ Modules are **auto-discovered** recursively! Just create your `.nix` file in the
 
 ---
 
-### Live-Editable Dotfiles
+### Dotfile Symlink Modes (Nix Store vs. Live Edit)
 
-Store config files in the repo and symlink them so you can **edit without rebuilding**:
+Dotfiles support two modes on a per-module basis:
 
-```
-modules/home/terminal/ghostty/
-├── ghostty.nix
-└── dotfiles/
-    ├── config
-    └── themes/
-        └── catppuccin-mocha
-```
+1. 📦 **Settled / Store Mode (`live = false`, default):** Copies dotfiles into `/nix/store`. Store paths are captured in NixOS / Home Manager generations, allowing NixOS & GRUB generation rollbacks (`nixos-rebuild switch --rollback` or GRUB boot menu) to restore historical dotfile revisions cleanly.
+2. 🛠️ **Live Mode (`live = true`):** Symlinks point out-of-store directly to `$DOTFILES_DIR`. Edit files directly during active development and changes apply immediately without `nixos-rebuild switch`.
 
-In your module, use `mkDotfilesSymlink`:
+#### How to Configure
 
+- **In Module Definition:**
 ```nix
-{ config, pkgs, lib, self, ... }:
-{
-  config = mkIf cfg.enable (mkMerge [
-    # Install the package
-    (mkModule { allSystems.home.packages = [ pkgs.ghostty ]; })
-
-    # Symlink dotfiles to ~/.config/ghostty (editable without rebuild!)
-    {
-      home-manager.users = lib.my.mkDotfilesSymlink {
-        inherit config self;
-        path = "ghostty";                                      # ~/.config/ghostty
-        source = "modules/home/terminal/ghostty/dotfiles"; # repo path
-      };
-    }
-  ]);
-}
+dotfiles = {
+  path = "ghostty/config";
+  source = "modules/home/terminal/ghostty/dotfiles/config";
+  live = true; # Set to true during active development
+};
 ```
 
-Now `~/.config/ghostty` → `/path/to/repo/modules/home/terminal/ghostty/dotfiles`
-
-Edit the files directly, changes apply immediately (no `nixos-rebuild` needed)!
+- **Per-Module Override in Host Config:**
+```nix
+# hosts/machines/nix-goldstar/default.nix
+modules.home.terminal.ghostty.dotfilesLive = true;  # Enable live edit for active dev
+modules.home.editors.neovim.dotfilesLive = false;   # Store mode for settled neovim config
+```
 
 ---
 
