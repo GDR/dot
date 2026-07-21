@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.nix'
+      - 'Makefile'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.nix'
+      - 'Makefile'
+      - '.github/workflows/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - name: Nixpkgs Format Check
+        run: nix run nixpkgs#nixpkgs-fmt -- --check .
+      - name: Deadnix Check
+        run: nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names --no-lambda-arg .
+      - name: Statix Check
+        run: nix run nixpkgs#statix -- check .
+      - name: Actionlint
+        run: nix run nixpkgs#actionlint
+
+  flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - name: Flake Check
+        run: nix flake check --all-systems
+
+  eval-hosts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - name: Build nix-goldstar (dry-run)
+        run: nix build .#nixosConfigurations.nix-goldstar.config.system.build.toplevel --dry-run
+      - name: Build nix-oldstar (dry-run)
+        run: nix build .#nixosConfigurations.nix-oldstar.config.system.build.toplevel --dry-run
+      - name: Eval mac-brightstar drvPath
+        run: nix eval .#darwinConfigurations.mac-brightstar.config.system.build.toplevel.drvPath
