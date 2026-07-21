@@ -3,7 +3,7 @@
 { inputs, lib, self, overlays }:
 
 let
-  inherit (inputs) nixpkgs nix-darwin home-manager vscode-server hardware charon-key sops-nix antigravity-nix;
+  inherit (inputs) nixpkgs nix-darwin home-manager vscode-server hardware charon-key sops-nix;
 
   # Helper to wrap a module file and filter out 'meta' attribute
   # NixOS modules don't allow arbitrary top-level attributes

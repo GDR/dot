@@ -31,7 +31,7 @@ lib.my.mkModuleV2 args {
 
       # Deploy Java extension into Ghidra's user Extensions directory.
       # Ghidra scans this dir on startup and loads GhidraMCP automatically.
-      file."\${ghidraConfigDir}/Extensions/GhidraMCP" = lib.mkIf (pkgs ? ghidra-mcp-extension) {
+      file."${ghidraConfigDir}/Extensions/GhidraMCP" = lib.mkIf (pkgs ? ghidra-mcp-extension) {
         source = pkgs.ghidra-mcp-extension;
         recursive = true;
       };

@@ -1,9 +1,6 @@
 # Chromium browser - cross-platform
 # On Darwin, package = null means use externally installed Chromium (homebrew cask)
-{ lib, pkgs, system, ... }@args:
-let
-  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
-in
+{ lib, pkgs, ... }@args:
 lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "Chromium web browser";

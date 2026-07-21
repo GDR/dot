@@ -10,7 +10,7 @@
 # Config management: when enabled, also manages ~/.gemini/config/ files
 # (AGENTS.md rules, skills.json for external skills like caveman)
 # and ~/.gemini/antigravity/mcp_config.json (global MCP servers).
-{ lib, pkgs, config, system, ... }@args:
+{ lib, pkgs, config, ... }@args:
 
 let
   # Wrap Linux binaries to force plain-text credential storage.

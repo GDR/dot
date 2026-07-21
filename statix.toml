@@ -1,2 +1,2 @@
-disabled = ["repeated_keys"]
+disabled = ["repeated_keys", "manual_inherit", "manual_inherit_from", "collapsible_let_in"]
 ignore = [".direnv", ".agents"]

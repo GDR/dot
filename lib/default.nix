@@ -404,7 +404,7 @@
   #   };
   mkDotfilesSymlink = { config, self, path, source, target ? null, live ? false }:
     let
-      isLive = if live == true then true else false;
+      isLive = live;
 
       enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
 
@@ -517,8 +517,7 @@
     , imports ? [ ]
     }:
     let
-      inherit (args) config pkgs system _modulePath;
-      inherit (args) lib;
+      inherit (args) config system _modulePath;
       self = args.self or null;
       modulesRegistry = args.modulesRegistry or null;
       modulePath = _modulePath;
@@ -658,7 +657,6 @@
     }:
     let
       inherit (args) config system _modulePath;
-      inherit (args) lib;
 
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
       isLinux = system == "aarch64-linux" || system == "x86_64-linux";
@@ -692,8 +690,6 @@
       # Get module config
       cfg = foldl' (acc: part: acc.${part} or { }) config pathParts;
 
-      # Get enabled users for modules that need home-manager access
-      enabledUsers = filterAttrs (_: u: u.enable) (config.hostUsers or { });
     in
     {
       inherit imports;

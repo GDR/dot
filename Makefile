@@ -14,7 +14,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 .DEFAULT_GOAL := help
-.PHONY: help all update fmt check \
+.PHONY: help all update fmt fmt-check lint check-hosts check \
         mac-brightstar \
         nix-oldstar nix-goldstar \
         nixos darwin
@@ -32,7 +32,10 @@ help:
 	@printf "\n"
 	@printf "  \033[36mmake update\033[0m         nix flake update (refresh lock file)\n"
 	@printf "  \033[36mmake fmt\033[0m            nixpkgs-fmt on all *.nix files\n"
-	@printf "  \033[36mmake check\033[0m          nix flake check\n"
+	@printf "  \033[36mmake fmt-check\033[0m      Check formatting without modifying files\n"
+	@printf "  \033[36mmake lint\033[0m           Run deadnix and statix checks\n"
+	@printf "  \033[36mmake check-hosts\033[0m     Dry-run build/eval host configurations\n"
+	@printf "  \033[36mmake check\033[0m          Composite target (fmt-check + lint + check-hosts + flake check)\n"
 	@printf "\n"
 
 # ── Top-level targets ─────────────────────────────────────────────────────────
@@ -68,8 +71,23 @@ update:
 
 fmt:
 	@printf "\033[1m\033[32m▶ Formatting Nix files…\033[0m\n"
-	nix run nixpkgs#nixpkgs-fmt -- **/*.nix
+	nix run nixpkgs#nixpkgs-fmt -- .
 
-check:
+fmt-check:
+	@printf "\033[1m\033[32m▶ Checking Nix formatting…\033[0m\n"
+	nix run nixpkgs#nixpkgs-fmt -- --check .
+
+lint:
+	@printf "\033[1m\033[32m▶ Running deadnix & statix…\033[0m\n"
+	nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names --no-lambda-arg .
+	nix run nixpkgs#statix -- check .
+
+check-hosts:
+	@printf "\033[1m\033[32m▶ Evaluating system host configurations…\033[0m\n"
+	nix build .#nixosConfigurations.nix-goldstar.config.system.build.toplevel --dry-run
+	nix build .#nixosConfigurations.nix-oldstar.config.system.build.toplevel --dry-run
+	nix eval .#darwinConfigurations.mac-brightstar.config.system.build.toplevel.drvPath
+
+check: fmt-check lint check-hosts
 	@printf "\033[1m\033[32m▶ Running nix flake check…\033[0m\n"
-	nix flake check
+	nix flake check --all-systems

@@ -4,7 +4,6 @@
 let
   theme = lib.my.getTheme config;
   r = theme.roles;
-  f = theme.fonts;
 
   # ── Generated GTK CSS theme file ──────────────────────────────────────────
   # Written to ~/.config/waybar-theme.css (adjacent to the ~/.config/waybar
