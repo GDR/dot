@@ -40,7 +40,7 @@ let
   };
 
   antigravityIdeWrapper = pkgs.writeShellScriptBin "antigravity-ide" ''
-    exec "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app/Contents/MacOS/Antigravity IDE" "$@"
+    exec "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app/Contents/MacOS/Antigravity IDE" --password-store=basic "$@"
   '';
 
   # cfg read via config.modules path-walking so it's available at the top-level let
