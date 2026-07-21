@@ -278,5 +278,10 @@ result
 /instructions
 
 .env
-.agents/
+
+# AI Agent Configuration vs Runtime Artifacts
+.agents/*
+!.agents/AGENTS.md
+!.agents/skills/
+!.agents/antigravity/
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,visualstudiocode,intellij+all,git,windows,vim,emacs
