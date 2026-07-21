@@ -28,20 +28,32 @@ lib.my.mkSystemModuleV2 args {
           force = true;
         };
 
-        # Populate the directory with app aliases after files are written
-        home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+        # Populate the directory with app aliases after copyApps finishes
+        home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "copyApps" ] ''
           app_folder="/Users/${username}/Applications/${cfg.folder}"
-          # Remove existing aliases to avoid duplicates
+          # Remove existing skeleton directories or broken aliases so mkalias succeeds
           if [ -d "$app_folder" ]; then
-            find "$app_folder" -type f -delete
+            rm -rf "$app_folder"/*
+          else
+            mkdir -p "$app_folder"
           fi
           # Create aliases for home-manager apps from the newly linked generation
-          if [ -d "$genProfilePath/home-path/Applications" ]; then
-            find "$genProfilePath/home-path/Applications" -type l -print | while read -r app; do
-              app_target="$app_folder/$(basename "$app")"
-              real_app="$(readlink "$app")"
-              # Use || true so a single bookmark failure doesn't abort the whole activation
-              $DRY_RUN_CMD ${pkgs.mkalias}/bin/mkalias "$real_app" "$app_target" || true
+          app_src=""
+          if [ -d "$newGenPath/home-path/Applications" ]; then
+            app_src="$newGenPath/home-path/Applications"
+          elif [ -d "$genProfilePath/home-path/Applications" ]; then
+            app_src="$genProfilePath/home-path/Applications"
+          elif [ -d "$genProfilePath/Applications" ]; then
+            app_src="$genProfilePath/Applications"
+          fi
+
+          if [ -n "$app_src" ]; then
+            find "$app_src" -maxdepth 1 -name "*.app" | while read -r app; do
+              real_app="$(readlink -f "$app" 2>/dev/null || realpath "$app" 2>/dev/null || true)"
+              if [ -n "$real_app" ] && [ -d "$real_app" ]; then
+                app_target="$app_folder/$(basename "$real_app")"
+                $DRY_RUN_CMD ${pkgs.mkalias}/bin/mkalias "$real_app" "$app_target" || true
+              fi
             done
           fi
         '';

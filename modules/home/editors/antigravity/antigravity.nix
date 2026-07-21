@@ -13,9 +13,6 @@
 { lib, pkgs, config, system, ... }@args:
 
 let
-  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
-  isLinux = system == "aarch64-linux" || system == "x86_64-linux";
-
   # Wrap Linux binaries to force plain-text credential storage.
   ideLinux = pkgs.symlinkJoin {
     name = "google-antigravity-ide-with-basic-store";
@@ -40,11 +37,11 @@ let
   };
 
   antigravityWrapper = pkgs.writeShellScriptBin "antigravity" ''
-    exec "${pkgs.google-antigravity}/Applications/Antigravity.app/Contents/MacOS/Antigravity" --password-store=basic "$@"
+    exec open -a "${pkgs.google-antigravity}/Applications/Antigravity.app" --args --password-store=basic "$@"
   '';
 
   antigravityIdeWrapper = pkgs.writeShellScriptBin "antigravity-ide" ''
-    exec "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app/Contents/MacOS/Antigravity IDE" --password-store=basic "$@"
+    exec open -a "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app" --args --password-store=basic "$@"
   '';
 
 
@@ -120,6 +117,7 @@ lib.my.mkModuleV2 args {
     nixosSystems.home.packages = [
       ideLinux
       antigravityLinux
+      pkgs.google-antigravity-cli
       pkgs.mcp-nixos # nixos MCP server — called directly (avoids slow nix run github:...)
     ];
 
@@ -128,6 +126,7 @@ lib.my.mkModuleV2 args {
       antigravityIdeWrapper
       pkgs.google-antigravity-ide
       pkgs.google-antigravity
+      pkgs.google-antigravity-cli
       pkgs.mcp-nixos
     ];
 
@@ -141,9 +140,9 @@ lib.my.mkModuleV2 args {
       (lib.mkIf hasSkills { ".gemini/config/skills.json".text = skillsJson; })
       (lib.mkIf hasMcp {
         ".gemini/antigravity/mcp_config.json".text =
-          builtins.toJSON { mcpServers = cfg.mcpServers; };
+          builtins.toJSON { inherit (cfg) mcpServers; };
         ".gemini/config/mcp_config.json".text =
-          builtins.toJSON { mcpServers = cfg.mcpServers; };
+          builtins.toJSON { inherit (cfg) mcpServers; };
       })
     ];
   };

@@ -106,7 +106,7 @@ in
     };
   };
 
-  modules.home.editors.antigravity = userDefaults.antigravity;
+  modules.home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
 
   time.timeZone = "Europe/Moscow";
   theme.name = "rose-pine-moon";
