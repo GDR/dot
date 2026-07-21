@@ -1,3 +1,0 @@
--- Language-specific configurations
--- Add language packs here as needed
--- Example: require("plugins.lang.python")

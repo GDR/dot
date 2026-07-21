@@ -210,6 +210,27 @@
         "type": "github"
       }
     },
+    "nix-wrapper-modules_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nvim-nix",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782135443,
+        "narHash": "sha256-vAmbArdCyjqpVW+37aCy/PMBOLIqukUXLQuEKLwUhA4=",
+        "owner": "BirdeeHub",
+        "repo": "nix-wrapper-modules",
+        "rev": "6e7f66fa2cdf4d63162580b438f7fcf87c28a46f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BirdeeHub",
+        "repo": "nix-wrapper-modules",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1767892417,
@@ -239,6 +260,27 @@
         "type": "github"
       }
     },
+    "nvim-nix": {
+      "inputs": {
+        "nix-wrapper-modules": "nix-wrapper-modules_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784660085,
+        "narHash": "sha256-db/loYA2ELAg640J1BMD91D8WCD3ij5KK6S3O4uuHBg=",
+        "owner": "GDR",
+        "repo": "nvim.nix",
+        "rev": "7391b5e7eef053804f0fbb09b733c88598e61164",
+        "type": "github"
+      },
+      "original": {
+        "owner": "GDR",
+        "repo": "nvim.nix",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "antigravity-nix": "antigravity-nix",
@@ -249,6 +291,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-wrapper-modules": "nix-wrapper-modules",
         "nixpkgs": "nixpkgs_2",
+        "nvim-nix": "nvim-nix",
         "sops-nix": "sops-nix",
         "vantage": "vantage",
         "vscode-server": "vscode-server"

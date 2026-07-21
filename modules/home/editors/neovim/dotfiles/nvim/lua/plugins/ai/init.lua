@@ -1,3 +1,0 @@
--- AI plugin configurations
--- Add AI integrations here as needed
--- Example: copilot, codeium, avante, etc.
