@@ -16,19 +16,24 @@ in
     keys = [{
       name = "brightstar";
       type = "ed25519";
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILcvDGz3ET+dzhMsYEeqMqWpJ5PAFSY6ewOC9tfeQrPN";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
+    bitwardenSshAgent.enable = true;
     ssh = [
       {
         host = "*";
-        identityFile = "~/.ssh/brightstar_id_ed25519";
-        extraOptions.AddKeysToAgent = "yes";
+        identityFile = "~/.ssh/brightstar_id_ed25519.pub";
+        extraOptions = {
+          IdentitiesOnly = "yes";
+          AddKeysToAgent = "yes";
+        };
       }
       {
         host = "github.com";
         user = "git";
-        identityFile = "~/.ssh/brightstar_id_ed25519";
+        identityFile = "~/.ssh/brightstar_id_ed25519.pub";
       }
     ] ++ userDefaults.ssh.knownHosts;
     modules = {

@@ -44,6 +44,11 @@ let
         default = false;
         description = "Whether this is the default key for SSH";
       };
+      publicKey = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Public key string (non-sensitive, safe to commit to repo)";
+      };
     };
   };
 
@@ -127,6 +132,20 @@ let
         type = types.listOf types.str;
         default = [ "~/.ssh/config.d/*" ];
         description = "Additional SSH config files to include";
+      };
+
+      # Bitwarden SSH Agent integration
+      bitwardenSshAgent = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable Bitwarden SSH Agent integration for this user";
+        };
+        socketPath = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Custom Bitwarden SSH Agent socket path. If null, uses platform default.";
+        };
       };
 
       # Linux-specific

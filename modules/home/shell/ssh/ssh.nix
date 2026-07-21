@@ -1,6 +1,6 @@
 # SSH client configuration - reads keys and config from hostUsers
 # User-level module (per-user SSH config)
-{ lib, config, ... }@args:
+{ lib, config, pkgs, ... }@args:
 
 let
   # Get enabled users
@@ -34,11 +34,35 @@ let
       sshArray);
 
   # Build SSH config for a user
-  mkUserSSHConfig = userName: userCfg:
+  mkUserSSHConfig = pkgs: userName: userCfg:
     let
       sshArray = userCfg.ssh or [ ];
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
-      settings = sshArrayToMatchBlocks userName sshArray;
+      baseSettings = sshArrayToMatchBlocks userName sshArray;
+
+      # Bitwarden SSH Agent integration
+      bwCfg = userCfg.bitwardenSshAgent or { };
+      bwEnabled = bwCfg.enable or false;
+      defaultBwSocket =
+        if pkgs.stdenv.isDarwin
+        then "~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
+        else "~/.bitwarden/ssh-agent.sock";
+      bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;
+
+      # Inject Bitwarden IdentityAgent into '*' host setting if enabled and not already explicitly set
+      settings =
+        if bwEnabled then
+          lib.recursiveUpdate { "*" = { IdentityAgent = bwSocket; }; } baseSettings
+        else
+          baseSettings;
+
+      # Write declared public keys to ~/.ssh/<name>_id_<type>.pub
+      pubKeyFiles = lib.listToAttrs (map (key: {
+        name = ".ssh/${key.name}_id_${key.type}.pub";
+        value = {
+          text = key.publicKey;
+        };
+      }) (builtins.filter (k: (k.publicKey or null) != null) (userCfg.keys or [ ])));
     in
     {
       programs.ssh = {
@@ -46,6 +70,12 @@ let
         enableDefaultConfig = false;
         settings = settings;
         includes = includes;
+      };
+
+      home.file = pubKeyFiles;
+
+      home.sessionVariables = lib.optionalAttrs bwEnabled {
+        SSH_AUTH_SOCK = bwSocket;
       };
 
       # SSH refuses symlinks to world-readable Nix store files.
@@ -67,7 +97,7 @@ lib.my.mkModuleV2 args {
   module = _: {
     allSystems = {
       # Apply config to all enabled users
-      home-manager.users = lib.mapAttrs mkUserSSHConfig enabledUsers;
+      home-manager.users = lib.mapAttrs (mkUserSSHConfig pkgs) enabledUsers;
     };
   };
 }
