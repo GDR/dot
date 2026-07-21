@@ -51,6 +51,7 @@ in
       home.utils.enable = false;
       # host-specific
       home.ai-tools.enable = true;
+      home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
       home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
     };
   };

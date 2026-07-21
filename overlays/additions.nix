@@ -9,4 +9,5 @@ final: _prev:
   google-antigravity = inputs.antigravity-nix.packages.${system}.google-antigravity;
   google-antigravity-ide = inputs.antigravity-nix.packages.${system}.google-antigravity-ide;
   google-antigravity-cli = inputs.antigravity-nix.packages.${system}.google-antigravity-cli;
+  antigravity-cli = inputs.antigravity-nix.packages.${system}.google-antigravity-cli;
 }

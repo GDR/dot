@@ -39,9 +39,14 @@ let
     '';
   };
 
+  antigravityWrapper = pkgs.writeShellScriptBin "antigravity" ''
+    exec "${pkgs.google-antigravity}/Applications/Antigravity.app/Contents/MacOS/Antigravity" --password-store=basic "$@"
+  '';
+
   antigravityIdeWrapper = pkgs.writeShellScriptBin "antigravity-ide" ''
     exec "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app/Contents/MacOS/Antigravity IDE" --password-store=basic "$@"
   '';
+
 
   # cfg read via config.modules path-walking so it's available at the top-level let
   # (for hasRules/hasSkills/hasMcp guards used in allSystems.home.file below).
@@ -115,17 +120,20 @@ lib.my.mkModuleV2 args {
     nixosSystems.home.packages = [
       ideLinux
       antigravityLinux
-      pkgs.google-antigravity-cli
       pkgs.mcp-nixos # nixos MCP server — called directly (avoids slow nix run github:...)
     ];
 
     darwinSystems.home.packages = [
+      antigravityWrapper
       antigravityIdeWrapper
       pkgs.google-antigravity-ide
       pkgs.google-antigravity
-      pkgs.google-antigravity-cli
       pkgs.mcp-nixos
     ];
+
+    allSystems.programs.antigravity-cli = {
+      enable = true;
+    };
 
     # Config files — routed to all enabled users automatically via home.* auto-routing
     allSystems.home.file = lib.mkMerge [
