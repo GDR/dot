@@ -278,4 +278,5 @@ result
 /instructions
 
 .env
+.agents/
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,visualstudiocode,intellij+all,git,windows,vim,emacs
