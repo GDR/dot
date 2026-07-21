@@ -31,13 +31,14 @@ lib.my.mkSystemModuleV2 args {
         # Populate the directory with app aliases after copyApps finishes
         home.activation.aliasHomeManagerApplications = lib.hm.dag.entryAfter [ "copyApps" ] ''
           app_folder="/Users/${username}/Applications/${cfg.folder}"
-          # Remove existing skeleton directories or broken aliases so mkalias succeeds
+          # Remove existing application bundles cleanly (ensuring write perms)
           if [ -d "$app_folder" ]; then
+            chmod -R +w "$app_folder" 2>/dev/null || true
             rm -rf "$app_folder"/*
           else
             mkdir -p "$app_folder"
           fi
-          # Create aliases for home-manager apps from the newly linked generation
+          # Create synced app bundles for home-manager apps so macOS Spotlight/Raycast index icons natively
           app_src=""
           if [ -d "$newGenPath/home-path/Applications" ]; then
             app_src="$newGenPath/home-path/Applications"
@@ -52,7 +53,7 @@ lib.my.mkSystemModuleV2 args {
               real_app="$(readlink -f "$app" 2>/dev/null || realpath "$app" 2>/dev/null || true)"
               if [ -n "$real_app" ] && [ -d "$real_app" ]; then
                 app_target="$app_folder/$(basename "$real_app")"
-                $DRY_RUN_CMD ${pkgs.mkalias}/bin/mkalias "$real_app" "$app_target" || true
+                $DRY_RUN_CMD ${pkgs.rsync}/bin/rsync -a --delete --chmod=u+w "$real_app/" "$app_target/" || true
               fi
             done
           fi
