@@ -43,7 +43,8 @@ let
       # Secretive SSH Agent integration
       secCfg = userCfg.secretiveSshAgent or { };
       secEnabled = secCfg.enable or false;
-      defaultSecSocket = "~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
+      homePrefix = if pkgs.stdenv.isDarwin then "/Users" else "/home";
+      defaultSecSocket = "${homePrefix}/${userName}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
       secSocket = if (secCfg.socketPath or null != null) then secCfg.socketPath else defaultSecSocket;
 
       # Bitwarden SSH Agent integration
