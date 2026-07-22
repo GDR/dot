@@ -62,12 +62,21 @@ let
 
       agentEnabled = secEnabled || bwEnabled;
 
-      # Inject IdentityAgent into '*' host setting if enabled
+      baseControlSettings = {
+        "*" = {
+          ControlMaster = "auto";
+          ControlPath = "~/.ssh/sockets/%r@%h:%p";
+          ControlPersist = "3m";
+          IdentitiesOnly = "yes";
+        };
+      };
+
+      # Inject ControlMaster & IdentityAgent into '*' host setting if enabled
       settings =
         if agentEnabled then
-          lib.recursiveUpdate { "*" = { IdentityAgent = agentSocket; }; } baseSettings
+          lib.recursiveUpdate (lib.recursiveUpdate baseControlSettings { "*" = { IdentityAgent = agentSocket; }; }) baseSettings
         else
-          baseSettings;
+          lib.recursiveUpdate baseControlSettings baseSettings;
 
       # Write declared public keys to ~/.ssh/<name>_id_<type>.pub
       pubKeyFiles = lib.listToAttrs (map
@@ -93,9 +102,20 @@ let
         SSH_AUTH_SOCK = agentSocket;
       };
 
+      # Pre-activation: remove regular file ~/.ssh/config so Home Manager can recreate the symlink with fresh config
+      home.activation.removeOldSshConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+        sshConfig="$HOME/.ssh/config"
+        if [ -f "$sshConfig" ] && [ ! -L "$sshConfig" ]; then
+          rm -f "$sshConfig"
+        fi
+      '';
+
       # SSH refuses symlinks to world-readable Nix store files.
       # Replace the symlink with a proper copy at 0600 after each switch.
+      # Also ensure ~/.ssh/sockets exists for ControlMaster multiplexing.
       home.activation.fixSshConfigPerms = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        mkdir -p "$HOME/.ssh/sockets"
+        chmod 700 "$HOME/.ssh/sockets"
         sshConfig="$HOME/.ssh/config"
         if [ -L "$sshConfig" ]; then
           target=$(readlink "$sshConfig")
