@@ -8,6 +8,7 @@ lib.my.mkModuleV2 args {
   module = {
     allSystems = {
       programs.gpg.enable = true;
+      home.packages = [ pkgs.gnupg ];
 
       services.gpg-agent = {
         enable = true;
