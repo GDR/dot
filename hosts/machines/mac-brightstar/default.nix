@@ -16,7 +16,7 @@ in
     keys = [{
       name = "brightstar";
       type = "ed25519";
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN7Fd0hUS78auEZR9Om6Rus3R+oKD2xJ4wmooUMjK9Md gosugdr@gmail.com";
+      publicKey = lib.trim (builtins.readFile ./brightstar_id_ed25519.pub);
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
