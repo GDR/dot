@@ -76,6 +76,7 @@ let
           ControlPath = "~/.ssh/sockets/%r@%h:%p";
           ControlPersist = "3m";
           IdentitiesOnly = "yes";
+          AddKeysToAgent = "yes";
         } // lib.optionalAttrs (defaultIdentityFile != null) {
           IdentityFile = defaultIdentityFile;
         };
