@@ -40,12 +40,7 @@ let
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
       baseSettings = sshArrayToMatchBlocks userName sshArray;
 
-      # Secretive SSH Agent integration
-      secCfg = userCfg.secretiveSshAgent or { };
-      secEnabled = secCfg.enable or false;
       homePrefix = if pkgs.stdenv.isDarwin then "/Users" else "/home";
-      defaultSecSocket = "${homePrefix}/${userName}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
-      secSocket = if (secCfg.socketPath or null != null) then secCfg.socketPath else defaultSecSocket;
 
       # Bitwarden SSH Agent integration
       bwCfg = userCfg.bitwardenSshAgent or { };
@@ -57,11 +52,10 @@ let
       bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;
 
       agentSocket =
-        if secEnabled then secSocket
-        else if bwEnabled then bwSocket
+        if bwEnabled then bwSocket
         else null;
 
-      agentEnabled = secEnabled || bwEnabled;
+      agentEnabled = bwEnabled;
 
       # Find default key for user if present
       userKeys = userCfg.keys or [ ];

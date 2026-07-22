@@ -134,20 +134,6 @@ let
         description = "Additional SSH config files to include";
       };
 
-      # Secretive SSH Agent integration
-      secretiveSshAgent = {
-        enable = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Enable Secretive SSH Agent integration for this user";
-        };
-        socketPath = mkOption {
-          type = types.nullOr types.str;
-          default = null;
-          description = "Custom Secretive SSH Agent socket path. If null, uses platform default.";
-        };
-      };
-
       # Bitwarden SSH Agent integration
       bitwardenSshAgent = {
         enable = mkOption {

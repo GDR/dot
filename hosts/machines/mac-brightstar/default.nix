@@ -20,7 +20,6 @@ in
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    secretiveSshAgent.enable = true;
     ssh = [
       {
         host = "github.com";
@@ -44,7 +43,6 @@ in
       home.media.enable = true;
       home.messengers.enable = true;
       home.security.enable = true;
-      home.security.secretive.enable = true;
       home.utils.enable = false;
       # host-specific
       home.ai-tools.enable = true;
