@@ -49,6 +49,11 @@
       url = "github:GDR/nvim.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    pinentry-touchid = {
+      url = "path:/Users/dgarifullin/Workspaces/gdr/pinentry-touchid";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, charon-key, ... }:
@@ -80,7 +85,7 @@
         let
           pkgs = import nixpkgs { inherit system; config.allowUnfree = true; nvidia.acceptLicense = true; };
         in
-        import ./packages.nix { inherit pkgs lib system charon-key; }
+        import ./packages.nix { inherit pkgs lib system charon-key inputs; }
       );
 
       devShells = forAllSystems (system:
