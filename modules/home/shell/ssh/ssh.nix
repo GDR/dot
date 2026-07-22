@@ -51,11 +51,16 @@ let
         else "~/.bitwarden/ssh-agent.sock";
       bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;
 
+      # GPG SSH Agent integration
+      gpgEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.gpg"; };
+      gpgSocket = "${homePrefix}/${userName}/.gnupg/S.gpg-agent.ssh";
+
       agentSocket =
         if bwEnabled then bwSocket
+        else if gpgEnabled then gpgSocket
         else null;
 
-      agentEnabled = bwEnabled;
+      agentEnabled = bwEnabled || gpgEnabled;
 
       # Find default key for user if present
       userKeys = userCfg.keys or [ ];

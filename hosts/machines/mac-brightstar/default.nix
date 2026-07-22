@@ -43,6 +43,7 @@ in
       home.media.enable = true;
       home.messengers.enable = true;
       home.security.enable = true;
+      home.security.gpg.enable = true;
       home.utils.enable = false;
       # host-specific
       home.ai-tools.enable = true;
