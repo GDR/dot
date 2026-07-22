@@ -23,7 +23,11 @@ lib.my.mkModuleV2 args {
     darwinSystems = {
       services.gpg-agent = {
         pinentry.package = pkgs.pinentry_mac;
+        extraConfig = ''
+          pinentry-program /opt/homebrew/bin/pinentry-touchid
+        '';
       };
+      homebrew.brews = [ "pinentry-touchid" ];
     };
 
     nixosSystems = {
