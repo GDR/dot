@@ -72,6 +72,10 @@
     {
       inherit lib;
 
+      formatter = forAllSystems (system:
+        nixpkgs.legacyPackages.${system}.nixpkgs-fmt
+      );
+
       packages = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; config.allowUnfree = true; nvidia.acceptLicense = true; };

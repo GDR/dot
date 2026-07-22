@@ -57,12 +57,14 @@ let
           baseSettings;
 
       # Write declared public keys to ~/.ssh/<name>_id_<type>.pub
-      pubKeyFiles = lib.listToAttrs (map (key: {
-        name = ".ssh/${key.name}_id_${key.type}.pub";
-        value = {
-          text = key.publicKey;
-        };
-      }) (builtins.filter (k: (k.publicKey or null) != null) (userCfg.keys or [ ])));
+      pubKeyFiles = lib.listToAttrs (map
+        (key: {
+          name = ".ssh/${key.name}_id_${key.type}.pub";
+          value = {
+            text = key.publicKey;
+          };
+        })
+        (builtins.filter (k: (k.publicKey or null) != null) (userCfg.keys or [ ])));
     in
     {
       programs.ssh = {
