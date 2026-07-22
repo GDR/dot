@@ -21,7 +21,12 @@ in
       isDefault = true;
     }];
     bitwardenSshAgent.enable = true;
-    ssh = userDefaults.ssh.knownHosts;
+    ssh = [
+      {
+        host = "github.com";
+        user = "git";
+      }
+    ] ++ userDefaults.ssh.knownHosts;
     modules = {
       # developer profile
       home.cli.enable = true;
