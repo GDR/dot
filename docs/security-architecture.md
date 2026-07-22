@@ -1,81 +1,151 @@
-# Security Architecture
+# 🛡️ Security Architecture
 
-Overview of the security design, key management, authentication agent architecture, and secret management across NixOS and macOS (`mac-brightstar`) hosts in `GDR/dot`.
+Comprehensive guide to key management, authentication agent architecture, secret decryption, and SSH multiplexing across NixOS and macOS hosts in `GDR/dot`.
 
 ---
 
-## Architecture Overview
+## 📐 System Architecture
 
+The dotfiles repository uses a **unified `gpg-agent` architecture** across both macOS (`mac-brightstar`) and Linux (`nix-goldstar`, `nix-oldstar`).
+
+```mermaid
+flowchart TD
+    subgraph Operations [" User Operations "]
+        GitCommit["git commit / git rebase"]
+        SSHConn["ssh host / git push"]
+        SOPSDecrypt["sops / sops-nix"]
+    end
+
+    subgraph Agent [" Unified Agent Layer "]
+        GPGAgent["gpg-agent\n(SSH_AUTH_SOCK = ~/.gnupg/S.gpg-agent.ssh)"]
+        RAMCache["10-Minute RAM Cache\n(defaultCacheTtl = 600s)"]
+    end
+
+    subgraph Pinentry [" Platform Auth Providers "]
+        MacPinentry["macOS: pinentry_mac\n(Keychain Integration / Touch ID)"]
+        LinuxPinentry["Linux: pinentry-curses\n(Terminal TTY Prompt)"]
+    end
+
+    subgraph Storage [" Key Stores & Cryptography "]
+        GPGStore["~/.gnupg/\n(OpenPGP / SSH Keys)"]
+        AgeStore["ssh-to-age\n(~/.ssh/id_ed25519 -> age1...)"]
+    end
+
+    GitCommit --> GPGAgent
+    SSHConn --> GPGAgent
+    SOPSDecrypt --> AgeStore
+
+    GPGAgent <--> RAMCache
+    GPGAgent <--> MacPinentry
+    GPGAgent <--> LinuxPinentry
+    GPGAgent <--> GPGStore
+
+    style Operations fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
+    style Agent fill:#181825,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4
+    style Pinentry fill:#181825,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
+    style Storage fill:#181825,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4
 ```
-                          ┌──────────────────────────┐
-                          │     User Operations      │
-                          │ (git, ssh, sops, rebase) │
-                          └─────────────┬────────────┘
-                                        │
-                                        ▼
-                          ┌──────────────────────────┐
-                          │    SSH_AUTH_SOCK / GPG   │
-                          │ (~/.gnupg/S.gpg-agent.ssh│
-                          └─────────────┬────────────┘
-                                        │
-                                        ▼
-                          ┌──────────────────────────┐
-                          │        gpg-agent         │
-                          │   (RAM Cache: 10 mins)   │
-                          └─────────────┬────────────┘
-                                        │
-                    ┌───────────────────┴───────────────────┐
-                    ▼                                       ▼
-        ┌──────────────────────┐                ┌──────────────────────┐
-        │     macOS Darwin     │                │     Linux NixOS      │
-        │    (pinentry-mac /   │                │   (pinentry-curses)  │
-        │   pinentry-touchid   │                │                      │
-        │   Keychain Sync)     │                │                      │
-        └──────────────────────┘                └──────────────────────┘
+
+---
+
+## 🔑 Core Security Subsystems
+
+### 1. Unified Authentication Agent (`gpg-agent`)
+
+> [!NOTE]
+> Single daemon managing both OpenPGP commit signing and OpenSSH authentication.
+
+| Component | Configuration | Purpose |
+| :--- | :--- | :--- |
+| **Agent Daemon** | `services.gpg-agent.enable = true` | Manages private keys in memory. |
+| **SSH Emulation** | `services.gpg-agent.enableSshSupport = true` | Exposes `~/.gnupg/S.gpg-agent.ssh` for SSH. |
+| **Cache TTL** | `defaultCacheTtl = 600` (10 mins) | Eliminates repetitive prompts during multi-commit rebases. |
+| **Max TTL** | `maxCacheTtl = 7200` (2 hours) | Hard upper bound before re-authentication. |
+
+---
+
+### 2. Authentication Flow & Caching
+
+The diagram below illustrates how `gpg-agent` handles authentication during interactive commands versus cached sub-ops:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 👤 Developer
+    participant Git as 📦 Git / SSH Client
+    participant Agent as 🛡️ gpg-agent (RAM)
+    participant Pinentry as 🔐 pinentry_mac / Keychain
+    participant Remote as 🌐 Remote Host / GitHub
+
+    User->>Git: git rebase -i / git commit
+    Git->>Agent: Request Signature / Auth
+    alt Passphrase Cached in RAM (< 10 mins)
+        Agent-->>Git: Return Signature instantly (0 prompts)
+    else Cache Expired / First Request
+        Agent->>Pinentry: Request Passphrase / Touch ID
+        Pinentry->>User: Display GUI / Keychain Prompt
+        User-->>Pinentry: Authorize / Touch ID
+        Pinentry-->>Agent: Passphrase Authorized
+        Agent->>Agent: Store in RAM Cache (600s)
+        Agent-->>Git: Return Signature
+    end
+    Git->>Remote: Complete SSH / Signed Push
 ```
 
 ---
 
-## 1. Authentication & Agent Architecture (`gpg-agent`)
+### 3. Secret Management (`sops-nix` & `ssh-to-age`)
 
-The dotfiles repository uses **`gpg-agent` with SSH support** as the unified agent across macOS and Linux:
+> [!IMPORTANT]
+> `sops-nix` encrypts repository secrets using `age` public keys derived directly from `Ed25519` SSH keys.
 
-* **Unified Agent**: `services.gpg-agent` with `enableSshSupport = true` acts as both the OpenPGP agent and the OpenSSH Agent (`SSH_AUTH_SOCK="$HOME/.gnupg/S.gpg-agent.ssh"`).
-* **Biometric & Keychain Integration (macOS)**: Uses `pinentry_mac` (or `pinentry-touchid`). Passphrases can be saved in macOS Keychain, allowing Touch ID / system prompt authorization.
-* **Smart RAM Caching (`defaultCacheTtl = 600`)**: Key passphrases are cached in memory for **10 minutes** after your first authorization. This enables multi-commit operations (`git rebase -i`, `git fetch --all`, `git submodule`) to sign 50+ commits instantly without prompting for your passphrase/fingerprint on every single commit.
-* **Terminal Pinentry (Linux)**: Uses `pinentry-curses` for headless or terminal environments.
+```mermaid
+flowchart LR
+    SSHKey["~/.ssh/id_ed25519.pub\n(Ed25519 Public Key)"]
+    Converter["ssh-to-age"]
+    AgeKey["age1wa37p3gvk7p0m0rwzg43xlnhdm75...\n(Age Recipient Key)"]
+    SopsYaml[".sops.yaml\n(Creation Rules)"]
+    EncryptedSecrets["hosts/machines/<host>/secrets/\n(SOPS Encrypted YAML)"]
 
----
+    SSHKey --> Converter --> AgeKey --> SopsYaml --> EncryptedSecrets
 
-## 2. Git Commit Signing
-
-Git commit signing is configured via `modules/systems/all/shell/git.nix` and `modules/home/security/gpg.nix`:
-
-* **OpenPGP & SSH Signing Formats**: Supports both OpenPGP (`gpg.format = "openpgp"`) and SSH signing (`gpg.format = "ssh"`).
-* **Automatic Agent Signing**: Git routes signing requests to `gpg-agent`, which retrieves the cached key passphrase or prompts `pinentry-mac`.
-
----
-
-## 3. Secret Management (`sops-nix`)
-
-Secrets (SOPS encrypted files in `hosts/machines/<host>/secrets/`) are managed using **`sops-nix`** and **`age`**:
-
-* **Key Derivation**: `sops-nix` uses `ssh-to-age` to convert `Ed25519` SSH public keys into `age` recipient public keys (`age1...`).
-* **Host Keys**: NixOS hosts decrypt system secrets at boot using `/etc/ssh/ssh_host_ed25519_key`.
-* **User Keys (macOS)**: macOS user secrets are decrypted using `~/.ssh/id_ed25519` or `~/.config/sops/age/keys.txt`.
+    style SSHKey fill:#1e1e2e,stroke:#89b4fa,color:#cdd6f4
+    style Converter fill:#313244,stroke:#f9e2af,color:#cdd6f4
+    style AgeKey fill:#181825,stroke:#a6e3a1,color:#cdd6f4
+    style SopsYaml fill:#181825,stroke:#cba6f7,color:#cdd6f4
+    style EncryptedSecrets fill:#181825,stroke:#f38ba8,color:#cdd6f4
+```
 
 ---
 
-## 4. SSH Connection Multiplexing (`ControlMaster`)
+### 4. SSH Connection Multiplexing (`ControlMaster`)
 
-To prevent multiple SSH connection handshakes:
+> [!TIP]
+> Connection multiplexing reuses a single TCP tunnel for multiple connections to the same host within 3 minutes.
 
-* **Multiplexing Config**: Enabled under `Host *` in `modules/home/shell/ssh/ssh.nix`:
-  ```ssh
-  Host *
-    ControlMaster auto
-    ControlPath ~/.ssh/sockets/%r@%h:%p
-    ControlPersist 3m
-    IdentitiesOnly yes
-  ```
-* **Behavior**: The first SSH connection to a host (e.g. `nix-oldstar` or `github.com`) establishes a master control socket in `~/.ssh/sockets/`. Subsequent connections reuse the active socket for 3 minutes without requiring a new SSH handshake.
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as 💻 Terminal Process
+    participant OpenSSH as 🔒 OpenSSH Engine
+    participant Socket as 🔌 ~/.ssh/sockets/git@github.com:22
+    participant Remote as 🐙 GitHub / Remote Server
+
+    Note over Client,Remote: Connection 1: Initial SSH / Git Fetch
+    Client->>OpenSSH: ssh -T git@github.com
+    OpenSSH->>Remote: Perform SSH Handshake & Agent Auth
+    OpenSSH->>Socket: Create Master Control Socket
+    Remote-->>Client: Authenticated Session Established
+
+    Note over Client,Remote: Connection 2..N: Submodules / Parallel Fetch (< 3 mins)
+    Client->>OpenSSH: git submodule update / git fetch
+    OpenSSH->>Socket: Re-use Active Master Control Socket
+    Socket-->>Client: Session Connected Instantly (0 Handshakes / 0 Prompts!)
+```
+
+| Directive | Value | Purpose |
+| :--- | :--- | :--- |
+| `ControlMaster` | `auto` | Automatically creates a master connection if none exists. |
+| `ControlPath` | `~/.ssh/sockets/%r@%h:%p` | Path template for control sockets (`0700` permissions). |
+| `ControlPersist` | `3m` | Keeps background connection alive for 3 minutes after idle. |
+| `IdentitiesOnly` | `yes` | Restricts key offerings to explicitly defined `IdentityFile` entries. |
