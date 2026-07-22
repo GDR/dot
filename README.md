@@ -33,6 +33,7 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
 
 - [Quick Start](#-quick-start)
 - [Architecture](#-architecture)
+  - [Architecture Diagram](#architecture-diagram)
   - [Directory Structure](#directory-structure)
   - [Module Types](#module-types)
 - [Guides](#-guides)
@@ -40,6 +41,8 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
   - [Create a New User](#create-a-new-user)
   - [Per-User Module Configuration](#per-user-module-configuration)
   - [Create a New Module](#create-a-new-module)
+- [Secrets Management (SOPS)](#-secrets-management-sops)
+- [Vantage Infrastructure Stub](#-vantage-infrastructure-stub)
 - [Host Configuration](#-host-configuration)
 - [License](#-license)
 
@@ -63,6 +66,49 @@ darwin-rebuild switch --flake .#<hostname>
 ---
 
 ## 🏗 Architecture
+
+### Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph Inputs["Flake Inputs & Outputs"]
+        FI["flake.nix Inputs<br/>(nixpkgs, nix-darwin, home-manager, sops-nix, vantage)"]
+        FO["flakeOutputs<br/>(nixosConfigurations, darwinConfigurations, packages, devShells, checks, formatter)"]
+        FI --> FO
+    end
+
+    subgraph Hosts["Host Configurations"]
+        NG["nix-goldstar<br/>(NixOS Desktop)"]
+        NO["nix-oldstar<br/>(NixOS Server)"]
+        MB["mac-brightstar<br/>(Darwin Laptop)"]
+        FO --> NG
+        FO --> NO
+        FO --> MB
+    end
+
+    subgraph Profiles["Profiles & Users"]
+        U["User Defaults<br/>(hosts/users/dgarifullin.nix)"]
+        P["Profiles & Enables<br/>(developer, desktop, server, gaming)"]
+        NG --> U
+        NO --> U
+        MB --> U
+        U --> P
+    end
+
+    subgraph Modules["Module System"]
+        HM["User Modules (mkModuleV2)<br/>modules/home/*"]
+        SM["System Modules (mkSystemModuleV2)<br/>modules/systems/{all,linux,darwin}/*"]
+        P --> HM
+        P --> SM
+    end
+
+    subgraph Targets["System State & Config"]
+        DOT["Live-Editable Dotfiles<br/>(mkDotfilesSymlink → ~/.config/*)"]
+        SECR["SOPS Secrets<br/>(sops-nix / age / Bitwarden integration)"]
+        HM --> DOT
+        SM --> SECR
+    end
+```
 
 ### Directory Structure
 
@@ -124,9 +170,9 @@ darwin-rebuild switch --flake .#<hostname>
 
 | Type | Location | Enabled via | Scope |
 |------|----------|-------------|-------|
-| **System (All)** | `systems/all/` | `systemAll.<name>.enable` | System-wide, cross-platform |
-| **System (Linux)** | `systems/linux/` | `systemLinux.<name>.enable` | System-wide, Linux only |
-| **System (Darwin)** | `systems/darwin/` | `systemDarwin.<name>.enable` | System-wide, macOS only |
+| **System (All)** | `systems/all/` | `modules.system.all.<name>.enable` | System-wide, cross-platform |
+| **System (Linux)** | `systems/linux/` | `modules.system.linux.<name>.enable` | System-wide, Linux only |
+| **System (Darwin)** | `systems/darwin/` | `modules.system.darwin.<name>.enable` | System-wide, macOS only |
 | **User** | `home/` | `hostUsers.<user>.modules.<path>.enable` | Per-user, hierarchical enables |
 
 ---
@@ -174,7 +220,7 @@ in
   networking.hostName = "my-new-host";
 
   # System modules
-  systemAll = {
+  modules.system.all = {
     fonts.enable = true;
     nix.settings.enable = true;
     nix.gc.enable = true;
@@ -183,7 +229,7 @@ in
   };
 
   # Linux-specific (remove for Darwin)
-  systemLinux = {
+  modules.system.linux = {
     desktop.hyprland.enable = true;
     networking.networkmanager.enable = true;
     sound.enable = true;
@@ -358,13 +404,65 @@ modules.home.editors.neovim.dotfilesLive = false;   # Store mode for settled neo
 
 ---
 
+## 🔐 Secrets Management (SOPS)
+
+Secrets across the repository are managed using [`sops-nix`](https://github.com/Mic92/sops-nix) with `age` encryption.
+
+### Key Derivation (`ssh-to-age`)
+Host age keys are derived directly from SSH host keys (`/etc/ssh/ssh_host_ed25519_key.pub`), eliminating the need to store secondary key files on machine hosts:
+
+```bash
+# Derive host age key from SSH host key
+nix-shell -p ssh-to-age --run 'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
+```
+
+### Age Key Locations
+- **Linux / NixOS**: `~/.config/sops/age/keys.txt` (XDG standard compliant).
+- **macOS / Darwin**: `~/Library/Application Support/sops/age/keys.txt` (Environment variable `SOPS_AGE_KEY_FILE` is automatically set by `modules.system.all.sops.enable`).
+
+### Shell Wrapper & Bitwarden Integration
+A shell wrapper (`sops`) is provided in Zsh (`common.zsh`). If `SOPS_AGE_KEY` is not present, it dynamically fetches the per-machine SOPS key from Bitwarden CLI (`bw get notes "SOPS Age Key <hostname>"`) and caches it in RAM (`/tmp/.sops-age-key-<hostname>-<uid>`) for 15 minutes.
+
+### Managing Secrets
+Secrets are specified in `.sops.yaml` with creation rules targeting host secrets paths (e.g., `hosts/machines/<host>/secrets/*`). Edit or create secrets using:
+
+```bash
+sops hosts/machines/<host>/secrets/<secret-name>
+```
+
+---
+
+## 🔌 Vantage Infrastructure Stub
+
+`vantage` is an optional infrastructure flake input containing private service modules (Consul, Nomad, Vault, Vault Agent sidecar, remote builder configuration, Consul DNS).
+
+### Public Stub Mechanism
+To ensure the repository remains fully open-source, evaluation-ready, and buildable on public CI without needing private SSH keys:
+- By default, `flake.nix` points `vantage` to a public stub repository:
+  `github:GDR/dot-stubs?dir=vantage`
+- The stub exposes no-op modules and default options, allowing all host configurations (`nix-goldstar`, `nix-oldstar`, `mac-brightstar`) to evaluate cleanly without private repo access.
+
+### Override Workflow for Infra Hosts
+When deploying to active infrastructure nodes (`nix-oldstar` or `mac-brightstar`), override the `vantage` input to point to the private repository:
+
+```bash
+# Manual override during rebuild:
+nixos-rebuild switch --flake .#nix-oldstar --override-input vantage git+ssh://git@github.com/GDR/vantage
+
+# Or using Makefile helper targets:
+make nix-oldstar
+make mac-brightstar
+```
+
+---
+
 ## 🖥 Host Configuration
 
 | Host | Platform | Description |
 |------|----------|-------------|
-| `nix-goldstar` | NixOS | Desktop workstation with Hyprland |
-| `mac-italy` | Darwin | MacBook Pro |
-| `mac-blackstar` | Darwin | Mac Mini |
+| `nix-goldstar` | NixOS (x86_64-linux) | Desktop workstation with Hyprland & NVIDIA |
+| `nix-oldstar` | NixOS (x86_64-linux) | Server & remote builder (ThinkPad T480 homelab) |
+| `mac-brightstar` | Darwin (aarch64-darwin) | MacBook Pro workstation |
 
 ---
 
