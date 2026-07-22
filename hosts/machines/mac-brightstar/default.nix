@@ -15,8 +15,8 @@ in
     enable = true;
     keys = [{
       name = "brightstar";
-      type = "ed25519";
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILcvDGz3ET+dzhMsYEeqMqWpJ5PAFSY6ewOC9tfeQrPN";
+      type = "ecdsa";
+      publicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBgEt8IvN2ztKFMj1c6OK12Fr2+3n5rQa4q4FIdQkQIHRL6UpE6+igc6EZb4VKn9dnkmMs5zwLGXpQjBkbA00L0= gosugdr@gmail.com";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
