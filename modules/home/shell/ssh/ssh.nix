@@ -40,6 +40,12 @@ let
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
       baseSettings = sshArrayToMatchBlocks userName sshArray;
 
+      # Secretive SSH Agent integration
+      secCfg = userCfg.secretiveSshAgent or { };
+      secEnabled = secCfg.enable or false;
+      defaultSecSocket = "~/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
+      secSocket = if (secCfg.socketPath or null != null) then secCfg.socketPath else defaultSecSocket;
+
       # Bitwarden SSH Agent integration
       bwCfg = userCfg.bitwardenSshAgent or { };
       bwEnabled = bwCfg.enable or false;
@@ -49,10 +55,17 @@ let
         else "~/.bitwarden/ssh-agent.sock";
       bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;
 
-      # Inject Bitwarden IdentityAgent into '*' host setting if enabled and not already explicitly set
+      agentSocket =
+        if secEnabled then secSocket
+        else if bwEnabled then bwSocket
+        else null;
+
+      agentEnabled = secEnabled || bwEnabled;
+
+      # Inject IdentityAgent into '*' host setting if enabled
       settings =
-        if bwEnabled then
-          lib.recursiveUpdate { "*" = { IdentityAgent = bwSocket; }; } baseSettings
+        if agentEnabled then
+          lib.recursiveUpdate { "*" = { IdentityAgent = agentSocket; }; } baseSettings
         else
           baseSettings;
 
@@ -76,8 +89,8 @@ let
 
       home.file = pubKeyFiles;
 
-      home.sessionVariables = lib.optionalAttrs bwEnabled {
-        SSH_AUTH_SOCK = bwSocket;
+      home.sessionVariables = lib.optionalAttrs agentEnabled {
+        SSH_AUTH_SOCK = agentSocket;
       };
 
       # SSH refuses symlinks to world-readable Nix store files.
