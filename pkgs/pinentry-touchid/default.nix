@@ -16,6 +16,11 @@ buildGoModule rec {
   vendorHash = "sha256-v3JtUk94/javwhtUsPUFV9EwFfaixZpb4AqKpCEaZp4=";
   doCheck = false;
 
+  postPatch = ''
+    substituteInPlace main.go \
+      --replace-fail 'query := keychain.NewItem()' 'query := keychain.NewItem(); query.SetService("GnuPG")'
+  '';
+
   nativeBuildInputs = [ makeWrapper ];
 
   buildInputs = [

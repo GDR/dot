@@ -32,6 +32,14 @@ lib.my.mkModuleV2 args {
           pinentry-program ${pinentryTouchId}/bin/pinentry-touchid
         '';
       };
+
+      launchd.user.agents.gpg-agent = {
+        command = "${pkgs.gnupg}/bin/gpgconf --launch gpg-agent";
+        serviceConfig = {
+          RunAtLoad = true;
+          KeepAlive = true;
+        };
+      };
     };
 
     nixosSystems = {
