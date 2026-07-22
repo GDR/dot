@@ -21,21 +21,7 @@ in
       isDefault = true;
     }];
     bitwardenSshAgent.enable = true;
-    ssh = [
-      {
-        host = "*";
-        identityFile = "~/.ssh/brightstar_id_ed25519.pub";
-        extraOptions = {
-          IdentitiesOnly = "yes";
-          AddKeysToAgent = "yes";
-        };
-      }
-      {
-        host = "github.com";
-        user = "git";
-        identityFile = "~/.ssh/brightstar_id_ed25519.pub";
-      }
-    ] ++ userDefaults.ssh.knownHosts;
+    ssh = userDefaults.ssh.knownHosts;
     modules = {
       # developer profile
       home.cli.enable = true;
