@@ -62,12 +62,22 @@ let
 
       agentEnabled = secEnabled || bwEnabled;
 
+      # Find default key for user if present
+      userKeys = userCfg.keys or [ ];
+      defaultKey = lib.findFirst (k: k.isDefault or false) null userKeys;
+      defaultIdentityFile =
+        if defaultKey != null
+        then "~/.ssh/${defaultKey.name}_id_${defaultKey.type}.pub"
+        else null;
+
       baseControlSettings = {
         "*" = {
           ControlMaster = "auto";
           ControlPath = "~/.ssh/sockets/%r@%h:%p";
           ControlPersist = "3m";
           IdentitiesOnly = "yes";
+        } // lib.optionalAttrs (defaultIdentityFile != null) {
+          IdentityFile = defaultIdentityFile;
         };
       };
 
