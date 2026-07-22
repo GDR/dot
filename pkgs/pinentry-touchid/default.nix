@@ -1,4 +1,4 @@
-{ lib, stdenv, buildGoModule, fetchFromGitHub, apple-sdk_15 }:
+{ lib, stdenv, buildGoModule, fetchFromGitHub, apple-sdk_15, pinentry_mac, makeWrapper }:
 
 buildGoModule rec {
   pname = "pinentry-touchid";
@@ -16,9 +16,17 @@ buildGoModule rec {
   vendorHash = "sha256-v3JtUk94/javwhtUsPUFV9EwFfaixZpb4AqKpCEaZp4=";
   doCheck = false;
 
+  nativeBuildInputs = [ makeWrapper ];
+
   buildInputs = [
     apple-sdk_15
+    pinentry_mac
   ];
+
+  postInstall = ''
+    wrapProgram $out/bin/pinentry-touchid \
+      --prefix PATH : ${lib.makeBinPath [ pinentry_mac ]}
+  '';
 
   meta = with lib; {
     description = "Pinentry program for GnuPG that uses macOS Touch ID";
