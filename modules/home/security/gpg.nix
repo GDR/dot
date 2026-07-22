@@ -21,13 +21,13 @@ lib.my.mkModuleV2 args {
 
     darwinSystems = {
       services.gpg-agent = {
-        pinentryPackage = pkgs.pinentry_mac;
+        pinentry.package = pkgs.pinentry_mac;
       };
     };
 
     nixosSystems = {
       services.gpg-agent = {
-        pinentryPackage = pkgs.pinentry-curses;
+        pinentry.package = pkgs.pinentry-curses;
       };
     };
   };
