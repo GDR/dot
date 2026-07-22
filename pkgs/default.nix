@@ -29,6 +29,7 @@ let
   };
   darwin = {
     vfkit = pkgs.callPackage ./vfkit { };
+    pinentry-touchid = pkgs.callPackage ./pinentry-touchid { };
   };
 in
 common // (if isLinux then linux else { }) // (if isDarwin then darwin else { })

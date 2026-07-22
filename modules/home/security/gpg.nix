@@ -1,6 +1,9 @@
 # GPG & GPG-Agent configuration
-{ lib, pkgs, ... }@args:
+{ config, lib, pkgs, ... }@args:
 
+let
+  pinentryTouchId = pkgs.pinentry-touchid or (pkgs.callPackage ../../../pkgs/pinentry-touchid { });
+in
 lib.my.mkModuleV2 args {
   description = "GPG key agent and pinentry configuration";
   platforms = [ "linux" "darwin" ];
@@ -21,13 +24,11 @@ lib.my.mkModuleV2 args {
     };
 
     darwinSystems = {
+      home.packages = [ pinentryTouchId pkgs.pinentry_mac ];
+
       services.gpg-agent = {
-        pinentry.package = pkgs.pinentry_mac;
-        extraConfig = ''
-          pinentry-program /opt/homebrew/bin/pinentry-touchid
-        '';
+        pinentry.package = pinentryTouchId;
       };
-      homebrew.brews = [ "pinentry-touchid" ];
     };
 
     nixosSystems = {
