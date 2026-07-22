@@ -28,6 +28,9 @@ lib.my.mkModuleV2 args {
 
       services.gpg-agent = {
         pinentry.package = pinentryTouchId;
+        extraConfig = ''
+          pinentry-program ${pinentryTouchId}/bin/pinentry-touchid
+        '';
       };
     };
 
