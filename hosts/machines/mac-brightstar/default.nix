@@ -14,7 +14,7 @@ in
   hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
     keys = [{
-      name = "brightstar";
+      name = "mac_brightstar";
       type = "ed25519";
       publicKey = lib.trim (builtins.readFile ./brightstar_id_ed25519.pub);
       purpose = [ "git" "ssh" ];

@@ -67,7 +67,7 @@ let
       defaultKey = lib.findFirst (k: k.isDefault or false) null userKeys;
       defaultIdentityFile =
         if defaultKey != null
-        then "~/.ssh/${defaultKey.name}_id_${defaultKey.type}.pub"
+        then "~/.ssh/${defaultKey.name}_${defaultKey.type}"
         else null;
 
       baseControlSettings = {
