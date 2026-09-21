@@ -1,15 +1,14 @@
-# macFUSE - FUSE filesystem support for macOS
-# Required for mounting NTFS, SSHFS, and other FUSE-based filesystems
+# Obsidian - Knowledge base and note-taking app
 { lib, pkgs, ... }@args:
 lib.my.mkModuleV2 args {
-  platforms = [ "darwin" ]; # macOS only
-  description = "macFUSE filesystem support";
+  description = "Obsidian knowledge base and note-taking app";
 
   module = {
     allSystems = {
-      home.packages = with pkgs; [
-        obsidian
-      ];
+      programs.obsidian = {
+        enable = true;
+        cli.enable = true;
+      };
     };
   };
 }
