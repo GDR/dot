@@ -72,13 +72,15 @@ let
 
       baseControlSettings = {
         "*" = {
-          ControlMaster = "auto";
-          ControlPath = "~/.ssh/sockets/%r@%h:%p";
-          ControlPersist = "3m";
+          # ControlMaster = "auto";
+          # ControlPath = "~/.ssh/sockets/%r@%h:%p";
           IdentitiesOnly = "yes";
           AddKeysToAgent = "yes";
         } // lib.optionalAttrs (defaultIdentityFile != null) {
           IdentityFile = defaultIdentityFile;
+        };
+        "github.com" = {
+          AddressFamily = "inet";
         };
       };
 
