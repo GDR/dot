@@ -45,6 +45,7 @@ in
       home.security.enable = true;
       home.security.gpg.enable = true;
       home.utils.enable = false;
+      home.utils.obsidian.enable = true;
       # host-specific
       home.ai-tools.enable = true;
       home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
