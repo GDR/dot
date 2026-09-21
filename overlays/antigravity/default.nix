@@ -1,12 +1,29 @@
-# Antigravity overlay — no-op passthrough.
+# Antigravity overlay
 #
-# Antigravity 2.x packages (google-antigravity, google-antigravity-ide,
-# google-antigravity-cli) are injected into pkgs via overlays/additions.nix
-# using inputs.antigravity-nix.packages.${system}.*.
-#
-# The old local information.json pin (Antigravity 1.x IDE) is superseded
-# by the upstream flake input. This overlay is retained for structural
-# consistency but performs no overrides.
+# Fixes DMG unpacking on Darwin/macOS where upstream Google Antigravity 2.9+
+# switched DMG format from HFS+ to APFS, and 7zz extracts DMG root volume folder.
+# undmg (which uses hfsplus) fails with "error: only HFS file systems are supported".
+# We replace undmg with 7zz and move any extracted *.app to top level.
 { lib, system, ... }:
 
-_final: _prev: { }
+final: prev:
+let
+  fixDarwinDmg = pkg:
+    if prev.stdenv.isDarwin && (pkg ? overrideAttrs) then
+      pkg.overrideAttrs
+        (oldAttrs: {
+          nativeBuildInputs = [ final._7zz ];
+          unpackPhase = ''
+            runHook preUnpack
+            7zz x $src
+            find . -mindepth 2 -name "*.app" -exec mv {} . \; 2>/dev/null || true
+            runHook postUnpack
+          '';
+        })
+    else
+      pkg;
+in
+{
+  google-antigravity = fixDarwinDmg prev.google-antigravity;
+  google-antigravity-ide = fixDarwinDmg prev.google-antigravity-ide;
+}
