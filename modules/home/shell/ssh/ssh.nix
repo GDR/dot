@@ -42,6 +42,12 @@ let
 
       homePrefix = if pkgs.stdenv.isDarwin then "/Users" else "/home";
 
+      # Clavis SSH Agent integration
+      clavisCfg = userCfg.clavisAgent or { };
+      clavisEnabled = clavisCfg.enable or false;
+      defaultClavisSocket = "${homePrefix}/${userName}/.ssh/clavis.sock";
+      clavisSocket = if (clavisCfg.socketPath or null != null) then clavisCfg.socketPath else defaultClavisSocket;
+
       # Bitwarden SSH Agent integration
       bwCfg = userCfg.bitwardenSshAgent or { };
       bwEnabled = bwCfg.enable or false;
@@ -56,11 +62,12 @@ let
       gpgSocket = "${homePrefix}/${userName}/.gnupg/S.gpg-agent.ssh";
 
       agentSocket =
-        if bwEnabled then bwSocket
+        if clavisEnabled then clavisSocket
+        else if bwEnabled then bwSocket
         else if gpgEnabled then gpgSocket
         else null;
 
-      agentEnabled = bwEnabled || gpgEnabled;
+      agentEnabled = clavisEnabled || bwEnabled || gpgEnabled;
 
       # Find default key for user if present
       userKeys = userCfg.keys or [ ];
@@ -74,8 +81,8 @@ let
         "*" = {
           # ControlMaster = "auto";
           # ControlPath = "~/.ssh/sockets/%r@%h:%p";
-          IdentitiesOnly = "yes";
-          AddKeysToAgent = "yes";
+          IdentitiesOnly = if agentEnabled then "no" else "yes";
+          AddKeysToAgent = if agentEnabled then "no" else "yes";
         } // lib.optionalAttrs (defaultIdentityFile != null) {
           IdentityFile = defaultIdentityFile;
         };

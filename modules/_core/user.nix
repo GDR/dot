@@ -134,6 +134,20 @@ let
         description = "Additional SSH config files to include";
       };
 
+      # Clavis SSH Agent integration
+      clavisAgent = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable Clavis SSH Agent integration for this user";
+        };
+        socketPath = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = "Custom Clavis SSH Agent socket path. If null, uses ~/.ssh/clavis.sock";
+        };
+      };
+
       # Bitwarden SSH Agent integration
       bitwardenSshAgent = {
         enable = mkOption {
