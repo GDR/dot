@@ -10,7 +10,8 @@ let
   mkUserDarwinSSHConfig = userName: userCfg:
     let
       allKeys = userCfg.keys or [ ];
-      clavisEnabled = userCfg.clavisAgent.enable or false;
+      clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
+      clavisEnabled = (userCfg.clavisAgent.enable or false) || clavisModuleEnabled;
     in
     lib.optionalAttrs (allKeys != [ ]) (
       {

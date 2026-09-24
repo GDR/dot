@@ -38,7 +38,8 @@ let
       gitKey = getGitKey userCfg;
       signingKeyPath = if gitKey != null then keyPath userName gitKey else null;
 
-      clavisEnabled = userCfg.clavisAgent.enable or false;
+      clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
+      clavisEnabled = (userCfg.clavisAgent.enable or false) || clavisModuleEnabled;
       bwEnabled = userCfg.bitwardenSshAgent.enable or false;
       gpgEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.gpg"; };
       hasAgent = clavisEnabled || bwEnabled || gpgEnabled;

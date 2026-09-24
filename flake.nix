@@ -54,6 +54,11 @@
       url = "path:/Users/dgarifullin/Workspaces/gdr/pinentry-touchid";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    clavis = {
+      url = "github:gdr/clavis";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, charon-key, ... }:

@@ -43,8 +43,9 @@ let
       homePrefix = if pkgs.stdenv.isDarwin then "/Users" else "/home";
 
       # Clavis SSH Agent integration
+      clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
       clavisCfg = userCfg.clavisAgent or { };
-      clavisEnabled = clavisCfg.enable or false;
+      clavisEnabled = (clavisCfg.enable or false) || clavisModuleEnabled;
       defaultClavisSocket = "${homePrefix}/${userName}/.ssh/clavis.sock";
       clavisSocket = if (clavisCfg.socketPath or null != null) then clavisCfg.socketPath else defaultClavisSocket;
 
