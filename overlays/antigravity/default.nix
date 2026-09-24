@@ -12,11 +12,11 @@ let
     if prev.stdenv.hostPlatform.isDarwin && (pkg ? overrideAttrs) then
       pkg.overrideAttrs
         (oldAttrs: {
-          nativeBuildInputs = [ final._7zz ];
+          nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [ final._7zz ];
           unpackPhase = ''
             runHook preUnpack
             7zz x $src
-            find . -mindepth 2 -name "*.app" -exec mv {} . \; 2>/dev/null || true
+            find . -mindepth 2 -maxdepth 2 -name "*.app" -exec mv {} . \; 2>/dev/null || true
             runHook postUnpack
           '';
         })
