@@ -95,7 +95,7 @@ lib.my.mkModuleV2 args {
       };
 
       # gcr provides the GUI unlock prompter (fallback if PAM didn't unlock)
-      home.packages = [ pkgs.gcr pkgs.grim pkgs.slurp ];
+      home.packages = [ pkgs.gcr_4 pkgs.grim pkgs.slurp ];
 
       # Generated Hyprland theme module (Lua).
       # Written as a sibling to the hypr/ symlink (same pattern as waybar-theme.css).

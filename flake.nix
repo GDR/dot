@@ -24,7 +24,6 @@
     };
     vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     charon-key = {
       url = "github:GDR/charon-key";

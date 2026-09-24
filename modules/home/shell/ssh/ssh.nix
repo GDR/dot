@@ -40,7 +40,7 @@ let
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
       baseSettings = sshArrayToMatchBlocks userName sshArray;
 
-      homePrefix = if pkgs.stdenv.isDarwin then "/Users" else "/home";
+      homePrefix = if pkgs.stdenv.hostPlatform.isDarwin then "/Users" else "/home";
 
       # Clavis SSH Agent integration
       clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
@@ -53,7 +53,7 @@ let
       bwCfg = userCfg.bitwardenSshAgent or { };
       bwEnabled = bwCfg.enable or false;
       defaultBwSocket =
-        if pkgs.stdenv.isDarwin
+        if pkgs.stdenv.hostPlatform.isDarwin
         then "~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
         else "~/.bitwarden/ssh-agent.sock";
       bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;

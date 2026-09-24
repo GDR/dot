@@ -9,7 +9,7 @@
 final: prev:
 let
   fixDarwinDmg = pkg:
-    if prev.stdenv.isDarwin && (pkg ? overrideAttrs) then
+    if prev.stdenv.hostPlatform.isDarwin && (pkg ? overrideAttrs) then
       pkg.overrideAttrs
         (oldAttrs: {
           nativeBuildInputs = [ final._7zz ];
