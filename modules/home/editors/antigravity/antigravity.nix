@@ -51,8 +51,7 @@ let
   pathParts = lib.splitString "." modulePath;
   cfg = lib.foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
 
-  allSkillPaths = (cfg.skillPaths or [ ])
-    ++ lib.optional (cfg.cavemanEnable or false) "${pkgs.caveman-skills}";
+  allSkillPaths = cfg.skillPaths or [ ];
 
   hasRules = (cfg.rules or "") != "";
   hasSkills = allSkillPaths != [ ];
@@ -75,7 +74,6 @@ lib.my.mkModuleV2 args {
         ## Communication
         - Direct, no fluff — answer immediately
         - Dense, iterative style
-        - Always use caveman ultra mode (see caveman skill)
 
         ## Code Style
         - Comment non-obvious decisions
@@ -89,12 +87,6 @@ lib.my.mkModuleV2 args {
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = "Absolute paths to external skill directories for skills.json.";
-    };
-
-    cavemanEnable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Add caveman skills (pkgs.caveman-skills) to skill paths.";
     };
 
     mcpServers = lib.mkOption {

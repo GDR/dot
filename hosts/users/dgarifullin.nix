@@ -42,6 +42,5 @@
       - Cite sources when referencing external docs
       - Imperative mood in commit messages
     '';
-    cavemanEnable = true;
   };
 }
