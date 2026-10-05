@@ -10,7 +10,6 @@
   # Package modifications
   antigravity = import ./antigravity { inherit lib system; };
   ollama = import ./ollama;
-  code-cursor = import ./code-cursor { inherit lib system; };
   proton-ge-bin = import ./proton-ge-bin;
   openldap = import ./openldap;
 }

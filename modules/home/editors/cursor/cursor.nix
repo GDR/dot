@@ -5,6 +5,9 @@ lib.my.mkModuleV2 args {
   platforms = [ "linux" "darwin" ];
   description = "Cursor IDE - AI-powered code editor";
   module = {
-    allSystems.home.packages = [ pkgs.code-cursor pkgs.cursor-cli ];
+    allSystems = {
+      programs.cursor.enable = true;
+      home.packages = [ pkgs.cursor-cli ];
+    };
   };
 }

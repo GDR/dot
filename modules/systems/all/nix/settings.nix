@@ -20,7 +20,6 @@ lib.my.mkSystemModuleV2 args {
       overlays.${system}.patches
       overlays.${system}.antigravity
       overlays.${system}.ollama
-      overlays.${system}.code-cursor
       overlays.${system}.proton-ge-bin
       overlays.${system}.openldap
     ];
