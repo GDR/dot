@@ -23,6 +23,7 @@ in
     modules = {
       # developer profile
       home.cli.enable = true;
+      home.editors.cursor.enable = true;
       home.editors.neovim.enable = true;
       home.shell.enable = true;
       home.terminal.enable = true;
