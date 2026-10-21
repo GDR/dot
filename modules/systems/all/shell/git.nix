@@ -39,7 +39,7 @@ let
       signingKeyPath = if gitKey != null then keyPath userName gitKey else null;
 
       clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
-      clavisEnabled = (userCfg.clavisAgent.enable or false) || clavisModuleEnabled;
+      clavisEnabled = isDarwin && ((userCfg.clavisAgent.enable or false) || clavisModuleEnabled);
       bwEnabled = userCfg.bitwardenSshAgent.enable or false;
       gpgEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.gpg"; };
       hasAgent = clavisEnabled || bwEnabled || gpgEnabled;
@@ -65,9 +65,11 @@ let
           push.autoSetupRemote = true;
           pull.rebase = true;
           init.defaultBranch = "main";
-          gpg.format = "ssh";
-        } // lib.optionalAttrs useDynamicSigning {
-          gpg.ssh.defaultKeyCommand = "sh -c 'echo key::$(ssh-add -L | head -1)'";
+          gpg = {
+            format = "ssh";
+          } // lib.optionalAttrs useDynamicSigning {
+            ssh.defaultKeyCommand = "sh -c 'echo key::$(ssh-add -L | head -1)'";
+          };
         };
       };
     };
