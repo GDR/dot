@@ -67,11 +67,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792557759,
-        "narHash": "sha256-wu5PXKlAPANnVhXe/4KaAv7ZoD0v1UykD4Vhq44i3lQ=",
+        "lastModified": 1792563817,
+        "narHash": "sha256-oM/baFDN+mSjlLVK8oTxsZ8aXZX5m2FKq5j7XVLe1ak=",
         "owner": "gdr",
         "repo": "clavis",
-        "rev": "a0c04baff4ef944af857663c3b2d4cb4e6816f61",
+        "rev": "9e8d01ad436eb479b840f7c5185dd73021350e20",
         "type": "github"
       },
       "original": {
