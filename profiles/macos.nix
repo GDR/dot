@@ -4,6 +4,5 @@
 {
   system.darwin = {
     macos-settings.enable = true;
-    app-aliases.enable = true;
   };
 }

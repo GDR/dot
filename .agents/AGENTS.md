@@ -54,7 +54,7 @@ profiles/
                   # system.linux: sound, networkmanager, tailscale, firewall
   gaming.nix      # home: games.*
   server.nix      # home: cli, shell, neovim, docker + system openssh/tailscale/vscode-server
-  macos.nix       # system.darwin: macos-settings, app-aliases
+  macos.nix       # system.darwin: macos-settings
 ```
 
 ### Using profiles in a host
