@@ -88,7 +88,6 @@ in
 
   modules.system.darwin = {
     macos-settings.enable = true;
-    app-aliases.enable = true;
     homebrew = {
       enable = true;
       user = "dgarifullin";
