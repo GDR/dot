@@ -40,12 +40,13 @@ let
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
       baseSettings = sshArrayToMatchBlocks userName sshArray;
 
-      homePrefix = if pkgs.stdenv.hostPlatform.isDarwin then "/Users" else "/home";
+      isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+      homePrefix = if isDarwin then "/Users" else "/home";
 
-      # Clavis SSH Agent integration
+      # Clavis SSH Agent integration (macOS-only; guard against home.security.enable cascade on Linux)
       clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
       clavisCfg = userCfg.clavisAgent or { };
-      clavisEnabled = (clavisCfg.enable or false) || clavisModuleEnabled;
+      clavisEnabled = isDarwin && ((clavisCfg.enable or false) || clavisModuleEnabled);
       defaultClavisSocket = "${homePrefix}/${userName}/.ssh/clavis.sock";
       clavisSocket = if (clavisCfg.socketPath or null != null) then clavisCfg.socketPath else defaultClavisSocket;
 
@@ -122,6 +123,22 @@ let
       home.sessionVariables = lib.optionalAttrs agentEnabled {
         SSH_AUTH_SOCK = agentSocket;
       };
+
+      # Ensure SSH_AUTH_SOCK is always set in Zsh even when __HM_SESS_VARS_SOURCED=1
+      # is already inherited from a parent GUI app or terminal.
+      programs.zsh.envExtra = lib.mkIf agentEnabled ''
+        if [ -z "''${SSH_CONNECTION-}" ]; then
+          export SSH_AUTH_SOCK="${agentSocket}"
+        fi
+      '';
+
+      # On macOS, propagate SSH_AUTH_SOCK to launchd user environment so GUI apps
+      # (IDEs, Git clients) don't fall back to Apple's com.openssh.ssh-agent socket.
+      home.activation.setLaunchdSshAuthSock = lib.mkIf (pkgs.stdenv.hostPlatform.isDarwin && agentEnabled) (
+        lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+          /bin/launchctl setenv SSH_AUTH_SOCK "${agentSocket}" || true
+        ''
+      );
 
       # Pre-activation: remove regular file ~/.ssh/config so Home Manager can recreate the symlink with fresh config
       home.activation.removeOldSshConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
