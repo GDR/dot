@@ -24,4 +24,12 @@ _: prev:
       terminfo = prev.runCommand "termite-stub-terminfo" { } "mkdir -p $out";
     in
     prev.runCommand "termite-stub" { passthru = { inherit terminfo; }; } "mkdir -p $out";
+
+  # qbittorrent-5.2.4 uses Q_OS_MAC which Qt 6.12 marks deprecated via
+  # `#pragma clang deprecated(Q_OS_MAC, ...)`, failing the build under -Werror.
+  qbittorrent = prev.qbittorrent.overrideAttrs (old: {
+    postPatch = (old.postPatch or "") + ''
+      grep -rl '\bQ_OS_MAC\b' src/ | xargs sed -i 's/\bQ_OS_MAC\b/Q_OS_MACOS/g'
+    '';
+  });
 }
