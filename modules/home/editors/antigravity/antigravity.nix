@@ -7,8 +7,7 @@
 # --password-store=basic tells Electron to store credentials as plain text inside
 # the app's --user-data-dir (~/.antigravity-ide), which persists normally.
 #
-# Config management: when enabled, also manages ~/.gemini/config/ files
-# (AGENTS.md rules, skills.json for external skills like caveman)
+# Config management: when enabled, also manages ~/.gemini/config/AGENTS.md
 # and ~/.gemini/antigravity/mcp_config.json (global MCP servers).
 { lib, pkgs, config, ... }@args:
 
@@ -46,20 +45,13 @@ let
 
 
   # cfg read via config.modules path-walking so it's available at the top-level let
-  # (for hasRules/hasSkills/hasMcp guards used in allSystems.home.file below).
+  # (for hasRules/hasMcp guards used in allSystems.home.file below).
   modulePath = args._modulePath;
   pathParts = lib.splitString "." modulePath;
   cfg = lib.foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
 
-  allSkillPaths = cfg.skillPaths or [ ];
-
   hasRules = (cfg.rules or "") != "";
-  hasSkills = allSkillPaths != [ ];
   hasMcp = (cfg.mcpServers or { }) != { };
-
-  skillsJson = builtins.toJSON {
-    entries = map (p: { path = p; }) allSkillPaths;
-  };
 
 in
 lib.my.mkModuleV2 args {
@@ -81,12 +73,6 @@ lib.my.mkModuleV2 args {
         - Imperative mood in commit messages
       '';
       description = "Content for ~/.gemini/config/AGENTS.md (global rules).";
-    };
-
-    skillPaths = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-      description = "Absolute paths to external skill directories for skills.json.";
     };
 
     mcpServers = lib.mkOption {
@@ -129,7 +115,6 @@ lib.my.mkModuleV2 args {
     # Config files — routed to all enabled users automatically via home.* auto-routing
     allSystems.home.file = lib.mkMerge [
       (lib.mkIf hasRules { ".gemini/config/AGENTS.md".text = cfg.rules; })
-      (lib.mkIf hasSkills { ".gemini/config/skills.json".text = skillsJson; })
       (lib.mkIf hasMcp {
         ".gemini/antigravity/mcp_config.json".text =
           builtins.toJSON { inherit (cfg) mcpServers; };
