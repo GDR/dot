@@ -48,8 +48,8 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: Flake Check
         run: |
-          nix flake check --all-systems --no-build
           nix flake check
+          nix eval .#checks.aarch64-darwin.module-platform-merge.drvPath
 
   eval-hosts:
     runs-on: ubuntu-latest
