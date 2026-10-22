@@ -42,7 +42,6 @@ Updates are atomic (they fully apply or don't touch anything), and different pac
   - [Per-User Module Configuration](#per-user-module-configuration)
   - [Create a New Module](#create-a-new-module)
 - [Secrets Management (SOPS)](#-secrets-management-sops)
-- [Vantage Infrastructure Stub](#-vantage-infrastructure-stub)
 - [Host Configuration](#-host-configuration)
 - [License](#-license)
 
@@ -72,7 +71,7 @@ darwin-rebuild switch --flake .#<hostname>
 ```mermaid
 graph TD
     subgraph Inputs["Flake Inputs & Outputs"]
-        FI["flake.nix Inputs<br/>(nixpkgs, nix-darwin, home-manager, sops-nix, vantage)"]
+        FI["flake.nix Inputs<br/>(nixpkgs, nix-darwin, home-manager, sops-nix)"]
         FO["flakeOutputs<br/>(nixosConfigurations, darwinConfigurations, packages, devShells, checks, formatter)"]
         FI --> FO
     end
@@ -424,35 +423,7 @@ nix-shell -p ssh-to-age --run 'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
 A shell wrapper (`sops`) is provided in Zsh (`common.zsh`). If `SOPS_AGE_KEY` is not present, it dynamically fetches the per-machine SOPS key from Bitwarden CLI (`bw get notes "SOPS Age Key <hostname>"`) and caches it in RAM (`/tmp/.sops-age-key-<hostname>-<uid>`) for 15 minutes.
 
 ### Managing Secrets
-Secrets are specified in `.sops.yaml` with creation rules targeting host secrets paths (e.g., `hosts/machines/<host>/secrets/*`). Edit or create secrets using:
-
-```bash
-sops hosts/machines/<host>/secrets/<secret-name>
-```
-
----
-
-## 🔌 Vantage Infrastructure Stub
-
-`vantage` is an optional infrastructure flake input containing private service modules (Consul, Nomad, Vault, Vault Agent sidecar, remote builder configuration, Consul DNS).
-
-### Public Stub Mechanism
-To ensure the repository remains fully open-source, evaluation-ready, and buildable on public CI without needing private SSH keys:
-- By default, `flake.nix` points `vantage` to a public stub repository:
-  `github:GDR/dot-stubs?dir=vantage`
-- The stub exposes no-op modules and default options, allowing all host configurations (`nix-goldstar`, `nix-oldstar`, `mac-brightstar`) to evaluate cleanly without private repo access.
-
-### Override Workflow for Infra Hosts
-When deploying to active infrastructure nodes (`nix-oldstar` or `mac-brightstar`), override the `vantage` input to point to the private repository:
-
-```bash
-# Manual override during rebuild:
-nixos-rebuild switch --flake .#nix-oldstar --override-input vantage git+ssh://git@github.com/GDR/vantage
-
-# Or using Makefile helper targets:
-make nix-oldstar
-make mac-brightstar
-```
+Secrets are managed via SOPS with age keys configured per host.
 
 ---
 

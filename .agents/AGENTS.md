@@ -191,5 +191,5 @@ Optional scope: `refactor(flake):`, `feat(zsh):`
 | Host | Platform | Key features |
 |------|----------|-------------|
 | `nix-goldstar` | NixOS | Desktop, Hyprland, NVIDIA |
-| `nix-oldstar` | NixOS | Remote, vantage override |
+| `nix-oldstar` | NixOS | Server, remote builder |
 | `mac-brightstar` | Darwin | MacBook, nix-homebrew |

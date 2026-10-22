@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches:
+      - master
       - main
     paths:
       - '**.nix'
@@ -10,6 +11,7 @@ on:
       - '.github/workflows/**'
   pull_request:
     branches:
+      - master
       - main
     paths:
       - '**.nix'

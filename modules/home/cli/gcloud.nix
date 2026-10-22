@@ -1,5 +1,4 @@
 # Google Cloud SDK (gcloud CLI)
-# Darwin-only — Linux infra hosts get gcloud via the vantage devshell.
 { lib, pkgs, ... }@args:
 
 lib.my.mkModuleV2 args {

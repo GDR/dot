@@ -1,13 +1,9 @@
-{ self, inputs, pkgs, lib, overlays, ... }:
+{ lib, ... }:
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
 in
 {
-  imports = [
-    inputs.vantage.darwinModules.consul-dns # *.consul DNS via /etc/resolver/consul
-  ];
-
   nix.enable = true;
   ids.gids.nixbld = 30000;
 
@@ -102,9 +98,4 @@ in
 
   time.timeZone = "Europe/Moscow";
   theme.name = "rose-pine-moon";
-
-  services.vantage.consul-dns = {
-    enable = true;
-    nameserver = "100.64.100.3";
-  };
 }
