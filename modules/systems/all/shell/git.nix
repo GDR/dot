@@ -41,8 +41,7 @@ let
       clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
       clavisEnabled = isDarwin && ((userCfg.clavisAgent.enable or false) || clavisModuleEnabled);
       bwEnabled = userCfg.bitwardenSshAgent.enable or false;
-      gpgEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.gpg"; };
-      hasAgent = clavisEnabled || bwEnabled || gpgEnabled;
+      hasAgent = clavisEnabled || bwEnabled;
 
       # Dynamic signing via SSH agent when no static key is specified
       useDynamicSigning = signingKeyPath == null && hasAgent;

@@ -35,7 +35,6 @@ in
       home.messengers.enable = true;
       home.security.enable = true;
       home.security.clavis.enable = true;
-      home.security.gpg.enable = true;
       home.utils.enable = false;
       home.utils.obsidian.enable = true;
       # host-specific
