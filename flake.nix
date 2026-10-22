@@ -45,7 +45,7 @@
     };
 
     pinentry-touchid = {
-      url = "path:/Users/dgarifullin/Workspaces/gdr/pinentry-touchid";
+      url = "github:GDR/pinentry-touchid";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

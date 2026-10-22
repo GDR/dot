@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - '**.nix'
+      - 'flake.lock'
       - 'Makefile'
       - '.github/workflows/**'
   pull_request:
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - '**.nix'
+      - 'flake.lock'
       - 'Makefile'
       - '.github/workflows/**'
 

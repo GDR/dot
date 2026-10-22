@@ -361,14 +361,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1784716215,
-        "narHash": "sha256-wxOm/4v2Qlqod8G+efedOkFfpuTHfCYqsh4i4HNPmUU=",
-        "path": "/Users/dgarifullin/Workspaces/gdr/pinentry-touchid",
-        "type": "path"
+        "lastModified": 1784715767,
+        "narHash": "sha256-Q0elnFBoHc67XX5oBmJ66cQ/TrDOP7bHbZoT3I8Tf0o=",
+        "owner": "GDR",
+        "repo": "pinentry-touchid",
+        "rev": "65617f815cfdb7e479401a76386d95931fcdd2ae",
+        "type": "github"
       },
       "original": {
-        "path": "/Users/dgarifullin/Workspaces/gdr/pinentry-touchid",
-        "type": "path"
+        "owner": "GDR",
+        "repo": "pinentry-touchid",
+        "type": "github"
       }
     },
     "root": {
