@@ -44,11 +44,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    pinentry-touchid = {
-      url = "github:GDR/pinentry-touchid";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     clavis = {
       url = "github:gdr/clavis";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -84,7 +79,7 @@
         let
           pkgs = import nixpkgs { inherit system; config.allowUnfree = true; nvidia.acceptLicense = true; };
         in
-        import ./packages.nix { inherit pkgs lib system charon-key inputs; }
+        import ./packages.nix { inherit pkgs lib system charon-key; }
       );
 
       devShells = forAllSystems (system:

@@ -47,7 +47,9 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: Flake Check
-        run: nix flake check --all-systems
+        run: |
+          nix flake check --all-systems --no-build
+          nix flake check
 
   eval-hosts:
     runs-on: ubuntu-latest

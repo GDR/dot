@@ -3,7 +3,6 @@
 
 let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-  pinentryTouchId = pkgs.pinentry-touchid or (pkgs.callPackage ../../../pkgs/pinentry-touchid { });
 
   clavisModuleEnabled = isDarwin && (lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; });
   enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
@@ -39,13 +38,10 @@ lib.my.mkModuleV2 args {
     };
 
     darwinSystems = {
-      home.packages = [ pinentryTouchId pkgs.pinentry_mac ];
+      home.packages = [ pkgs.pinentry_mac ];
 
       services.gpg-agent = {
-        pinentry.package = pinentryTouchId;
-        extraConfig = ''
-          pinentry-program ${pinentryTouchId}/bin/pinentry-touchid
-        '';
+        pinentry.package = pkgs.pinentry_mac;
       };
 
       launchd.user.agents.gpg-agent = {
