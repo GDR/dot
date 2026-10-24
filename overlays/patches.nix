@@ -32,4 +32,18 @@ _: prev:
       grep -rl '\bQ_OS_MAC\b' src/ | xargs sed -i 's/\bQ_OS_MAC\b/Q_OS_MACOS/g'
     '';
   });
+
+  # Pin IINA to 1.4.4 on Darwin (rollback from 1.5.0)
+  iina =
+    if prev.stdenv.hostPlatform.isDarwin then
+      prev.iina.overrideAttrs (_: rec {
+        version = "1.4.4";
+        src = prev.fetchurl {
+          url = "https://github.com/iina/iina/releases/download/v${version}/IINA.v${version}.dmg";
+          hash = "sha256-3Q/AvUs3+1ehyNMNbjIBs6ZLr9KZWf5WlTlkYTI3vrE=";
+        };
+      })
+    else
+      prev.iina;
 }
+
