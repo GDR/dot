@@ -42,6 +42,7 @@
     nvim-nix = {
       url = "github:GDR/nvim.nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-wrapper-modules.follows = "nix-wrapper-modules";
     };
 
     clavis = {
