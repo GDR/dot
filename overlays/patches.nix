@@ -33,14 +33,14 @@ _: prev:
     '';
   });
 
-  # Pin IINA to 1.4.4 on Darwin (rollback from 1.5.0)
+  # Pin IINA to 1.3.5 on Darwin (rollback from 1.5.0)
   iina =
     if prev.stdenv.hostPlatform.isDarwin then
       prev.iina.overrideAttrs (_: rec {
-        version = "1.4.4";
+        version = "1.3.5";
         src = prev.fetchurl {
           url = "https://github.com/iina/iina/releases/download/v${version}/IINA.v${version}.dmg";
-          hash = "sha256-3Q/AvUs3+1ehyNMNbjIBs6ZLr9KZWf5WlTlkYTI3vrE=";
+          hash = "sha256-O4uRmfQaGMKqizDlgk0MnazMHVkXaDLqZQ9TP8vcajg=";
         };
       })
     else
