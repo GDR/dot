@@ -1,9 +1,9 @@
 # htop - interactive process viewer
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "htop - interactive process viewer";
-  module = {
-    allSystems.home.packages = [ pkgs.htop ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.htop ];
   };
 }
