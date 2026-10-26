@@ -1,26 +1,23 @@
 # Docker container runtime
-{ lib, pkgs, config, _modulePath, ... }@args: with lib;
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" "darwin" ];
   description = "Docker container runtime";
-  systemModule = {
-    nixosSystems = {
-      # Linux: Enable docker daemon system-wide, add users to docker group
-      virtualisation.docker.enable = true;
 
-      # Add only users who enabled Docker to docker group
-      users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: {
-        extraGroups = [ "docker" ];
-      });
-    };
-    darwinSystems = {
-      # Darwin: install docker CLI system-wide via native Nix (pkgs.docker supports Darwin)
-      environment.systemPackages = with pkgs; [
-        colima
-        docker
-        docker-credential-helpers
-      ];
-    };
+  nixosModule = { selectedUsers, lib, ... }: {
+    virtualisation.docker.enable = true;
+
+    users.users = lib.genAttrs selectedUsers (_: {
+      extraGroups = [ "docker" ];
+    });
+  };
+
+  homeModuleDarwin = { pkgs, ... }: {
+    home.packages = with pkgs; [
+      colima
+      docker
+      docker-credential-helpers
+    ];
   };
 }
