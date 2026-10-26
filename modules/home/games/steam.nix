@@ -1,43 +1,50 @@
-# Steam gaming platform - Linux only (system-wide when any user enables "games" tag)
-{ lib, pkgs, ... }@args: with lib;
+# Steam gaming platform - Linux only
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Steam gaming platform with Gamescope support";
+
   extraOptions = {
-    enableGamescope = mkOption {
+    enableGamescope = lib.mkOption {
       default = true;
-      type = types.bool;
+      type = lib.types.bool;
       description = "Whether to enable Gamescope support for Steam";
     };
 
-    remotePlayOpenFirewall = mkOption {
+    remotePlayOpenFirewall = lib.mkOption {
       default = true;
-      type = types.bool;
+      type = lib.types.bool;
       description = "Open ports in the firewall for Steam Remote Play";
     };
 
-    dedicatedServerOpenFirewall = mkOption {
+    dedicatedServerOpenFirewall = lib.mkOption {
       default = true;
-      type = types.bool;
+      type = lib.types.bool;
       description = "Open ports in the firewall for Source Dedicated Server";
     };
 
-    extraCodecs = mkOption {
+    extraCodecs = lib.mkOption {
       default = true;
-      type = types.bool;
+      type = lib.types.bool;
       description = "Add GStreamer plugins (H.265/HEVC, etc.) to Steam FHS for codec playback";
     };
   };
-  systemModule = cfg: {
-    nixosSystems = {
-      # Enable the Steam program itself (system-level)
+
+  nixosModule = { pkgs, lib, featureCfg, ... }:
+    let
+      enableGamescope = featureCfg.enableGamescope or true;
+      remotePlayOpenFirewall = featureCfg.remotePlayOpenFirewall or true;
+      dedicatedServerOpenFirewall = featureCfg.dedicatedServerOpenFirewall or true;
+      extraCodecs = featureCfg.extraCodecs or true;
+    in
+    {
       programs.steam = {
         enable = true;
-        remotePlay.openFirewall = cfg.remotePlayOpenFirewall;
-        dedicatedServer.openFirewall = cfg.dedicatedServerOpenFirewall;
-        gamescopeSession.enable = cfg.enableGamescope;
-        extraPackages = with pkgs; (optionals cfg.enableGamescope [
+        remotePlay.openFirewall = remotePlayOpenFirewall;
+        dedicatedServer.openFirewall = dedicatedServerOpenFirewall;
+        gamescopeSession.enable = enableGamescope;
+        extraPackages = with pkgs; (lib.optionals enableGamescope [
           gamescope
           libxcursor
           libxi
@@ -48,8 +55,8 @@ lib.my.mkModuleV2 args {
           libvorbis
           libkrb5
           keyutils
-        ]) ++ (optionals cfg.extraCodecs [
-          gst_all_1.gst-plugins-bad # H.265/HEVC
+        ]) ++ (lib.optionals extraCodecs [
+          gst_all_1.gst-plugins-bad
           gst_all_1.gst-plugins-ugly
           gst_all_1.gst-libav
           gst_all_1.gstreamer
@@ -61,23 +68,18 @@ lib.my.mkModuleV2 args {
         ];
       };
 
-      # Enable Gamescope as a system program
-      programs.gamescope = mkIf cfg.enableGamescope {
+      programs.gamescope = lib.mkIf enableGamescope {
         enable = true;
-        capSysNice = mkForce false;
+        capSysNice = lib.mkForce false;
       };
 
-      # Hardware-specific support
       hardware.steam-hardware.enable = true;
 
-      # Allow unfree packages for Steam
       nixpkgs.config.allowUnfreePredicate = pkg:
-        builtins.elem (getName pkg) [
+        builtins.elem (lib.getName pkg) [
           "steam"
           "steam-original"
           "steam-run"
         ];
     };
-  };
-  module = { }; # Steam is system-level only, no home-manager config
 }
