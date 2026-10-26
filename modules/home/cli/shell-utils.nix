@@ -1,22 +1,19 @@
 # Essential shell utilities
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "Essential shell utilities (bat, fzf, wget, direnv)";
-  module = {
-    allSystems = {
-      home.packages = with pkgs; [
-        bat
-        fzf
-        fastfetch
-        wget
-      ];
-      programs.direnv = {
-        enable = true;
-        nix-direnv.enable = true;
-        silent = true; # Silence all direnv output
-      };
+  homeModule = { pkgs, ... }: {
+    home.packages = with pkgs; [
+      bat
+      fzf
+      fastfetch
+      wget
+    ];
+    programs.direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+      silent = true;
     };
   };
 }
