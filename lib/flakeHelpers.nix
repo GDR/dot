@@ -8,20 +8,28 @@ let
   # Helper to wrap a module file and filter out 'meta' attribute
   # NixOS modules don't allow arbitrary top-level attributes
   # Accept all possible module arguments and forward them
-  # computedModulePath is passed for modules modules
+  # computedModulePath is passed for modules
   wrapModuleFile = filePath: computedModulePath: { config ? null, options ? null, pkgs ? null, lib ? null, system ? null, inputs ? null, overlays ? null, home-manager ? null, hardware ? null, nixpkgs ? null, ... }@args:
     let
       # Import the actual module with all arguments plus computed path
-      originalModule = import filePath (args // { _modulePath = computedModulePath; });
-      # Filter out meta - keep everything else
-      filtered = lib.filterAttrs (name: _: name != "meta") originalModule;
+      imported = import filePath;
+      originalModule =
+        if lib.isFunction imported
+        then imported (args // { _modulePath = computedModulePath; })
+        else imported;
     in
-    filtered;
+    if (originalModule._type or "") == "feature" then
+      # Migrated feature: handled centrally by the feature compiler in user.nix!
+      # Returning { } ensures NixOS module system does not reject feature attributes.
+      { }
+    else
+      # Filter out meta - keep everything else
+      lib.filterAttrs (name: _: name != "meta") originalModule;
 
   # Compute module path from file path for modules
   # e.g., "/path/to/modules/home/cli/htop.nix" -> "home.cli.htop"
   # e.g., "/path/to/modules/home/cli/htop/htop.nix" -> "home.cli.htop" (dedup)
-  computeModulePath = filePath:
+  computeModulePath = lib.my.computeModulePath or (filePath:
     let
       pathStr = toString filePath;
       # Check if this is a modules module
@@ -40,7 +48,7 @@ let
         else parts;
       modulePath = lib.concatStringsSep "." dedupedParts;
     in
-    if isModulePath then modulePath else null;
+    if isModulePath then modulePath else null);
 
   # Process module directories (like modules/home) that have a default.nix
   # exporting a .modules list
@@ -76,7 +84,9 @@ let
       moduleFiles;
 
   # Build registry during import time (not module evaluation time)
-  modulesRegistry = (import ../modules/_core/registry.nix { inherit lib; }).moduleRegistry or { modules = [ ]; };
+  modulesRegistry = (import ../modules/_core/registry.nix { inherit lib inputs; }).moduleRegistry or { modules = [ ]; };
+
+  privateExtension = inputs.private-extension.dotExtension or { };
 
 in
 {
@@ -100,6 +110,8 @@ in
         # antigravity-nix exposes only packages/overlays (no darwinModules);
         # google-antigravity* are injected via overlays/additions.nix
       ]
+        ++ (privateExtension.systemModules.all or [ ])
+        ++ (privateExtension.systemModules.darwin or [ ])
         ++ mkConfigurationModules [
         ../modules/home
       ]
@@ -132,6 +144,8 @@ in
         charon-key.nixosModules.default
         sops-nix.nixosModules.sops
       ]
+        ++ (privateExtension.systemModules.all or [ ])
+        ++ (privateExtension.systemModules.linux or [ ])
         ++ mkConfigurationModules [
         ../modules/home
       ]
