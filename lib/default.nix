@@ -110,7 +110,7 @@
             if evalResult.success then
               evalResult.value
             else
-              let _ = builtins.trace "Warning: Failed to import ${toString path}: ${toString evalResult.value}" null; in null;
+              builtins.trace "Warning: Failed to import ${toString path}: ${toString evalResult.value}" null;
 
           modulesWithMeta = map
             (path:
@@ -141,7 +141,7 @@
           extFeaturesWithPaths = map
             (f:
               let
-                path = if f ? path then f.path else (if f ? name then (if hasPrefix "home." f.name then f.name else "home." + f.name) else throw "Feature in private-extension must have path or name");
+                path = f.path or (if f ? name then (if hasPrefix "home." f.name then f.name else "home." + f.name) else throw "Feature in private-extension must have path or name");
               in
               f // { inherit path; }
             )
@@ -164,7 +164,7 @@
       defaultRegistry = makeRegistry [ ];
     in
     defaultRegistry // {
-      __functor = self: extFeatures: makeRegistry extFeatures;
+      __functor = _: makeRegistry;
     };
   mkBoolOpt = default:
     mkOption {

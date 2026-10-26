@@ -4,13 +4,13 @@
 
 lib.my.mkFeature {
   description = "Chromium web browser";
-  homeModuleDarwin = { ... }: {
+  homeModuleDarwin = _: {
     programs.chromium = {
       enable = true;
       package = null; # Install Chromium via: brew install --cask chromium
     };
   };
-  homeModuleLinux = { ... }: {
+  homeModuleLinux = _: {
     programs.chromium = {
       enable = true;
       commandLineArgs = [

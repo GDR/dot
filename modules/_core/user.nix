@@ -327,7 +327,7 @@ in
 
         users = mapAttrs
           (userName: userCfg:
-            { ... }@hmArgs: {
+            hmArgs: {
               imports = lib.my.compileUserHomeModules {
                 osConfig = hmArgs.osConfig or config;
                 inherit userName userCfg featureCatalog modulesRegistry;
