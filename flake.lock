@@ -316,6 +316,18 @@
         "type": "github"
       }
     },
+    "private-extension": {
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-qUFY+RNeKb60AJ0AKlZanfta+KYQLs4L5DsRVTPNkpQ=",
+        "path": "./extensions/empty",
+        "type": "path"
+      },
+      "original": {
+        "path": "./extensions/empty",
+        "type": "path"
+      }
+    },
     "root": {
       "inputs": {
         "antigravity-nix": "antigravity-nix",
@@ -328,6 +340,7 @@
         "nix-wrapper-modules": "nix-wrapper-modules",
         "nixpkgs": "nixpkgs_2",
         "nvim-nix": "nvim-nix",
+        "private-extension": "private-extension",
         "sops-nix": "sops-nix",
         "vscode-server": "vscode-server"
       }
