@@ -49,6 +49,10 @@
       url = "github:gdr/clavis";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    private-extension = {
+      url = "path:./extensions/empty";
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, charon-key, ... }:
