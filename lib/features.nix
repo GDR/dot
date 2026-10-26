@@ -319,8 +319,13 @@ let
     , modulesRegistry ? null
     }:
     let
+      sys = osConfig.nixpkgs.system or "";
+      isDarwinHost = lib.hasSuffix "-darwin" sys || (osConfig ? system && osConfig.system ? primaryUser);
+      isLinuxHost = !isDarwinHost;
+
       enabledFeatures = resolveUserFeatures {
         inherit osConfig userName userCfg featureCatalog modulesRegistry;
+        hostPlatform = if isDarwinHost then "darwin" else "linux";
       };
 
       compileSingleFeature = feature:
@@ -339,17 +344,15 @@ let
           featureArgs = hmArgs // {
             inherit featureCfg userName osConfig;
           };
-          isLinux = pkgs.stdenv.hostPlatform.isLinux;
-          isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
         in
         lib.mkMerge [
           (if feature.homeModule != null then
             (if lib.isFunction feature.homeModule then feature.homeModule featureArgs else feature.homeModule)
            else { })
-          (if isLinux && feature.homeModuleLinux != null then
+          (if isLinuxHost && feature.homeModuleLinux != null then
             (if lib.isFunction feature.homeModuleLinux then feature.homeModuleLinux featureArgs else feature.homeModuleLinux)
            else { })
-          (if isDarwin && feature.homeModuleDarwin != null then
+          (if isDarwinHost && feature.homeModuleDarwin != null then
             (if lib.isFunction feature.homeModuleDarwin then feature.homeModuleDarwin featureArgs else feature.homeModuleDarwin)
            else { })
           (if lib.isFunction dotfilesConfig then dotfilesConfig hmArgs else dotfilesConfig)
