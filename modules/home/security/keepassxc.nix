@@ -1,11 +1,9 @@
 # KeePassXC password manager
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "KeePassXC password manager";
-  module = {
-    allSystems = {
-      home.packages = [ pkgs.keepassxc ];
-    };
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.keepassxc ];
   };
 }
