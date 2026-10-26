@@ -36,14 +36,14 @@ _: prev:
   # Pin IINA to 1.3.5 on Darwin (rollback from 1.5.0)
   iina =
     if prev.stdenv.hostPlatform.isDarwin then
-      prev.iina.overrideAttrs (_: rec {
-        version = "1.3.5";
-        src = prev.fetchurl {
-          url = "https://github.com/iina/iina/releases/download/v${version}/IINA.v${version}.dmg";
-          hash = "sha256-O4uRmfQaGMKqizDlgk0MnazMHVkXaDLqZQ9TP8vcajg=";
-        };
-      })
+      prev.iina.overrideAttrs
+        (_: rec {
+          version = "1.3.5";
+          src = prev.fetchurl {
+            url = "https://github.com/iina/iina/releases/download/v${version}/IINA.v${version}.dmg";
+            hash = "sha256-O4uRmfQaGMKqizDlgk0MnazMHVkXaDLqZQ9TP8vcajg=";
+          };
+        })
     else
       prev.iina;
 }
-
