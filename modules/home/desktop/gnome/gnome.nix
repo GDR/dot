@@ -1,45 +1,38 @@
 # GNOME desktop environment
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "GNOME desktop environment";
 
-  systemModule = {
-    nixosSystems = {
-      # X server with GDM and GNOME
+  nixosModule = {
+    services = {
+      displayManager.gdm.enable = true;
+      desktopManager.gnome.enable = true;
 
-      services = {
-        displayManager.gdm.enable = true;
-        desktopManager.gnome.enable = true;
+      xserver = {
+        enable = true;
 
-        xserver = {
-          enable = true;
-
-          # Keyboard layout
-          xkb = {
-            layout = "us,ru";
-            variant = ",mac";
-            options = "grp:alt_space_toggle";
-          };
+        # Keyboard layout
+        xkb = {
+          layout = "us,ru";
+          variant = ",mac";
+          options = "grp:alt_space_toggle";
         };
       };
-
-      # Disable GNOME SSH agent (use system ssh-agent)
-      services.gnome.gcr-ssh-agent.enable = false;
-
-      # Console keyboard layout
-      console.keyMap = "us";
     };
+
+    # Disable GNOME SSH agent (use system ssh-agent)
+    services.gnome.gcr-ssh-agent.enable = false;
+
+    # Console keyboard layout
+    console.keyMap = "us";
   };
 
-  # User-level GNOME utilities (nautilus lives in utils/nautilus.nix)
-  module = {
-    nixosSystems = {
-      home.packages = with pkgs; [
-        gnome-tweaks
-        gnome-extension-manager
-      ];
-    };
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = with pkgs; [
+      gnome-tweaks
+      gnome-extension-manager
+    ];
   };
 }
