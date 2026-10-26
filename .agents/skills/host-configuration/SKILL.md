@@ -150,7 +150,7 @@ Generate: `nixos-generate-config --show-hardware-config`
    darwinConfigurations.<hostname> = flakeHelpers.mkDarwinConfiguration ./hosts/machines/<hostname>;
    ```
 4. Pick profiles — `developer` for any machine, `desktop` for GUI, `server` for headless
-5. Add Makefile target (optional)
+5. Add `justfile` target (optional)
 
 ## SSH Keys
 
@@ -179,6 +179,6 @@ keys = [{
 
 | Host | Platform | Profiles | Rebuild command |
 |------|----------|----------|-----------------|
-| `nix-goldstar` | NixOS | developer + desktop + gaming | `make nix-goldstar` |
-| `nix-oldstar` | NixOS | server | `make nix-oldstar` |
-| `mac-brightstar` | Darwin | developer + desktop + macos | `make mac-brightstar` |
+| `nix-goldstar` | NixOS | developer + desktop + gaming | `just nix-goldstar` |
+| `nix-oldstar` | NixOS | server | `just nix-oldstar` |
+| `mac-brightstar` | Darwin | developer + desktop + macos | `just mac-brightstar` |
