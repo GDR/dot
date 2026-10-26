@@ -1,5 +1,5 @@
 # Tailscale VPN - Linux system module
-{ lib, pkgs, config, ... }@args:
+{ lib, pkgs, ... }@args:
 
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
@@ -43,12 +43,5 @@ lib.my.mkSystemModuleV2 args {
 
     # Firewall settings
     networking.firewall.checkReversePath = "loose";
-
-    # Systray app (for all enabled hostUsers)
-    home-manager.users = lib.mapAttrs
-      (name: _: {
-        home.packages = [ pkgs.tailscale-systray ];
-      })
-      (lib.filterAttrs (_: u: u.enable) config.hostUsers);
   };
 }
