@@ -39,6 +39,7 @@ in
       home.utils.obsidian.enable = true;
       # host-specific
       home.ai-tools.enable = true;
+      home.ai-tools.learnharness.enable = true;
       home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
       home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
     };
