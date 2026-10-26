@@ -38,23 +38,23 @@ let
     , nixosModule ? null
     , darwinModule ? null
     }:
-    assert lib.assertMsg (lib.isList platforms) "mkFeature: platforms must be a list of strings";
-    assert lib.assertMsg (lib.isList requires) "mkFeature: requires must be a list of strings";
-    assert lib.assertMsg (lib.isAttrs extraOptions) "mkFeature: extraOptions must be an attribute set";
-    assert lib.assertMsg (dotfiles == null || lib.isAttrs dotfiles) "mkFeature: dotfiles must be null or an attribute set";
-    assert lib.assertMsg (homeModule == null || lib.isFunction homeModule || lib.isAttrs homeModule) "mkFeature: homeModule must be null, a function, or an attribute set";
-    assert lib.assertMsg (homeModuleLinux == null || lib.isFunction homeModuleLinux || lib.isAttrs homeModuleLinux) "mkFeature: homeModuleLinux must be null, a function, or an attribute set";
-    assert lib.assertMsg (homeModuleDarwin == null || lib.isFunction homeModuleDarwin || lib.isAttrs homeModuleDarwin) "mkFeature: homeModuleDarwin must be null, a function, or an attribute set";
-    assert lib.assertMsg (nixosModule == null || lib.isFunction nixosModule || lib.isAttrs nixosModule) "mkFeature: nixosModule must be null, a function, or an attribute set";
-    assert lib.assertMsg (darwinModule == null || lib.isFunction darwinModule || lib.isAttrs darwinModule) "mkFeature: darwinModule must be null, a function, or an attribute set";
-    {
-      _type = "feature";
-      inherit description platforms requires extraOptions dotfiles
-              homeModule homeModuleLinux homeModuleDarwin nixosModule darwinModule;
-      meta = {
-        inherit description platforms requires;
+      assert lib.assertMsg (lib.isList platforms) "mkFeature: platforms must be a list of strings";
+      assert lib.assertMsg (lib.isList requires) "mkFeature: requires must be a list of strings";
+      assert lib.assertMsg (lib.isAttrs extraOptions) "mkFeature: extraOptions must be an attribute set";
+      assert lib.assertMsg (dotfiles == null || lib.isAttrs dotfiles) "mkFeature: dotfiles must be null or an attribute set";
+      assert lib.assertMsg (homeModule == null || lib.isFunction homeModule || lib.isAttrs homeModule) "mkFeature: homeModule must be null, a function, or an attribute set";
+      assert lib.assertMsg (homeModuleLinux == null || lib.isFunction homeModuleLinux || lib.isAttrs homeModuleLinux) "mkFeature: homeModuleLinux must be null, a function, or an attribute set";
+      assert lib.assertMsg (homeModuleDarwin == null || lib.isFunction homeModuleDarwin || lib.isAttrs homeModuleDarwin) "mkFeature: homeModuleDarwin must be null, a function, or an attribute set";
+      assert lib.assertMsg (nixosModule == null || lib.isFunction nixosModule || lib.isAttrs nixosModule) "mkFeature: nixosModule must be null, a function, or an attribute set";
+      assert lib.assertMsg (darwinModule == null || lib.isFunction darwinModule || lib.isAttrs darwinModule) "mkFeature: darwinModule must be null, a function, or an attribute set";
+      {
+        _type = "feature";
+        inherit description platforms requires extraOptions dotfiles
+          homeModule homeModuleLinux homeModuleDarwin nixosModule darwinModule;
+        meta = {
+          inherit description platforms requires;
+        };
       };
-    };
 
   # Generate strongly-typed option trees for categories and leaf features
   # Both options.modules.home.* and options.hostUsers.<user>.modules.home.* use this
@@ -62,10 +62,12 @@ let
     let
       featurePaths = map (f: lib.splitString "." f.path) featureCatalog;
       allPaths = (map (p: lib.splitString "." p) knownModulePaths) ++ featurePaths;
-      categoryPrefixes = lib.unique (lib.concatMap (p:
-        let len = lib.length p; in
-        lib.genList (i: lib.take (i + 1) p) (len - 1)
-      ) allPaths);
+      categoryPrefixes = lib.unique (lib.concatMap
+        (p:
+          let len = lib.length p; in
+          lib.genList (i: lib.take (i + 1) p) (len - 1)
+        )
+        allPaths);
 
       isCategory = prefix: lib.any (c: c == prefix) categoryPrefixes;
 
@@ -104,10 +106,12 @@ let
             // (matchingFeature.extraOptions or { })
             else { };
 
-          children = lib.listToAttrs (map (name: {
-            inherit name;
-            value = buildSubtree (prefix ++ [ name ]);
-          }) childNames);
+          children = lib.listToAttrs (map
+            (name: {
+              inherit name;
+              value = buildSubtree (prefix ++ [ name ]);
+            })
+            childNames);
         in
         categoryOpt // featureOpts // children;
     in
@@ -146,14 +150,17 @@ let
       revPrefixes = lib.reverseList prefixes;
 
       findSetting = modules:
-        lib.foldl' (acc: prefix:
-          if acc != null then acc
-          else
-            let
-              sub = lib.foldl' (a: p: a.${p} or { }) modules prefix;
-            in
-            sub.enable or null
-        ) null revPrefixes;
+        lib.foldl'
+          (acc: prefix:
+            if acc != null then acc
+            else
+              let
+                sub = lib.foldl' (a: p: a.${p} or { }) modules prefix;
+              in
+                sub.enable or null
+          )
+          null
+          revPrefixes;
 
       userModules = cfg.hostUsers.${userName}.modules or { };
       globalModules = cfg.modules or { };
@@ -169,7 +176,7 @@ let
     if directlyEnabled then true
     else if userSetting == false then false # User explicit opt-out wins over transitive requires
     else
-      # Check transitive requirements
+    # Check transitive requirements
       let
         registryModules =
           if modulesRegistry != null then (modulesRegistry.modules or [ ])
@@ -188,12 +195,15 @@ let
             pPrefixes = lib.genList (i: lib.take (i + 1) pParts) (lib.length pParts);
             pRevPrefixes = lib.reverseList pPrefixes;
             pFindSetting = modules:
-              lib.foldl' (acc: prefix:
-                if acc != null then acc
-                else
-                  let sub = lib.foldl' (a: part: a.${part} or { }) modules prefix; in
-                  sub.enable or null
-              ) null pRevPrefixes;
+              lib.foldl'
+                (acc: prefix:
+                  if acc != null then acc
+                  else
+                    let sub = lib.foldl' (a: part: a.${part} or { }) modules prefix; in
+                      sub.enable or null
+                )
+                null
+                pRevPrefixes;
             uSet = pFindSetting userModules;
             gSet = pFindSetting globalModules;
           in
@@ -203,12 +213,14 @@ let
 
         directlyEnabledPaths = lib.filter (p: p != path && isPathDirectlyEnabled p) allKnownPaths;
 
-        isRequired = lib.any (parentPath:
-          let
-            deps = moduleRegistryHelper.resolveDeps moduleMap parentPath [ ];
-          in
-          lib.elem path deps
-        ) directlyEnabledPaths;
+        isRequired = lib.any
+          (parentPath:
+            let
+              deps = moduleRegistryHelper.resolveDeps moduleMap parentPath [ ];
+            in
+            lib.elem path deps
+          )
+          directlyEnabledPaths;
       in
       isRequired;
 
@@ -234,7 +246,8 @@ let
         else if osConfig ? _modulesRegistry && osConfig._modulesRegistry != null then (osConfig._modulesRegistry.features or osConfig._modulesRegistry.featureCatalog or [ ])
         else [ ];
     in
-    lib.filter (f:
+    lib.filter
+      (f:
       (lib.elem hostPlatform f.platforms)
       && isFeatureEnabledForUser {
         config = osConfig;
@@ -242,7 +255,8 @@ let
         featurePath = f.path;
         featureCatalog = catalog;
       }
-    ) catalog;
+      )
+      catalog;
 
   # Single-user dotfiles compilation (scoped strictly to the user who enabled the feature)
   compileUserDotfiles =
@@ -288,7 +302,7 @@ let
         envDotfilesDir = osConfig.environment.variables.DOTFILES_DIR or null;
         repoPath =
           if envDotfilesDir != null
-             && (lib.hasPrefix "/home/${userName}/" envDotfilesDir || lib.hasPrefix "/Users/${userName}/" envDotfilesDir)
+            && (lib.hasPrefix "/home/${userName}/" envDotfilesDir || lib.hasPrefix "/Users/${userName}/" envDotfilesDir)
           then envDotfilesDir
           else defaultRepoPath;
 
@@ -348,13 +362,13 @@ let
         lib.mkMerge [
           (if feature.homeModule != null then
             (if lib.isFunction feature.homeModule then feature.homeModule featureArgs else feature.homeModule)
-           else { })
+          else { })
           (if isLinuxHost && feature.homeModuleLinux != null then
             (if lib.isFunction feature.homeModuleLinux then feature.homeModuleLinux featureArgs else feature.homeModuleLinux)
-           else { })
+          else { })
           (if isDarwinHost && feature.homeModuleDarwin != null then
             (if lib.isFunction feature.homeModuleDarwin then feature.homeModuleDarwin featureArgs else feature.homeModuleDarwin)
-           else { })
+          else { })
           (if lib.isFunction dotfilesConfig then dotfilesConfig hmArgs else dotfilesConfig)
         ];
     in
@@ -381,19 +395,22 @@ let
         else if config ? _modulesRegistry && config._modulesRegistry != null then (config._modulesRegistry.features or config._modulesRegistry.featureCatalog or [ ])
         else [ ];
     in
-    lib.mkMerge (map (feature:
+    lib.mkMerge (map
+      (feature:
       let
         pathParts = lib.splitString "." feature.path;
         globalCfg = lib.foldl' (acc: p: acc.${p} or { }) (config.modules or { }) pathParts;
 
-        selectedUsers = lib.filter (u:
-          isFeatureEnabledForUser {
-            inherit config system modulesRegistry;
-            userName = u;
-            featurePath = feature.path;
-            featureCatalog = catalog;
-          }
-        ) allUserNames;
+        selectedUsers = lib.filter
+          (u:
+            isFeatureEnabledForUser {
+              inherit config system modulesRegistry;
+              userName = u;
+              featurePath = feature.path;
+              featureCatalog = catalog;
+            }
+          )
+          allUserNames;
 
         isGloballyEnabled = (globalCfg.enable or null) == true;
         shouldActivate = (selectedUsers != [ ]) || isGloballyEnabled;
@@ -407,13 +424,14 @@ let
         lib.mkMerge [
           (if isLinux && feature.nixosModule != null then
             (if lib.isFunction feature.nixosModule then feature.nixosModule systemArgs else feature.nixosModule)
-           else { })
+          else { })
           (if isDarwin && feature.darwinModule != null then
             (if lib.isFunction feature.darwinModule then feature.darwinModule systemArgs else feature.darwinModule)
-           else { })
+          else { })
         ]
       )
-    ) catalog);
+      )
+      catalog);
 
 in
 {

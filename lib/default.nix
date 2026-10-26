@@ -138,11 +138,14 @@
           discoveredFeatures = filter (f: f != null) (map (m: m.feature) modulesWithMeta);
 
           extFeatures = if isList extFeaturesArg then extFeaturesArg else [ ];
-          extFeaturesWithPaths = map (f:
-            let
-              path = if f ? path then f.path else (if f ? name then (if hasPrefix "home." f.name then f.name else "home." + f.name) else throw "Feature in private-extension must have path or name");
-            in f // { inherit path; }
-          ) extFeatures;
+          extFeaturesWithPaths = map
+            (f:
+              let
+                path = if f ? path then f.path else (if f ? name then (if hasPrefix "home." f.name then f.name else "home." + f.name) else throw "Feature in private-extension must have path or name");
+              in
+              f // { inherit path; }
+            )
+            extFeatures;
 
           repoFeaturePaths = map (f: f.path) discoveredFeatures;
           extFeaturePaths = map (f: f.path) extFeaturesWithPaths;

@@ -18,7 +18,7 @@ let
         else imported;
     in
     if (originalModule._type or "") == "feature" then
-      # Features are handled centrally by the feature compiler in user.nix
+    # Features are handled centrally by the feature compiler in user.nix
       { }
     else
       originalModule;

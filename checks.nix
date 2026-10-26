@@ -3,16 +3,18 @@
 let
   user = "dgarifullin";
   hasPackage = nameOrPrefix: packages:
-    lib.any (package:
-      let
-        pname = package.pname or "";
-        name = package.name or "";
-      in
-      pname == nameOrPrefix ||
-      lib.hasPrefix "${nameOrPrefix}-" name ||
-      lib.hasPrefix nameOrPrefix name ||
-      name == nameOrPrefix
-    ) packages;
+    lib.any
+      (package:
+        let
+          pname = package.pname or "";
+          name = package.name or "";
+        in
+        pname == nameOrPrefix ||
+        lib.hasPrefix "${nameOrPrefix}-" name ||
+        lib.hasPrefix nameOrPrefix name ||
+        name == nameOrPrefix
+      )
+      packages;
 
   neovimConfig = inputs.nvim-nix.checks.${system}.neovim-config;
 
