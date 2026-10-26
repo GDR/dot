@@ -1,9 +1,10 @@
-{ lib, pkgs, ... }@args:
+# VLC media player
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "VLC media player";
-  module = {
-    nixosSystems.home.packages = [ pkgs.vlc ];
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.vlc ];
   };
 }
