@@ -1,10 +1,10 @@
 # Network manager applet
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Network manager tray applet";
-  module = {
-    nixosSystems.home.packages = [ pkgs.networkmanagerapplet ];
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.networkmanagerapplet ];
   };
 }
