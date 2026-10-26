@@ -1,30 +1,25 @@
 # Lutris gaming platform - Linux only
-{ lib, pkgs, ... }@args: with lib;
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Lutris gaming platform";
 
-  module = cfg: {
-    nixosSystems = {
-      programs.lutris.enable = true;
-      programs.lutris = {
-        extraPackages = with pkgs; [
-          gamemode
-        ];
-      };
+  homeModuleLinux = { pkgs, ... }: {
+    programs.lutris.enable = true;
+    programs.lutris.extraPackages = with pkgs; [
+      gamemode
+    ];
 
-      # XDG portal for file dialogs, OpenURI (OAuth callbacks), etc.
-      # Same pattern as hyprland: gtk fallback since 1.17.0 requires explicit portals.conf
-      xdg.portal = {
-        enable = true;
-        extraPortals = with pkgs; [ xdg-desktop-portal-gtk ];
-        config.common.default = "gtk";
-      };
-
-      home.packages = with pkgs; [
-        wine
-      ];
+    # XDG portal for file dialogs, OpenURI (OAuth callbacks), etc.
+    xdg.portal = {
+      enable = true;
+      extraPortals = with pkgs; [ xdg-desktop-portal-gtk ];
+      config.common.default = "gtk";
     };
+
+    home.packages = with pkgs; [
+      wine
+    ];
   };
 }
