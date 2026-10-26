@@ -118,8 +118,10 @@ Path follows directory structure: `modules/systems/<platform>/<module>` → `mod
 lib.my.mkFeature {
   description = "Feature description";
   platforms = [ "linux" "darwin" ];  # Supported platforms
-  requires = [ "home.shell.zsh" ];   # Dependencies auto-enabled per user
-  extraOptions = { ... };            # Per-user typed extra options
+  requires = [ "home.shell.zsh" ];   # Hard dependencies auto-enabled per user
+  recommends = [ ];                  # Soft dependencies (overridable by enable = false)
+  homeOptions = { ... };             # Per-user typed Home Manager options
+  systemOptions = { ... };           # System-wide typed options
 
   dotfiles = {                       # Optional dotfiles symlinking
     path = "app";
@@ -140,7 +142,7 @@ Home-manager configuration is scoped strictly per-user to users who enable the f
 
 ## Key Helpers (lib/default.nix)
 
-- `lib.my.mkFeature { description?, platforms?, requires?, extraOptions?, dotfiles?, homeModule?, homeModuleLinux?, homeModuleDarwin?, nixosModule?, darwinModule? }` — User feature descriptors
+- `lib.my.mkFeature { description?, platforms?, requires?, recommends?, homeOptions?, systemOptions?, dotfiles?, homeModule?, homeModuleLinux?, homeModuleDarwin?, nixosModule?, darwinModule? }` — User feature descriptors
 - `lib.my.mkSystemModuleV2 args { namespace, module, moduleLinux?, moduleDarwin?, ... }` — System modules
 - `lib.my.shouldEnableModule { config, modulePath }` — Check hierarchical enable
 - `lib.my.isFeatureEnabledForUser { config, userName, modulePath }` — Check per-user feature enable

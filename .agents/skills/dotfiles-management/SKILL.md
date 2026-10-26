@@ -35,16 +35,16 @@ lib.my.mkDotfilesSymlink {
 - Custom target: set `target` explicitly (e.g., `"~/.tmux"`)
 - Requires `DOTFILES_DIR` env variable in host config
 
-## Using in mkModuleV2
+## Using in mkFeature
 
-Preferred way — use the `dotfiles` parameter:
+Preferred way — use the `dotfiles` parameter in `lib.my.mkFeature`:
 
 ```nix
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Ghostty terminal";
 
-  module = {
-    allSystems.home.packages = [ pkgs.ghostty ];
+  homeModule = { pkgs, ... }: {
+    programs.ghostty.enable = true;
   };
 
   dotfiles = {
@@ -87,5 +87,5 @@ Without it, `mkDotfilesSymlink` throws an error.
 
 1. Create `dotfiles/` directory next to the module `.nix` file
 2. Put config files inside
-3. Add `dotfiles` parameter to `mkModuleV2` call
+3. Add `dotfiles` parameter to `mkFeature` call
 4. No rebuild needed for future config edits — just edit files in `dotfiles/`

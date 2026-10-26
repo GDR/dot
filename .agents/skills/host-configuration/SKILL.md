@@ -31,11 +31,12 @@ in
       isDefault = true;
     }];
     ssh = [
-      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
+      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraConfig.AddKeysToAgent = "yes"; }
       { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
     ] ++ userDefaults.ssh.knownHosts;
     modules = lib.recursiveUpdate profiles.userModules {
       home.desktop.hyprland.enable = true;  # WM choice is host-specific
+      home.editors.antigravity = userDefaults.antigravity // { enable = true; };
     };
     sudo.nopasswd = true;                   # remove if not needed
   };
@@ -52,7 +53,6 @@ in
     graphics.nvidia   = { enable = true; open = true; };
   };
 
-  modules.home.editors.antigravity = userDefaults.antigravity;
   time.timeZone = "Europe/Moscow";
   theme.name = "catppuccin-macchiato";
 }
@@ -78,11 +78,12 @@ in
     enable = true;
     keys = [{ name = "<hostname>"; type = "ed25519"; purpose = [ "git" "ssh" ]; isDefault = true; }];
     ssh = [
-      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
+      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraConfig.AddKeysToAgent = "yes"; }
       { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
     ] ++ userDefaults.ssh.knownHosts;
     modules = lib.recursiveUpdate profiles.userModules {
       home.ai-tools.enable = true;
+      home.editors.antigravity = userDefaults.antigravity // { enable = true; };
     };
   };
 
@@ -95,7 +96,6 @@ in
     openssh  = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
   };
 
-  modules.home.editors.antigravity = userDefaults.antigravity;
   time.timeZone = "Europe/Moscow";
   theme.name = "rose-pine-moon";
 }
@@ -145,9 +145,9 @@ Generate: `nixos-generate-config --show-hardware-config`
 2. Create `hosts/machines/<hostname>/hardware-configuration.nix`
 3. Add to `flake.nix`:
    ```nix
-   nixosConfigurations.<hostname> = flakeHelpers.mkNixosConfiguration ./hosts/machines/<hostname>;
+   nixosConfigurations.<hostname> = flakeHelpers.mkNixosConfiguration "<hostname>" ./hosts/machines/<hostname>;
    # or for Darwin:
-   darwinConfigurations.<hostname> = flakeHelpers.mkDarwinConfiguration ./hosts/machines/<hostname>;
+   darwinConfigurations.<hostname> = flakeHelpers.mkDarwinConfiguration "<hostname>" ./hosts/machines/<hostname>;
    ```
 4. Pick profiles — `developer` for any machine, `desktop` for GUI, `server` for headless
 5. Add `justfile` target (optional)
