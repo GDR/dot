@@ -1,60 +1,7 @@
 # Antigravity IDE & standalone Antigravity 2.0
-# Tracks latest via the upstream antigravity-nix flake (auto-updates 3x/week).
-#
-# On NixOS without a keyring daemon (typical on bare Hyprland), Electron's default
-# credential backend silently fails — auth tokens are never saved, so every launch
-# looks like a fresh install: no login, no conversation history.
-# --password-store=basic tells Electron to store credentials as plain text inside
-# the app's --user-data-dir (~/.antigravity-ide), which persists normally.
-#
-# Config management: when enabled, also manages ~/.gemini/config/AGENTS.md
-# and ~/.gemini/antigravity/mcp_config.json (global MCP servers).
-{ lib, pkgs, config, ... }@args:
+{ lib, ... }:
 
-let
-  # Wrap Linux binaries to force plain-text credential storage.
-  ideLinux = pkgs.symlinkJoin {
-    name = "google-antigravity-ide-with-basic-store";
-    paths = [ pkgs.google-antigravity-ide ];
-    buildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/antigravity-ide \
-        --add-flags "--password-store=basic" \
-        --add-flags "--force-color-profile=srgb"
-    '';
-  };
-
-  antigravityLinux = pkgs.symlinkJoin {
-    name = "google-antigravity-with-basic-store";
-    paths = [ pkgs.google-antigravity ];
-    buildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/antigravity \
-        --add-flags "--password-store=basic" \
-        --add-flags "--force-color-profile=srgb"
-    '';
-  };
-
-  antigravityWrapper = pkgs.writeShellScriptBin "antigravity" ''
-    exec open -a "${pkgs.google-antigravity}/Applications/Antigravity.app" --args --password-store=basic "$@"
-  '';
-
-  antigravityIdeWrapper = pkgs.writeShellScriptBin "antigravity-ide" ''
-    exec open -a "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app" --args --password-store=basic "$@"
-  '';
-
-
-  # cfg read via config.modules path-walking so it's available at the top-level let
-  # (for hasRules/hasMcp guards used in allSystems.home.file below).
-  modulePath = args._modulePath;
-  pathParts = lib.splitString "." modulePath;
-  cfg = lib.foldl' (acc: part: acc.${part} or { }) config.modules pathParts;
-
-  hasRules = (cfg.rules or "") != "";
-  hasMcp = (cfg.mcpServers or { }) != { };
-
-in
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Antigravity IDE & standalone Antigravity 2.0";
 
   extraOptions = {
@@ -89,38 +36,80 @@ lib.my.mkModuleV2 args {
     };
   };
 
-  # module without cfg parameter — avoids the recursion entirely.
-  # Package installation doesn't depend on cfg values.
-  module = {
-    nixosSystems.home.packages = [
-      ideLinux
-      antigravityLinux
-      pkgs.google-antigravity-cli
-      pkgs.mcp-nixos # nixos MCP server — called directly (avoids slow nix run github:...)
-    ];
+  homeModule = { pkgs, lib, featureCfg, ... }:
+    let
+      hasRules = (featureCfg.rules or "") != "";
+      hasMcp = (featureCfg.mcpServers or { }) != { };
+    in
+    {
+      programs.antigravity-cli = {
+        enable = true;
+      };
 
-    darwinSystems.home.packages = [
-      antigravityWrapper
-      antigravityIdeWrapper
-      pkgs.google-antigravity-ide
-      pkgs.google-antigravity
-      pkgs.google-antigravity-cli
-      pkgs.mcp-nixos
-    ];
-
-    allSystems.programs.antigravity-cli = {
-      enable = true;
+      home.file = lib.mkMerge [
+        (lib.mkIf hasRules {
+          ".gemini/config/AGENTS.md".text = featureCfg.rules;
+        })
+        (lib.mkIf hasMcp {
+          ".gemini/antigravity/mcp_config.json".text =
+            builtins.toJSON { inherit (featureCfg) mcpServers; };
+          ".gemini/config/mcp_config.json".text =
+            builtins.toJSON { inherit (featureCfg) mcpServers; };
+        })
+      ];
     };
 
-    # Config files — routed to all enabled users automatically via home.* auto-routing
-    allSystems.home.file = lib.mkMerge [
-      (lib.mkIf hasRules { ".gemini/config/AGENTS.md".text = cfg.rules; })
-      (lib.mkIf hasMcp {
-        ".gemini/antigravity/mcp_config.json".text =
-          builtins.toJSON { inherit (cfg) mcpServers; };
-        ".gemini/config/mcp_config.json".text =
-          builtins.toJSON { inherit (cfg) mcpServers; };
-      })
-    ];
-  };
+  homeModuleLinux = { pkgs, ... }:
+    let
+      ideLinux = pkgs.symlinkJoin {
+        name = "google-antigravity-ide-with-basic-store";
+        paths = [ pkgs.google-antigravity-ide ];
+        buildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/antigravity-ide \
+            --add-flags "--password-store=basic" \
+            --add-flags "--force-color-profile=srgb"
+        '';
+      };
+
+      antigravityLinux = pkgs.symlinkJoin {
+        name = "google-antigravity-with-basic-store";
+        paths = [ pkgs.google-antigravity ];
+        buildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram $out/bin/antigravity \
+            --add-flags "--password-store=basic" \
+            --add-flags "--force-color-profile=srgb"
+        '';
+      };
+    in
+    {
+      home.packages = [
+        ideLinux
+        antigravityLinux
+        pkgs.google-antigravity-cli
+        pkgs.mcp-nixos
+      ];
+    };
+
+  homeModuleDarwin = { pkgs, ... }:
+    let
+      antigravityWrapper = pkgs.writeShellScriptBin "antigravity" ''
+        exec open -a "${pkgs.google-antigravity}/Applications/Antigravity.app" --args --password-store=basic "$@"
+      '';
+
+      antigravityIdeWrapper = pkgs.writeShellScriptBin "antigravity-ide" ''
+        exec open -a "${pkgs.google-antigravity-ide}/Applications/Antigravity IDE.app" --args --password-store=basic "$@"
+      '';
+    in
+    {
+      home.packages = [
+        antigravityWrapper
+        antigravityIdeWrapper
+        pkgs.google-antigravity-ide
+        pkgs.google-antigravity
+        pkgs.google-antigravity-cli
+        pkgs.mcp-nixos
+      ];
+    };
 }
