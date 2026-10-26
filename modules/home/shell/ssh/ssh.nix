@@ -42,7 +42,7 @@ lib.my.mkFeature {
 
       # Clavis SSH Agent integration (macOS-only; guard against home.security.enable cascade on Linux)
       clavisModuleEnabled = lib.my.isFeatureEnabledForUser {
-        inherit (osConfig) config;
+        config = osConfig;
         inherit userName;
         modulePath = "home.security.clavis";
       };
