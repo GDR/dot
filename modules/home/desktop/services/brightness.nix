@@ -1,10 +1,10 @@
 # Brightness control
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Brightness control (brightnessctl)";
-  module = {
-    nixosSystems.home.packages = [ pkgs.brightnessctl ];
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.brightnessctl ];
   };
 }
