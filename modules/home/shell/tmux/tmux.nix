@@ -1,14 +1,14 @@
 # Tmux terminal multiplexer
-{ lib, config, pkgs, ... }@args:
+{ lib, ... }:
 
-let
-  t = (lib.my.getTheme config).roles;
-in
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Tmux terminal multiplexer";
 
-  module = {
-    allSystems = {
+  homeModule = { pkgs, osConfig, lib, ... }:
+    let
+      t = (lib.my.getTheme osConfig).roles;
+    in
+    {
       programs.tmux = {
         enable = false;
         shell = "${pkgs.zsh}/bin/zsh";
@@ -54,7 +54,7 @@ lib.my.mkModuleV2 args {
           # ── Window ────────────────────────────────────────────────────────
           bind c new-window -c "#{pane_current_path}"
 
-          # ── Status bar (theme: ${(lib.my.getTheme config).displayName}) ──
+          # ── Status bar (theme: ${(lib.my.getTheme osConfig).displayName}) ──
           set -g status-style 'bg=${t.background} fg=${t.foreground}'
           set -g status-left '#[fg=${t.background},bg=${t.accent},bold] #S '
           set -g status-right '#[fg=${t.foreground}] %H:%M '
@@ -67,7 +67,4 @@ lib.my.mkModuleV2 args {
         '';
       };
     };
-  };
-  # Note: no dotfiles key — programs.tmux manages ~/.config/tmux/tmux.conf directly.
-  # Adding a dir-level dotfiles symlink here would conflict with programs.tmux output.
 }
