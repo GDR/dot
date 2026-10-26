@@ -5,7 +5,7 @@ lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Steam gaming platform with Gamescope support";
 
-  extraOptions = {
+  systemOptions = {
     enableGamescope = lib.mkOption {
       default = true;
       type = lib.types.bool;

@@ -4,7 +4,7 @@
 lib.my.mkFeature {
   description = "Antigravity IDE & standalone Antigravity 2.0";
 
-  extraOptions = {
+  homeOptions = {
     rules = lib.mkOption {
       type = lib.types.lines;
       default = ''

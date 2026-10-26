@@ -5,7 +5,7 @@ lib.my.mkFeature {
   platforms = [ "linux" "darwin" ];
   description = "Zsh shell configuration with oh-my-zsh and zplug";
 
-  extraOptions = {
+  homeOptions = {
     showHostname = lib.mkOption {
       default = true;
       type = lib.types.bool;
