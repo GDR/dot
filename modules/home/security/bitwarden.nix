@@ -1,17 +1,14 @@
 # Bitwarden - secure password manager
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Bitwarden password manager";
-  module = {
-    # Darwin: use Homebrew cask to avoid nixpkgs compiler-rt build chain
-    darwinSystems = {
-      homebrew.casks = [ "bitwarden" ];
-    };
 
-    # Linux: use nixpkgs package
-    nixosSystems = {
-      home.packages = [ pkgs.bitwarden-desktop ];
-    };
+  darwinModule = {
+    homebrew.casks = [ "bitwarden" ];
+  };
+
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.bitwarden-desktop ];
   };
 }
