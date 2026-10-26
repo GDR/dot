@@ -57,17 +57,52 @@ let
       # bob receives pamixer/pavucontrol (via transitive requires audio)
       assert hasPackage "pamixer" bobPkgs;
       assert hasPackage "pavucontrol" bobPkgs;
-      # bob does NOT receive telegram-desktop, google-antigravity-ide, .gemini/antigravity/mcp_config.json, or docker group
+      # bob does NOT receive telegram-desktop, google-antigravity-ide, .gemini/antigravity/mcp_config.json, docker, wheel, or trusted-users
       assert !(hasPackage "telegram-desktop" bobPkgs);
       assert !(hasPackage "google-antigravity" bobPkgs);
       assert !(bobFiles ? ".gemini/antigravity/mcp_config.json");
       assert !(lib.elem "docker" bobGroups);
-      # dgarifullin retains all of their packages, configs, and groups
+      assert !(lib.elem "wheel" bobGroups);
+      assert !(lib.elem "bob" testHost.config.nix.settings.trusted-users);
+      # dgarifullin retains all of their packages, configs, groups, and trusted-users
       assert hasPackage "htop" dgarifullinPkgs;
       assert hasPackage "telegram-desktop" dgarifullinPkgs;
       assert (dgarifullinFiles ? ".gemini/antigravity/mcp_config.json");
       assert (lib.elem "docker" dgarifullinGroups);
+      assert (lib.elem "wheel" dgarifullinGroups);
+      assert (lib.elem user testHost.config.nix.settings.trusted-users);
       pkgs.runCommand "multi-user-isolation-check" { } "touch $out";
+
+    scoped-options-and-requires =
+      let
+        testHost = self.nixosConfigurations.nix-goldstar.extendModules {
+          modules = [
+            {
+              modules.home.games.steam.remotePlayOpenFirewall = lib.mkForce false;
+              hostUsers.${user}.modules.home.editors.antigravity.rules = lib.mkForce "Custom per-user rules";
+            }
+          ];
+        };
+        rulesText = testHost.config.home-manager.users.${user}.home.file.".gemini/config/AGENTS.md".text;
+        conflictHost = self.nixosConfigurations.nix-goldstar.extendModules {
+          modules = [
+            {
+              hostUsers.bob = {
+                enable = true;
+                modules = {
+                  home.games.soundpad.enable = true;
+                  home.desktop.services.audio.enable = false;
+                };
+              };
+            }
+          ];
+        };
+        conflictEval = builtins.tryEval (builtins.deepSeq conflictHost.config.home-manager.users.bob.home.packages true);
+      in
+      assert testHost.config.programs.steam.remotePlay.openFirewall == false;
+      assert rulesText == "Custom per-user rules\n" || rulesText == "Custom per-user rules";
+      assert !conflictEval.success;
+      pkgs.runCommand "scoped-options-and-requires-check" { } "touch $out";
 
     cascade-child-opt-out =
       let
