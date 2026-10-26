@@ -1,14 +1,11 @@
 # Gemini CLI - Google's AI coding assistant
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "Gemini CLI - Google's AI coding assistant";
-  module = {
-    allSystems = {
-      programs.antigravity-cli = {
-        enable = true;
-      };
+  homeModule = { ... }: {
+    programs.antigravity-cli = {
+      enable = true;
     };
   };
 }
