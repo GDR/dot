@@ -1,10 +1,9 @@
 # qBittorrent torrent client
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "qBittorrent torrent client";
-  module = {
-    allSystems.home.packages = [ pkgs.qbittorrent ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.qbittorrent ];
   };
 }
