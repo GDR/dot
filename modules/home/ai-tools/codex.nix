@@ -1,11 +1,10 @@
 # Codex - OpenAI's AI coding agent
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "Codex - OpenAI's AI coding agent CLI";
-  module = {
-    allSystems.programs.codex = {
+  homeModule = { ... }: {
+    programs.codex = {
       enable = true;
     };
   };
