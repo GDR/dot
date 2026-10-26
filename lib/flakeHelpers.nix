@@ -5,10 +5,9 @@
 let
   inherit (inputs) nixpkgs nix-darwin home-manager vscode-server hardware charon-key sops-nix;
 
-  # Helper to wrap a module file and filter out 'meta' attribute
-  # NixOS modules don't allow arbitrary top-level attributes
-  # Accept all possible module arguments and forward them
-  # computedModulePath is passed for modules
+  # Helper to wrap a module file and pass computed _modulePath
+  # Features in modules/home are compiled centrally by the feature compiler in user.nix, returning { }
+  # System modules in modules/systems are passed through directly
   wrapModuleFile = filePath: computedModulePath: { config ? null, options ? null, pkgs ? null, lib ? null, system ? null, inputs ? null, overlays ? null, home-manager ? null, hardware ? null, nixpkgs ? null, ... }@args:
     let
       # Import the actual module with all arguments plus computed path
@@ -19,12 +18,10 @@ let
         else imported;
     in
     if (originalModule._type or "") == "feature" then
-      # Migrated feature: handled centrally by the feature compiler in user.nix!
-      # Returning { } ensures NixOS module system does not reject feature attributes.
+      # Features are handled centrally by the feature compiler in user.nix
       { }
     else
-      # Filter out meta - keep everything else
-      lib.filterAttrs (name: _: name != "meta") originalModule;
+      originalModule;
 
   # Compute module path from file path for modules
   # e.g., "/path/to/modules/home/cli/htop.nix" -> "home.cli.htop"
