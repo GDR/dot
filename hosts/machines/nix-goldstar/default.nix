@@ -51,7 +51,6 @@ in
       # host-specific
       home.browsers.vivaldi.enable = true;
       home.desktop = {
-        gnome.enable = true;
         hyprland.enable = true;
       };
       home.editors.neovim.enable = true;
