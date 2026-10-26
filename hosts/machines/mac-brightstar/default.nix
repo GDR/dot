@@ -75,7 +75,6 @@ in
   modules.system.all = {
     nix.settings.enable = true;
     nix.gc.enable = true;
-    shell.git.enable = true;
     shell.ssh.enable = true;
     sops.enable = true;
     # fonts.enable = true;  # disabled on Darwin

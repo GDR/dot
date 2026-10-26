@@ -91,7 +91,6 @@ in
   };
 
   modules.system.all = {
-    shell.git.enable = true;
     shell.ssh.enable = true;
   };
 
