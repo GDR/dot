@@ -1,13 +1,10 @@
 # Cursor IDE - AI-powered code editor
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "Cursor IDE - AI-powered code editor";
-  module = {
-    allSystems = {
-      programs.cursor.enable = true;
-      home.packages = [ pkgs.cursor-cli ];
-    };
+  homeModule = { pkgs, ... }: {
+    programs.cursor.enable = true;
+    home.packages = [ pkgs.cursor-cli ];
   };
 }
