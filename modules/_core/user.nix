@@ -20,9 +20,16 @@ let
     if modulesRegistry != null then map (m: m.path) (modulesRegistry.allModules or modulesRegistry.modules or [ ])
     else [ ];
 
-  generatedFeatureOptions = lib.my.buildFeatureOptionTree {
+  userFeatureOptions = lib.my.buildFeatureOptionTree {
     inherit featureCatalog;
     knownModulePaths = allKnownModulePaths;
+    scope = "user";
+  };
+
+  systemFeatureOptions = lib.my.buildFeatureOptionTree {
+    inherit featureCatalog;
+    knownModulePaths = allKnownModulePaths;
+    scope = "system";
   };
 
   # SSH key submodule
@@ -89,7 +96,7 @@ let
 
       # SSH configuration
       ssh = mkOption {
-        type = types.listOf (types.submodule {
+        type = types.listOf (types.submodule ({ config, ... }: {
           options = {
             host = mkOption {
               type = types.str;
@@ -120,13 +127,21 @@ let
               default = null;
               description = "Actual hostname/IP address";
             };
-            extraOptions = mkOption {
+            extraConfig = mkOption {
               type = types.attrsOf types.str;
               default = { };
               description = "Additional SSH options (e.g., AddKeysToAgent, Compression)";
             };
+            extraOptions = mkOption {
+              type = types.attrsOf types.str;
+              default = { };
+              description = "Deprecated alias for extraConfig";
+            };
           };
-        });
+          config = {
+            extraConfig = mkIf (config.extraOptions != { }) config.extraOptions;
+          };
+        }));
         default = [ ];
         description = "SSH host configurations";
       };
@@ -180,20 +195,21 @@ let
 
       extraGroups = mkOption {
         type = types.listOf types.str;
-        default = [ "wheel" ];
+        default = [ ];
         description = "Extra groups for the user (Linux only)";
+      };
+
+      trustedNixUser = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether to add this user to nix.settings.trusted-users";
       };
 
       # Per-user module configuration (hierarchical enables)
       # Enable at any level: home.browsers.enable (all browsers) or home.browsers.vivaldi.enable (specific)
       modules = mkOption {
-        type = types.submoduleWith {
-          modules = [
-            {
-              freeformType = types.attrsOf types.anything;
-              options = generatedFeatureOptions;
-            }
-          ];
+        type = types.submodule {
+          options = userFeatureOptions;
         };
         default = { };
         description = ''
@@ -226,7 +242,7 @@ let
 
 in
 {
-  options.modules = generatedFeatureOptions;
+  options.modules = systemFeatureOptions;
 
   options._modulesRegistry = mkOption {
     internal = true;
@@ -314,7 +330,7 @@ in
 
       # Add users to nix trusted/allowed users
       nix.settings = {
-        trusted-users = [ "root" ] ++ (attrNames enabledUsers);
+        trusted-users = [ "root" ] ++ (attrNames (filterAttrs (_: u: u.trustedNixUser) enabledUsers));
         allowed-users = [ "root" ] ++ (attrNames enabledUsers);
       };
 

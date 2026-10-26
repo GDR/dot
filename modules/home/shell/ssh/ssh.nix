@@ -18,7 +18,7 @@ let
           Port = entry.port;
         } // lib.optionalAttrs (entry.hostname != null) {
           Hostname = entry.hostname;
-        } // entry.extraOptions;
+        } // (entry.extraConfig or { });
     in
     lib.listToAttrs (map
       (entry: {

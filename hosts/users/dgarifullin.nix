@@ -11,6 +11,7 @@
     email = "gosugdr@gmail.com";
     github = "gdr";
     extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
+    trustedNixUser = true;
     uid = 1000;
   };
 
