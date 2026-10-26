@@ -1,16 +1,11 @@
 # SSH client configuration - reads keys and config from hostUsers
 # User-level module (per-user SSH config)
-{ lib, config, pkgs, ... }@args:
+{ lib, ... }:
 
 let
-  # Get enabled users
-  enabledUsers = lib.filterAttrs (_: u: u.enable) (config.hostUsers or { });
-
   # Convert SSH array to matchBlocks attrs format
   sshArrayToMatchBlocks = userName: sshArray:
     let
-      # Convert a single SSH host entry to a settings block
-      # Uses upstream OpenSSH directive names as required by programs.ssh.settings
       sshEntryToSettingsBlock = entry:
         lib.optionalAttrs (entry.user != null)
           {
@@ -25,17 +20,19 @@ let
           Hostname = entry.hostname;
         } // entry.extraOptions;
     in
-    # Convert array to attrs: [{ host = "*"; ... }] -> { "*" = { ... }; }
     lib.listToAttrs (map
       (entry: {
         name = entry.host;
         value = sshEntryToSettingsBlock entry;
       })
       sshArray);
+in
+lib.my.mkFeature {
+  description = "SSH client configuration (reads keys and config from hostUsers)";
 
-  # Build SSH config for a user
-  mkUserSSHConfig = pkgs: userName: userCfg:
+  homeModule = { config, osConfig, pkgs, lib, userName, ... }:
     let
+      userCfg = osConfig.hostUsers.${userName} or { };
       sshArray = userCfg.ssh or [ ];
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
       baseSettings = sshArrayToMatchBlocks userName sshArray;
@@ -44,7 +41,11 @@ let
       homePrefix = if isDarwin then "/Users" else "/home";
 
       # Clavis SSH Agent integration (macOS-only; guard against home.security.enable cascade on Linux)
-      clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
+      clavisModuleEnabled = lib.my.isFeatureEnabledForUser {
+        inherit (osConfig) config;
+        inherit userName;
+        modulePath = "home.security.clavis";
+      };
       clavisCfg = userCfg.clavisAgent or { };
       clavisEnabled = isDarwin && ((clavisCfg.enable or false) || clavisModuleEnabled);
       defaultClavisSocket = "${homePrefix}/${userName}/.ssh/clavis.sock";
@@ -54,7 +55,7 @@ let
       bwCfg = userCfg.bitwardenSshAgent or { };
       bwEnabled = bwCfg.enable or false;
       defaultBwSocket =
-        if pkgs.stdenv.hostPlatform.isDarwin
+        if isDarwin
         then "~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
         else "~/.bitwarden/ssh-agent.sock";
       bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;
@@ -76,8 +77,6 @@ let
 
       baseControlSettings = {
         "*" = {
-          # ControlMaster = "auto";
-          # ControlPath = "~/.ssh/sockets/%r@%h:%p";
           IdentitiesOnly = if agentEnabled then "no" else "yes";
           AddKeysToAgent = if agentEnabled then "no" else "yes";
         } // lib.optionalAttrs (defaultIdentityFile != null) {
@@ -88,14 +87,12 @@ let
         };
       };
 
-      # Inject ControlMaster & IdentityAgent into '*' host setting if enabled
       settings =
         if agentEnabled then
           lib.recursiveUpdate (lib.recursiveUpdate baseControlSettings { "*" = { IdentityAgent = agentSocket; }; }) baseSettings
         else
           lib.recursiveUpdate baseControlSettings baseSettings;
 
-      # Write declared public keys to ~/.ssh/<name>_id_<type>.pub
       pubKeyFiles = lib.listToAttrs (map
         (key: {
           name = ".ssh/${key.name}_id_${key.type}.pub";
@@ -119,23 +116,18 @@ let
         SSH_AUTH_SOCK = agentSocket;
       };
 
-      # Ensure SSH_AUTH_SOCK is always set in Zsh even when __HM_SESS_VARS_SOURCED=1
-      # is already inherited from a parent GUI app or terminal.
       programs.zsh.envExtra = lib.mkIf agentEnabled ''
         if [ -z "''${SSH_CONNECTION-}" ]; then
           export SSH_AUTH_SOCK="${agentSocket}"
         fi
       '';
 
-      # On macOS, propagate SSH_AUTH_SOCK to launchd user environment so GUI apps
-      # (IDEs, Git clients) don't fall back to Apple's com.openssh.ssh-agent socket.
-      home.activation.setLaunchdSshAuthSock = lib.mkIf (pkgs.stdenv.hostPlatform.isDarwin && agentEnabled) (
+      home.activation.setLaunchdSshAuthSock = lib.mkIf (isDarwin && agentEnabled) (
         lib.hm.dag.entryAfter [ "writeBoundary" ] ''
           /bin/launchctl setenv SSH_AUTH_SOCK "${agentSocket}" || true
         ''
       );
 
-      # Pre-activation: remove regular file ~/.ssh/config so Home Manager can recreate the symlink with fresh config
       home.activation.removeOldSshConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         sshConfig="$HOME/.ssh/config"
         if [ -f "$sshConfig" ] && [ ! -L "$sshConfig" ]; then
@@ -143,9 +135,6 @@ let
         fi
       '';
 
-      # SSH refuses symlinks to world-readable Nix store files.
-      # Replace the symlink with a proper copy at 0600 after each switch.
-      # Also ensure ~/.ssh/sockets exists for ControlMaster multiplexing.
       home.activation.fixSshConfigPerms = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         mkdir -p "$HOME/.ssh/sockets"
         chmod 700 "$HOME/.ssh/sockets"
@@ -158,14 +147,4 @@ let
         fi
       '';
     };
-in
-lib.my.mkModuleV2 args {
-  description = "SSH client configuration (reads keys and config from hostUsers)";
-
-  module = _: {
-    allSystems = {
-      # Apply config to all enabled users
-      home-manager.users = lib.mapAttrs (mkUserSSHConfig pkgs) enabledUsers;
-    };
-  };
 }
