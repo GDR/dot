@@ -1,7 +1,7 @@
 # Clavis — Native macOS Ed25519 Keychain SSH Agent & age plugin with Touch ID
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Clavis — macOS Keychain SSH Agent & age plugin with Touch ID";
   platforms = [ "darwin" ];
 
@@ -18,18 +18,17 @@ lib.my.mkModuleV2 args {
     };
   };
 
-  module = cfg: {
-    darwinSystems = {
-      home.packages = lib.optional (cfg.package != null) cfg.package;
+  homeModuleDarwin = { lib, featureCfg, ... }: {
+    home.packages = lib.optional ((featureCfg.package or null) != null) featureCfg.package;
 
-      launchd.user.agents.clavis-agent = lib.mkIf (cfg.autostart && cfg.package != null) {
-        command = "${cfg.package}/bin/clavis-agent --daemon";
-        serviceConfig = {
-          Label = "com.clavis.agent";
-          RunAtLoad = true;
-          KeepAlive = false;
-          ProcessType = "Interactive";
-        };
+    launchd.agents.clavis-agent = lib.mkIf ((featureCfg.autostart or true) && (featureCfg.package or null) != null) {
+      enable = true;
+      config = {
+        ProgramArguments = [ "${featureCfg.package}/bin/clavis-agent" "--daemon" ];
+        Label = "com.clavis.agent";
+        RunAtLoad = true;
+        KeepAlive = false;
+        ProcessType = "Interactive";
       };
     };
   };

@@ -1,6 +1,6 @@
 # macOS-specific SSH configuration (Keychain integration, Touch ID)
 # Darwin-only system module
-{ lib, config, system, ... }@args:
+{ lib, config, ... }@args:
 
 let
   # Get enabled users
@@ -10,7 +10,11 @@ let
   mkUserDarwinSSHConfig = userName: userCfg:
     let
       allKeys = userCfg.keys or [ ];
-      clavisModuleEnabled = lib.my.shouldEnableModule { inherit config; modulePath = "home.security.clavis"; };
+      clavisModuleEnabled = lib.my.isFeatureEnabledForUser {
+        inherit config;
+        inherit userName;
+        modulePath = "home.security.clavis";
+      };
       clavisEnabled = (userCfg.clavisAgent.enable or false) || clavisModuleEnabled;
     in
     lib.optionalAttrs (allKeys != [ ]) (
