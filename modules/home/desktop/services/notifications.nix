@@ -1,10 +1,10 @@
 # Notification daemon - dunst
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Notification daemon (dunst)";
-  module = {
-    nixosSystems.home.packages = [ pkgs.dunst ];
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.dunst ];
   };
 }
