@@ -1,10 +1,10 @@
 # Google Cloud SDK (gcloud CLI)
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "darwin" ];
   description = "Google Cloud SDK (gcloud, gsutil, bq)";
-  module = {
-    darwinSystems.home.packages = [ pkgs.google-cloud-sdk ];
+  homeModuleDarwin = { pkgs, ... }: {
+    home.packages = [ pkgs.google-cloud-sdk ];
   };
 }
