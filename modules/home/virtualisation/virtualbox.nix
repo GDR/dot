@@ -1,23 +1,25 @@
 # VirtualBox virtualization
-{ lib, pkgs, config, _modulePath, ... }@args: with lib;
-lib.my.mkModuleV2 args {
+{ lib, ... }:
+
+lib.my.mkFeature {
   platforms = [ "linux" "darwin" ];
   description = "VirtualBox virtualization";
-  systemModule = {
-    nixosSystems = {
-      # Linux: Enable VirtualBox host, add users to vboxusers group
-      virtualisation.virtualbox.host.enable = true;
 
-      # Add only users who enabled VirtualBox to vboxusers group
-      users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: {
-        extraGroups = [ "vboxusers" ];
-      });
-    };
+  nixosModule = { selectedUsers, lib, ... }: {
+    virtualisation.virtualbox.host.enable = true;
+
+    users.users = lib.genAttrs selectedUsers (_: {
+      extraGroups = [ "vboxusers" ];
+    });
   };
-  module = {
-    nixosSystems.home.packages = with pkgs; [
+
+  darwinModule = {
+    homebrew.casks = [ "virtualbox" ];
+  };
+
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = with pkgs; [
       virtualbox
     ];
-    darwinSystems.homebrew.casks = [ "virtualbox" ];
   };
 }
