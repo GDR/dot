@@ -1,28 +1,22 @@
 # Wayland-specific desktop utilities - screenshots, status bar, wallpaper
 # Only enabled when Wayland compositor (hyprland) is active
-{ lib, pkgs, config, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Wayland-specific utilities - screenshots, status bar, wallpaper";
-  module = cfg:
-    let
-      # Check if Wayland is enabled system-wide
-      waylandEnabled = config.systemLinux.desktop.hyprland.enable or false;
-    in
-    # Only enable if Wayland is enabled system-wide
-    lib.mkIf waylandEnabled {
-      nixosSystems.home.packages = with pkgs; [
-        # Screenshot utilities
-        grim
-        slurp
-        wl-clipboard
+  homeModuleLinux = { pkgs, osConfig, lib, ... }: {
+    home.packages = lib.optionals (osConfig.programs.hyprland.enable or false) (with pkgs; [
+      # Screenshot utilities
+      grim
+      slurp
+      wl-clipboard
 
-        # Wallpaper daemon
-        swww
+      # Wallpaper daemon
+      swww
 
-        # Status bar
-        waybar
-      ];
-    };
+      # Status bar
+      waybar
+    ]);
+  };
 }
