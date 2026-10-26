@@ -13,6 +13,10 @@
 #   just darwin          Switch all Darwin hosts
 # ──────────────────────────────────────────────────────────────────────────────
 
+# Optional private extension path override (set DOT_PRIVATE_EXTENSION=/path/to/dot-private)
+private_ext := env("DOT_PRIVATE_EXTENSION", "")
+private_override := if private_ext != "" { "--override-input private-extension path:" + private_ext } else { "" }
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 [doc('Show available recipes')]
 help:
@@ -49,7 +53,7 @@ nixos: nix-oldstar nix-goldstar
 [doc('darwin-rebuild switch for mac-brightstar (local)')]
 mac-brightstar:
 	@printf "\033[1m\033[32m▶ Switching mac-brightstar (local)…\033[0m\n"
-	sudo SSH_AUTH_SOCK=$SSH_AUTH_SOCK darwin-rebuild switch --flake .#mac-brightstar
+	sudo SSH_AUTH_SOCK=$SSH_AUTH_SOCK darwin-rebuild switch --flake .#mac-brightstar {{private_override}}
 
 # ── NixOS hosts (SSH + nixos-rebuild) ─────────────────────────────────────────
 # SSH into the remote host, pull latest config, and nixos-rebuild switch.
@@ -57,12 +61,12 @@ mac-brightstar:
 [doc('nixos-rebuild switch for nix-oldstar (remote)')]
 nix-oldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-oldstar…\033[0m\n"
-	ssh -t nix-oldstar 'cd ${DOTFILES_DIR:-$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar'
+	ssh -t nix-oldstar 'cd ${DOTFILES_DIR:-$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar ${DOT_PRIVATE_EXTENSION:+--override-input private-extension path:$DOT_PRIVATE_EXTENSION}'
 
 [doc('nixos-rebuild switch for nix-goldstar (remote)')]
 nix-goldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-goldstar…\033[0m\n"
-	ssh -t nix-goldstar 'cd ${DOTFILES_DIR:-$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-goldstar'
+	ssh -t nix-goldstar 'cd ${DOTFILES_DIR:-$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-goldstar ${DOT_PRIVATE_EXTENSION:+--override-input private-extension path:$DOT_PRIVATE_EXTENSION}'
 
 # ── Maintenance ───────────────────────────────────────────────────────────────
 [doc('nix flake update (refresh lock file)')]
@@ -89,11 +93,11 @@ lint:
 [doc('Dry-run build/eval host configurations')]
 check-hosts:
 	@printf "\033[1m\033[32m▶ Evaluating system host configurations…\033[0m\n"
-	nix build .#nixosConfigurations.nix-goldstar.config.system.build.toplevel --dry-run
-	nix build .#nixosConfigurations.nix-oldstar.config.system.build.toplevel --dry-run
-	nix eval .#darwinConfigurations.mac-brightstar.config.system.build.toplevel.drvPath
+	nix build .#nixosConfigurations.nix-goldstar.config.system.build.toplevel --dry-run {{private_override}}
+	nix build .#nixosConfigurations.nix-oldstar.config.system.build.toplevel --dry-run {{private_override}}
+	nix eval .#darwinConfigurations.mac-brightstar.config.system.build.toplevel.drvPath {{private_override}}
 
 [doc('Composite target (fmt-check + lint + check-hosts + flake check)')]
 check: fmt-check lint check-hosts
 	@printf "\033[1m\033[32m▶ Running nix flake check…\033[0m\n"
-	nix flake check --all-systems
+	nix flake check --all-systems {{private_override}}

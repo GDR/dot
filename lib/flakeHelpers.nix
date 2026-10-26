@@ -90,69 +90,85 @@ in
   inherit wrapModuleFile computeModulePath mkConfigurationModules mkSystemModules;
 
   # Build a Darwin (macOS) system configuration
-  mkDarwinConfiguration = host-config:
+  # Accepts either (hostName: host-config:) or (host-config:)
+  mkDarwinConfiguration = arg1:
     let
-      system = "aarch64-darwin";
+      build = hostName: host-config:
+        let
+          system = "aarch64-darwin";
+        in
+        nix-darwin.lib.darwinSystem {
+          inherit system;
+          specialArgs = {
+            inherit self inputs lib overlays system vscode-server;
+            modulesRegistry = modulesRegistry;
+          };
+          modules = [ host-config ]
+            ++ (privateExtension.hosts.${hostName}.modules or [ ])
+            ++ [
+            home-manager.darwinModules.home-manager
+            charon-key.darwinModules.default
+            # antigravity-nix exposes only packages/overlays (no darwinModules);
+            # google-antigravity* are injected via overlays/additions.nix
+          ]
+            ++ (privateExtension.systemModules.all or [ ])
+            ++ (privateExtension.systemModules.darwin or [ ])
+            ++ mkConfigurationModules [
+            ../modules/home
+          ]
+            ++ mkSystemModules ../modules/systems/all
+            ++ mkSystemModules ../modules/systems/darwin
+            ++ [
+            # Import foundational modules separately (not package modules)
+            ../modules/_core/user.nix
+            ../modules/_core/theme.nix
+            ../modules/_core/system.nix
+          ];
+        };
     in
-    nix-darwin.lib.darwinSystem {
-      inherit system;
-      specialArgs = {
-        inherit self inputs lib overlays system vscode-server;
-        modulesRegistry = modulesRegistry;
-      };
-      modules = [ host-config ]
-        ++ [
-        home-manager.darwinModules.home-manager
-        charon-key.darwinModules.default
-        # antigravity-nix exposes only packages/overlays (no darwinModules);
-        # google-antigravity* are injected via overlays/additions.nix
-      ]
-        ++ (privateExtension.systemModules.all or [ ])
-        ++ (privateExtension.systemModules.darwin or [ ])
-        ++ mkConfigurationModules [
-        ../modules/home
-      ]
-        ++ mkSystemModules ../modules/systems/all
-        ++ mkSystemModules ../modules/systems/darwin
-        ++ [
-        # Import foundational modules separately (not package modules)
-        ../modules/_core/user.nix
-        ../modules/_core/theme.nix
-        ../modules/_core/system.nix
-      ];
-    };
+    if builtins.isString arg1
+    then (host-config: build arg1 host-config)
+    else build (builtins.baseNameOf (toString arg1)) arg1;
 
   # Build a NixOS (Linux) system configuration
-  mkNixosConfiguration = host-config:
+  # Accepts either (hostName: host-config:) or (host-config:)
+  mkNixosConfiguration = arg1:
     let
-      system = "x86_64-linux";
+      build = hostName: host-config:
+        let
+          system = "x86_64-linux";
+        in
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = {
+            inherit self inputs lib overlays system hardware;
+            modulesRegistry = modulesRegistry;
+          };
+          modules = [ host-config ]
+            ++ (privateExtension.hosts.${hostName}.modules or [ ])
+            ++ [
+            # Core NixOS modules from inputs
+            home-manager.nixosModules.home-manager
+            vscode-server.nixosModules.default
+            charon-key.nixosModules.default
+            sops-nix.nixosModules.sops
+          ]
+            ++ (privateExtension.systemModules.all or [ ])
+            ++ (privateExtension.systemModules.linux or [ ])
+            ++ mkConfigurationModules [
+            ../modules/home
+          ]
+            ++ mkSystemModules ../modules/systems/all
+            ++ mkSystemModules ../modules/systems/linux
+            ++ [
+            # Import foundational modules separately (not package modules)
+            ../modules/_core/user.nix
+            ../modules/_core/theme.nix
+            ../modules/_core/system.nix
+          ];
+        };
     in
-    nixpkgs.lib.nixosSystem {
-      inherit system;
-      specialArgs = {
-        inherit self inputs lib overlays system hardware;
-        modulesRegistry = modulesRegistry;
-      };
-      modules = [ host-config ]
-        ++ [
-        # Core NixOS modules from inputs
-        home-manager.nixosModules.home-manager
-        vscode-server.nixosModules.default
-        charon-key.nixosModules.default
-        sops-nix.nixosModules.sops
-      ]
-        ++ (privateExtension.systemModules.all or [ ])
-        ++ (privateExtension.systemModules.linux or [ ])
-        ++ mkConfigurationModules [
-        ../modules/home
-      ]
-        ++ mkSystemModules ../modules/systems/all
-        ++ mkSystemModules ../modules/systems/linux
-        ++ [
-        # Import foundational modules separately (not package modules)
-        ../modules/_core/user.nix
-        ../modules/_core/theme.nix
-        ../modules/_core/system.nix
-      ];
-    };
+    if builtins.isString arg1
+    then (host-config: build arg1 host-config)
+    else build (builtins.baseNameOf (toString arg1)) arg1;
 }
