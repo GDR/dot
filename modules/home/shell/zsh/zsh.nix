@@ -1,46 +1,51 @@
 # Zsh shell configuration with oh-my-zsh and zplug
-{ lib, pkgs, config, system, self, _modulePath, ... }@args: with lib;
-let
-  isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
-in
-lib.my.mkModuleV2 args {
+{ lib, ... }:
+
+lib.my.mkFeature {
   platforms = [ "linux" "darwin" ];
   description = "Zsh shell configuration with oh-my-zsh and zplug";
+
   extraOptions = {
-    showHostname = mkOption {
+    showHostname = lib.mkOption {
       default = true;
-      type = types.bool;
+      type = lib.types.bool;
       description = "Show hostname in the prompt (Powerlevel10k)";
     };
   };
-  systemModule = {
-    allSystems = {
-      # System-level config (NixOS programs.zsh, users.users)
-      # Enable zsh at system level (required for users to use zsh as shell)
-      programs.zsh.enable = true;
 
-      environment.systemPackages = with pkgs; [ eza ];
-
-      # Set user's default shell to zsh (only for users who enabled zsh)
-      users.users = lib.my.mkUsersAttrs { inherit config _modulePath; } (username: {
-        shell = pkgs.zsh;
-      });
-    };
+  nixosModule = { pkgs, lib, selectedUsers, ... }: {
+    programs.zsh.enable = true;
+    users.users = lib.genAttrs selectedUsers (_: {
+      shell = pkgs.zsh;
+    });
   };
-  module = cfg: {
-    allSystems = {
+
+  darwinModule = { pkgs, lib, selectedUsers, ... }: {
+    programs.zsh.enable = true;
+    users.users = lib.genAttrs selectedUsers (_: {
+      shell = pkgs.zsh;
+    });
+  };
+
+  homeModule = { pkgs, lib, featureCfg, ... }:
+    let
+      isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+      showHostname = featureCfg.showHostname or true;
+    in
+    {
+      home.packages = with pkgs; [ eza ];
+
       programs.atuin = {
         enable = true;
         enableZshIntegration = true;
-        flags = [ "--disable-up-arrow" ]; # Keep up-arrow for normal history
+        flags = [ "--disable-up-arrow" ];
         settings = {
-          auto_sync = false; # No cloud sync
+          auto_sync = false;
           search_mode = "fuzzy";
-          filter_mode = "global"; # Default to all history
-          filter_mode_shell_up_key_binding = "directory"; # Up arrow = directory context
+          filter_mode = "global";
+          filter_mode_shell_up_key_binding = "directory";
           show_preview = true;
           style = "compact";
-          # In search UI: Ctrl+R cycles filter modes (global/host/session/directory)
         };
       };
 
@@ -51,24 +56,9 @@ lib.my.mkModuleV2 args {
 
         oh-my-zsh.enable = true;
 
-        # Disable p10k instant prompt before it loads (via .zshenv, which runs before plugins).
-        # instant_prompt=verbose hangs in VSCode/Antigravity integrated terminals.
         envExtra = ''
           typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
         '';
-
-        # Guard zplug's check/install against non-interactive shells.
-        # home-manager emits `if ! zplug check; then zplug install; fi` unconditionally;
-        # `zplug check` spawns git processes that hang in non-TTY terminals (e.g. Antigravity).
-        # Since HM manages plugins declaratively, they're always present — skip the check.
-        # initExtraFirst = ''
-        #   # Make `zplug check` always pass so install is never triggered.
-        #   # Plugins are guaranteed present by home-manager; no git fetch needed.
-        #   zplug() {
-        #     if [[ "$1" == "check" ]]; then return 0; fi
-        #     builtin command zplug "$@"
-        #   }
-        # '';
 
         zplug = {
           enable = true;
@@ -96,11 +86,11 @@ lib.my.mkModuleV2 args {
           }
           zle -N edit-last-or-current
           bindkey "\C-e" edit-last-or-current
-        '' + optionalString (!cfg.showHostname) ''
+        '' + lib.optionalString (!showHostname) ''
           # Hide hostname in prompt (set by modules.home.shell.zsh.showHostname = false)
           typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%n'
           typeset -g POWERLEVEL9K_CONTEXT_ROOT_TEMPLATE='%n'
-        '' + optionalString isDarwin ''
+        '' + lib.optionalString isDarwin ''
           if [[ $(uname -m) == 'arm64' ]]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"
           fi
@@ -115,7 +105,7 @@ lib.my.mkModuleV2 args {
         };
       };
     };
-  };
+
   dotfiles = {
     path = "zsh";
     source = "modules/home/shell/zsh/dotfiles";
