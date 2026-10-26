@@ -1,13 +1,11 @@
 # Raycast - Spotlight replacement and productivity launcher for macOS
-{ lib, pkgs, ... }@args:
-lib.my.mkModuleV2 args {
-  platforms = [ "darwin" ]; # macOS only
+{ lib, ... }:
+
+lib.my.mkFeature {
+  platforms = [ "darwin" ];
   description = "Raycast launcher";
 
-  module = {
-    darwinSystems = {
-      home.packages = [ pkgs.raycast ];
-    };
+  homeModuleDarwin = { pkgs, ... }: {
+    home.packages = [ pkgs.raycast ];
   };
 }
-
