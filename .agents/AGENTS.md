@@ -15,7 +15,7 @@ dot/
 │       ├── nix-oldstar/      # NixOS host
 │       └── mac-brightstar/   # Darwin host
 ├── lib/
-│   ├── default.nix           # Core helpers: mkModuleV2, mkSystemModuleV2, mkDotfilesSymlink, etc.
+│   ├── default.nix           # Core helpers: mkFeature, mkSystemModuleV2, mkDotfilesSymlink, etc.
 │   ├── flakeHelpers.nix      # mkDarwinConfiguration, mkNixosConfiguration
 │   ├── moduleRegistry.nix    # Module discovery/registry
 │   └── themes/               # Theme system (rose-pine-moon, etc.)
@@ -80,13 +80,13 @@ Use `lib.recursiveUpdate` (not `//`) to merge nested attrsets without clobbering
 
 ### Module dependency requires
 
-Modules can declare `requires = [ "home.other.module" ]` in `mkModuleV2`. Enabling a module auto-enables its full transitive dependency tree — if A requires B and B requires C, enabling A auto-enables B and C. Inspect the registry: `nix eval '.#moduleRegistry.modules' --json`.
+Modules can declare `requires = [ "home.other.module" ]` in `mkFeature`. Enabling a module auto-enables its full transitive dependency tree — if A requires B and B requires C, enabling A auto-enables B and C. Inspect the registry: `nix eval '.#moduleRegistry.modules' --json`.
 
 ### Two module types
 
 | Type | Location | Created with | Enabled via | Auto-discovered |
 |------|----------|-------------|-------------|-----------------|
-| User | `modules/home/` | `mkModuleV2` | `hostUsers.<user>.modules.<path>.enable` | Yes |
+| User | `modules/home/` | `mkFeature` | `hostUsers.<user>.modules.<path>.enable` | Yes |
 | System | `modules/systems/` | `mkSystemModuleV2` | `modules.system.all.*` / `modules.system.linux.*` / `modules.system.darwin.*` | Yes |
 
 ### Hierarchical enables — home modules
@@ -112,34 +112,42 @@ Individual module enables still work as before (and take precedence for opt-outs
 
 Path follows directory structure: `modules/systems/<platform>/<module>` → `modules.system.<platform>.<module>`
 
-### Platform sections in modules
+### Feature structure (mkFeature)
 
 ```nix
-module = {
-  allSystems.home.packages = [ ... ];      # Both platforms
-  nixosSystems.home.packages = [ ... ];    # Linux only
-  darwinSystems.homebrew.casks = [ ... ];  # macOS only
-};
+lib.my.mkFeature {
+  description = "Feature description";
+  platforms = [ "linux" "darwin" ];  # Supported platforms
+  requires = [ "home.shell.zsh" ];   # Dependencies auto-enabled per user
+  extraOptions = { ... };            # Per-user typed extra options
 
-systemModule = {
-  nixosSystems = { programs.hyprland.enable = true; };
-  darwinSystems = { ... };
-  allSystems = { ... };
+  dotfiles = {                       # Optional dotfiles symlinking
+    path = "app";
+    source = "modules/home/.../dotfiles";
+  };
+
+  homeModule = { config, osConfig, pkgs, lib, featureCfg, userName, ... }: {
+    # Home Manager configuration scoped exclusively to this user
+  };
+  homeModuleLinux = { ... }: { ... };   # Linux-only HM config
+  homeModuleDarwin = { ... }: { ... };  # Darwin-only HM config
+  nixosModule = { config, pkgs, lib, featureCfg, selectedUsers, ... }: { ... };   # System-level NixOS activation
+  darwinModule = { config, pkgs, lib, featureCfg, selectedUsers, ... }: { ... };  # System-level Darwin activation
 };
 ```
 
-Home-manager attrs (`home`, `programs`, `xdg`, `services`, etc.) are automatically routed to all enabled `hostUsers`.
+Home-manager configuration is scoped strictly per-user to users who enable the feature.
 
 ## Key Helpers (lib/default.nix)
 
-- `lib.my.mkModuleV2 args { module, systemModule?, dotfiles?, imports?, extraOptions?, ... }` — User modules
+- `lib.my.mkFeature { description?, platforms?, requires?, extraOptions?, dotfiles?, homeModule?, homeModuleLinux?, homeModuleDarwin?, nixosModule?, darwinModule? }` — User feature descriptors
 - `lib.my.mkSystemModuleV2 args { namespace, module, moduleLinux?, moduleDarwin?, ... }` — System modules
 - `lib.my.shouldEnableModule { config, modulePath }` — Check hierarchical enable
+- `lib.my.isFeatureEnabledForUser { config, userName, modulePath }` — Check per-user feature enable
 - `lib.my.getUsersWithModule { config, modulePath }` — Users with module enabled
 - `lib.my.getUsersWithModuleNames { config, _modulePath }` — Usernames list
 - `lib.my.mkDotfilesSymlink { config, self, path, source, target? }` — Live-editable dotfile symlinks
 - `lib.my.mkUsersAttrs usernames fn` — Creates `users.users` attrset
-- `lib.my.mkModule system config cfg` — Low-level platform-aware config builder
 - `lib.my.getTheme config` — Get active theme (set via `config.theme.name`)
 
 ## Live-Editable Dotfiles

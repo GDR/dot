@@ -1,28 +1,28 @@
 ---
 name: nix-module-creation
-description: Creating new NixOS user and system modules using mkModuleV2/mkSystemModuleV2
+description: Creating new NixOS user features and system modules using mkFeature/mkSystemModuleV2
 ---
 
-# Creating NixOS Modules
+# Creating NixOS Modules and Features
 
-## User Module (mkModuleV2)
+## User Feature (mkFeature)
 
-### Simple module
+### Simple feature
 
 ```nix
 # modules/home/<category>/<name>.nix
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, ... }:
 
-lib.my.mkModuleV2 args {
-  description = "Description of the module";
+lib.my.mkFeature {
+  description = "Description of the feature";
   platforms = [ "linux" "darwin" ];  # optional, defaults to both
 
-  module = {
-    allSystems.home.packages = [ pkgs.my-tool ];
-    # Or platform-specific:
-    # nixosSystems.home.packages = [ pkgs.linux-tool ];
-    # darwinSystems.homebrew.casks = [ "mac-tool" ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.my-tool ];
   };
+  # Or platform-specific:
+  # homeModuleLinux = { pkgs, ... }: { home.packages = [ pkgs.linux-tool ]; };
+  # darwinModule = { homebrew.casks = [ "mac-tool" ]; };
 }
 ```
 
@@ -30,13 +30,13 @@ lib.my.mkModuleV2 args {
 
 ```nix
 # modules/home/<category>/<name>/<name>.nix
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Tool with live-editable config";
 
-  module = {
-    allSystems.home.packages = [ pkgs.my-tool ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.my-tool ];
   };
 
   dotfiles = {
@@ -57,20 +57,18 @@ modules/home/<category>/<name>/
 ### With system-level config
 
 ```nix
-{ lib, pkgs, config, ... }@args:
+{ lib, pkgs, ... }:
 
-lib.my.mkModuleV2 args {
-  description = "Module with system-level configuration";
+lib.my.mkFeature {
+  description = "Feature with system-level configuration";
 
-  systemModule = {
-    nixosSystems = {
-      programs.hyprland.enable = true;
-      services.greetd.enable = true;
-    };
+  nixosModule = { ... }: {
+    programs.hyprland.enable = true;
+    services.greetd.enable = true;
   };
 
-  module = {
-    nixosSystems.home.packages = [ pkgs.hyprland ];
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.hyprland ];
   };
 
   dotfiles = {
@@ -83,10 +81,10 @@ lib.my.mkModuleV2 args {
 ### With custom options
 
 ```nix
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, ... }:
 
-lib.my.mkModuleV2 args {
-  description = "Module with custom options";
+lib.my.mkFeature {
+  description = "Feature with custom options";
 
   extraOptions = {
     showHostname = lib.mkOption {
@@ -96,49 +94,46 @@ lib.my.mkModuleV2 args {
     };
   };
 
-  # When using extraOptions, module becomes a function receiving cfg
-  module = cfg: {
-    allSystems.home.packages = [ pkgs.my-tool ];
-    # Access option: cfg.showHostname
+  homeModule = { pkgs, featureCfg, ... }: {
+    home.packages = [ pkgs.my-tool ];
+    # Access option: featureCfg.showHostname
   };
 }
 ```
 
-### With imports (sub-modules)
+### With dependencies (requires)
 
 ```nix
-{ lib, pkgs, ... }@args:
+{ lib, pkgs, ... }:
 
-lib.my.mkModuleV2 args {
-  description = "Module with sub-module imports";
+lib.my.mkFeature {
+  description = "Feature with dependencies";
 
-  imports = [
-    ./dotfiles/general.nix
-    ./dotfiles/plugins/airline.nix
+  requires = [
+    "home.shell.zsh"
+    "home.desktop.services.audio"
   ];
 
-  systemModule = {
-    allSystems.programs.nixvim.enable = true;
-  };
-
-  module = {
-    allSystems.home.packages = [ pkgs.ripgrep pkgs.fzf ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.my-tool ];
   };
 }
 ```
 
-## mkModuleV2 Parameters
+## mkFeature Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `description` | string | No | Module description |
+| `description` | string | No | Feature description |
 | `platforms` | list | No | `["linux" "darwin"]` (default: both) |
-| `requires` | list | No | Module path dependencies |
-| `module` | attrset or `cfg -> attrset` | No | Platform config with `allSystems`/`nixosSystems`/`darwinSystems` sections |
-| `systemModule` | attrset or `cfg -> attrset` | No | System-level config (same sections) |
-| `dotfiles` | `{ path, source, target? }` | No | Live-editable symlinks |
-| `extraOptions` | attrset | No | Additional NixOS options (merged with `enable`) |
-| `imports` | list | No | Sub-module imports |
+| `requires` | list | No | Feature path dependencies (auto-enabled per user) |
+| `extraOptions` | attrset | No | Additional typed NixOS/HM options (merged per user) |
+| `dotfiles` | `{ path, source, target?, live? }` | No | Live-editable symlinks |
+| `homeModule` | function or attrset | No | Home Manager config for users enabling the feature |
+| `homeModuleLinux` | function or attrset | No | Linux-only Home Manager config |
+| `homeModuleDarwin` | function or attrset | No | Darwin-only Home Manager config |
+| `nixosModule` | function or attrset | No | System-level NixOS config when any user enables the feature |
+| `darwinModule` | function or attrset | No | System-level Darwin config when any user enables the feature |
 
 ## System Module (mkSystemModuleV2)
 
@@ -167,14 +162,14 @@ lib.my.mkSystemModuleV2 args {
 }
 ```
 
-Enable: `systemLinux.<category>.<name>.enable = true` in host config.
+Enable: `modules.system.linux.<category>.<name>.enable = true` in host config.
 
 ## Checklist
 
 1. Decide scope: System (`systems/*`) or User (`home/*`)
 2. Choose/create category subdirectory
 3. Create module file using templates above
-4. **System modules only**: Add import to `systems/*/default.nix`
-5. **User modules**: Auto-discovered — just add enable path to `hostUsers.<user>.modules`
+4. **System modules only**: Auto-discovered or added under `modules/systems/{all,linux,darwin}`
+5. **User features**: Auto-discovered — just add enable path to `hostUsers.<user>.modules`
 6. `git add` new files before `nix flake check`
 7. Test: `nix flake check`
