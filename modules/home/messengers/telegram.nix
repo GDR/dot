@@ -1,10 +1,9 @@
 # Telegram messenger
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "Telegram desktop messenger";
-  module = {
-    allSystems.home.packages = [ pkgs.telegram-desktop ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.telegram-desktop ];
   };
 }
