@@ -4,11 +4,7 @@
 lib.my.mkFeature {
   description = "Bitwarden password manager";
 
-  darwinModule = {
-    homebrew.casks = [ "bitwarden" ];
-  };
-
-  homeModuleLinux = { pkgs, ... }: {
+  homeModule = { pkgs, ... }: {
     home.packages = [ pkgs.bitwarden-desktop ];
   };
 }
