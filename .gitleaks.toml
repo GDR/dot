@@ -1,0 +1,22 @@
+title = "dot gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "google-oauth-client-secret"
+description = "Google OAuth Client Secret (GOCSPX)"
+regex = '''GOCSPX-[A-Za-z0-9_-]{28}'''
+keywords = ["GOCSPX-"]
+
+[[rules]]
+id = "google-oauth-client-id"
+description = "Google OAuth Client ID"
+regex = '''[0-9]{12}-[a-z0-9]{32}\.apps\.googleusercontent\.com'''
+keywords = [".apps.googleusercontent.com"]
+
+[allowlist]
+description = "Ignore Nix flake lockfile input names"
+paths = [
+  '''^flake\.lock$''',
+]

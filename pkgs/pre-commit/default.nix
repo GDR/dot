@@ -1,5 +1,5 @@
 # Minimal pre-commit package to avoid Swift dependency on Darwin
-{ lib, python3Packages, git }:
+{ lib, python3Packages, git, gitleaks, nixpkgs-fmt }:
 
 python3Packages.buildPythonApplication rec {
   pname = "pre-commit";
@@ -18,6 +18,20 @@ python3Packages.buildPythonApplication rec {
     nodeenv
     pyyaml
     virtualenv
+  ];
+
+  postPatch = ''
+    substituteInPlace pre_commit/resources/hook-tmpl \
+      --replace-fail '"$INSTALL_PYTHON" -mpre_commit' '"$INSTALL_PYTHON"'
+    substituteInPlace pre_commit/commands/install_uninstall.py \
+      --replace-fail 'sys.executable' 'shutil.which("pre-commit") or sys.executable'
+  '';
+
+  makeWrapperArgs = [
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ git gitleaks nixpkgs-fmt ])
   ];
 
   # Skip tests entirely - no test files in PyPI tarball

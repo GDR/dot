@@ -9,6 +9,15 @@ repos:
 
 - repo: local
   hooks:
+  - id: gitleaks
+    name: Gitleaks Secret Scan
+    entry: gitleaks git --pre-commit --staged --redact --no-banner
+    language: system
+    pass_filenames: false
+    always_run: true
+
+- repo: local
+  hooks:
   - id: nixpkgs-fmt
     name: Nixpkgs Fmt
     entry: nixpkgs-fmt . --check

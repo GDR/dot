@@ -4,6 +4,7 @@
   default = pkgs.mkShell {
     buildInputs = [
       pkgs.nixpkgs-fmt
+      pkgs.gitleaks
       customPkgs.pre-commit # Our custom package without Swift dependency
       pkgs.just
     ];

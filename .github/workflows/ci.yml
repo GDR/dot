@@ -5,20 +5,10 @@ on:
     branches:
       - master
       - main
-    paths:
-      - '**.nix'
-      - 'flake.lock'
-      - 'justfile'
-      - '.github/workflows/**'
   pull_request:
     branches:
       - master
       - main
-    paths:
-      - '**.nix'
-      - 'flake.lock'
-      - 'justfile'
-      - '.github/workflows/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,8 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - name: Gitleaks Secret Check
+        run: nix run nixpkgs#gitleaks -- git --redact --no-banner .
       - name: Nixpkgs Format Check
         run: nix run nixpkgs#nixpkgs-fmt -- --check .
       - name: Deadnix Check
