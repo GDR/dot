@@ -1,13 +1,14 @@
 # Audio control utilities
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
-  description = "Audio control utilities (pamixer, pavucontrol)";
-  module = {
-    nixosSystems.home.packages = with pkgs; [
+  description = "Audio control utilities (pamixer, pavucontrol, pulseaudio)";
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = with pkgs; [
       pamixer
       pavucontrol
+      pulseaudio
     ];
   };
 }
