@@ -37,21 +37,23 @@ in
 lib.my.mkFeature {
   description = "Ghostty terminal emulator";
 
-  darwinModule = {
-    homebrew.casks = [ "ghostty" ];
-  };
-
-  homeModule = { osConfig, lib, ... }:
+  homeModule = { osConfig, pkgs, lib, ... }:
     let
       theme = lib.my.getTheme osConfig;
     in
     {
+      programs.ghostty = {
+        enable = true;
+        package =
+          if pkgs.stdenv.hostPlatform.isDarwin
+          then pkgs.ghostty-bin
+          else pkgs.ghostty;
+      };
+
+      # Generated theme file — written by Nix, sourced by config via config-file = theme
+      # Works on both NixOS and Darwin (xdg.configFile is cross-platform in home-manager)
       xdg.configFile."ghostty/theme".text = mkGhosttyTheme theme;
     };
-
-  homeModuleLinux = { pkgs, ... }: {
-    home.packages = [ pkgs.ghostty ];
-  };
 
   dotfiles = {
     path = "ghostty/config";
