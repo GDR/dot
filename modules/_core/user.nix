@@ -324,6 +324,7 @@ in
         useGlobalPkgs = true;
         # Back up existing files instead of failing
         backupFileExtension = "backup";
+        sharedModules = optional (inputs ? learnharness && inputs.learnharness ? homeManagerModules.default) inputs.learnharness.homeManagerModules.default;
 
         users = mapAttrs
           (userName: userCfg:
