@@ -5,7 +5,7 @@ lib.my.mkFeature {
   description = "Git configuration (reads from hostUsers)";
   platforms = [ "linux" "darwin" ];
 
-  extraOptions = {
+  homeOptions = {
     editor = lib.mkOption {
       type = lib.types.str;
       default = "nvim";

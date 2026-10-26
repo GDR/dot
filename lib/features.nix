@@ -3,8 +3,6 @@
 { lib, inputs ? { }, ... }:
 
 let
-  moduleRegistryHelper = import ./moduleRegistry.nix { inherit lib; };
-
   # Compute module path from file path
   # e.g., "/path/to/modules/home/cli/htop.nix" -> "home.cli.htop"
   # e.g., "/path/to/modules/home/cli/htop/htop.nix" -> "home.cli.htop" (dedup)
@@ -30,7 +28,9 @@ let
     { description ? null
     , platforms ? [ "linux" "darwin" ]
     , requires ? [ ]
-    , extraOptions ? { }
+    , recommends ? [ ]
+    , homeOptions ? { }
+    , systemOptions ? { }
     , dotfiles ? null
     , homeModule ? null
     , homeModuleLinux ? null
@@ -40,7 +40,9 @@ let
     }:
       assert lib.assertMsg (lib.isList platforms) "mkFeature: platforms must be a list of strings";
       assert lib.assertMsg (lib.isList requires) "mkFeature: requires must be a list of strings";
-      assert lib.assertMsg (lib.isAttrs extraOptions) "mkFeature: extraOptions must be an attribute set";
+      assert lib.assertMsg (lib.isList recommends) "mkFeature: recommends must be a list of strings";
+      assert lib.assertMsg (lib.isAttrs homeOptions) "mkFeature: homeOptions must be an attribute set";
+      assert lib.assertMsg (lib.isAttrs systemOptions) "mkFeature: systemOptions must be an attribute set";
       assert lib.assertMsg (dotfiles == null || lib.isAttrs dotfiles) "mkFeature: dotfiles must be null or an attribute set";
       assert lib.assertMsg (homeModule == null || lib.isFunction homeModule || lib.isAttrs homeModule) "mkFeature: homeModule must be null, a function, or an attribute set";
       assert lib.assertMsg (homeModuleLinux == null || lib.isFunction homeModuleLinux || lib.isAttrs homeModuleLinux) "mkFeature: homeModuleLinux must be null, a function, or an attribute set";
@@ -49,16 +51,16 @@ let
       assert lib.assertMsg (darwinModule == null || lib.isFunction darwinModule || lib.isAttrs darwinModule) "mkFeature: darwinModule must be null, a function, or an attribute set";
       {
         _type = "feature";
-        inherit description platforms requires extraOptions dotfiles
+        inherit description platforms requires recommends homeOptions systemOptions dotfiles
           homeModule homeModuleLinux homeModuleDarwin nixosModule darwinModule;
         meta = {
-          inherit description platforms requires;
+          inherit description platforms requires recommends;
         };
       };
 
   # Generate strongly-typed option trees for categories and leaf features
-  # Both options.modules.home.* and options.hostUsers.<user>.modules.home.* use this
-  buildFeatureOptionTree = { featureCatalog ? [ ], knownModulePaths ? [ ] }:
+  # scope = "user" exposes homeOptions; scope = "system" exposes systemOptions
+  buildFeatureOptionTree = { featureCatalog ? [ ], knownModulePaths ? [ ], scope ? "both" }:
     let
       featurePaths = map (f: lib.splitString "." f.path) featureCatalog;
       allPaths = (map (p: lib.splitString "." p) knownModulePaths) ++ featurePaths;
@@ -103,7 +105,11 @@ let
                 description = "Override dotfile symlink mode for ${matchingFeature.path} (true = live edit out-of-store, false = immutable nix store).";
               };
             })
-            // (matchingFeature.extraOptions or { })
+            // (
+              if scope == "user" then (matchingFeature.homeOptions or { })
+              else if scope == "system" then (matchingFeature.systemOptions or { })
+              else (matchingFeature.homeOptions or { }) // (matchingFeature.systemOptions or { })
+            )
             else { };
 
           children = lib.listToAttrs (map
@@ -122,9 +128,11 @@ let
   # Check if a feature is enabled for a specific user:
   # 1. Walks from leaf to root in userModules: most specific non-null setting wins.
   # 2. If user setting is null, falls back to global config.modules hierarchy.
-  # 3. If directly enabled, returns true.
-  # 4. If user explicitly set enable = false, returns false (transitive requires cannot override user opt-out).
-  # 5. Otherwise, checks per-user transitive requires via moduleRegistry.resolveDeps.
+  # 3. Validates all requires/recommends paths exist in moduleMap.
+  # 4. If an enabled feature transitively requires this path, and user explicitly disabled it (enable = false), throws a conflict error.
+  # 5. If an enabled feature transitively requires this path, auto-enables it.
+  # 6. If user explicitly set enable = false, returns false (overriding category cascades and recommends).
+  # 7. If an enabled feature recommends this path (and user did not explicitly disable it), auto-enables it.
   isFeatureEnabledForUser =
     { config ? null
     , osConfig ? null
@@ -172,57 +180,147 @@ let
         if userSetting != null then userSetting
         else if globalSetting != null then globalSetting
         else false;
-    in
-    if directlyEnabled then true
-    else if userSetting == false then false # User explicit opt-out wins over transitive requires
-    else
-    # Check transitive requirements
-      let
-        registryModules =
-          if modulesRegistry != null then (modulesRegistry.modules or [ ])
-          else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.modules or [ ])
-          else [ ];
 
-        moduleMap =
-          (lib.listToAttrs (map (m: { name = m.path; value = m.meta or m; }) registryModules))
-          // (lib.listToAttrs (map (f: { name = f.path; value = f; }) catalog));
+      registryModules =
+        if modulesRegistry != null then (modulesRegistry.modules or [ ])
+        else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.modules or [ ])
+        else [ ];
 
-        allKnownPaths = lib.attrNames moduleMap;
+      moduleMap =
+        (lib.listToAttrs (map (m: { name = m.path; value = m.meta or m; }) registryModules))
+        // (lib.listToAttrs (map (f: { name = f.path; value = f; }) catalog));
 
-        isPathDirectlyEnabled = p:
-          let
-            pParts = lib.splitString "." p;
-            pPrefixes = lib.genList (i: lib.take (i + 1) pParts) (lib.length pParts);
-            pRevPrefixes = lib.reverseList pPrefixes;
-            pFindSetting = modules:
-              lib.foldl'
-                (acc: prefix:
-                  if acc != null then acc
-                  else
-                    let sub = lib.foldl' (a: part: a.${part} or { }) modules prefix; in
-                      sub.enable or null
+      allKnownPaths = lib.attrNames moduleMap;
+
+      # Validate dependencies exist in moduleMap
+      validateDeps =
+        if allKnownPaths == [ ] then [ ]
+        else
+          lib.concatMap
+            (modPath:
+              let
+                meta = moduleMap.${modPath};
+                reqs = if meta != null then (meta.requires or [ ]) else [ ];
+                recs = if meta != null then (meta.recommends or [ ]) else [ ];
+              in
+              (map
+                (req:
+                  if !(lib.elem req allKnownPaths)
+                  then throw "Evaluation error: Feature '${modPath}' requires unknown module '${req}'"
+                  else null
                 )
-                null
-                pRevPrefixes;
-            uSet = pFindSetting userModules;
-            gSet = pFindSetting globalModules;
-          in
-          if uSet != null then uSet
-          else if gSet != null then gSet
-          else false;
+                reqs)
+              ++
+              (map
+                (recPath:
+                  if !(lib.elem recPath allKnownPaths)
+                  then throw "Evaluation error: Feature '${modPath}' recommends unknown module '${recPath}'"
+                  else null
+                )
+                recs)
+            )
+            allKnownPaths;
 
-        directlyEnabledPaths = lib.filter (p: p != path && isPathDirectlyEnabled p) allKnownPaths;
+      isPathExplicitlyDisabled = p:
+        let
+          pParts = lib.splitString "." p;
+          leaf = (lib.foldl' (a: part: a.${part} or { }) userModules pParts).enable or null;
+        in
+        leaf == false;
 
-        isRequired = lib.any
-          (parentPath:
-            let
-              deps = moduleRegistryHelper.resolveDeps moduleMap parentPath [ ];
-            in
-            lib.elem path deps
-          )
-          directlyEnabledPaths;
-      in
-      isRequired;
+      userExplicitDisabled = isPathExplicitlyDisabled path;
+
+      isPathDirectlyEnabled = p:
+        let
+          pParts = lib.splitString "." p;
+          pPrefixes = lib.genList (i: lib.take (i + 1) pParts) (lib.length pParts);
+          pRevPrefixes = lib.reverseList pPrefixes;
+          pFindSetting = modules:
+            lib.foldl'
+              (acc: prefix:
+                if acc != null then acc
+                else
+                  let sub = lib.foldl' (a: part: a.${part} or { }) modules prefix; in
+                    sub.enable or null
+              )
+              null
+              pRevPrefixes;
+          uSet = pFindSetting userModules;
+          gSet = pFindSetting globalModules;
+        in
+        if uSet != null then uSet
+        else if gSet != null then gSet
+        else false;
+
+      directlyEnabledPaths = lib.filter isPathDirectlyEnabled allKnownPaths;
+
+      resolveTransitiveRequires = startPath:
+        let
+          step = visited: current:
+            if lib.elem current visited then visited
+            else
+              let
+                meta = moduleMap.${current} or null;
+                deps = if meta != null then (meta.requires or [ ]) else [ ];
+                nextVisited = visited ++ [ current ];
+              in
+              lib.foldl' step nextVisited deps;
+        in
+        step [ ] startPath;
+
+      requiringPaths = lib.filter
+        (parentPath:
+          let deps = resolveTransitiveRequires parentPath;
+          in lib.elem path deps && parentPath != path
+        )
+        directlyEnabledPaths;
+
+      # Conflict check 1: another enabled feature requires this path, but user explicitly set enable = false
+      _checkConflictRequired =
+        if userExplicitDisabled && requiringPaths != [ ] then
+          throw "Evaluation conflict: Feature '${lib.concatStringsSep ", " requiringPaths}' enabled for user '${userName}' requires '${path}', but '${path}' is explicitly disabled (enable = false)."
+        else true;
+
+      # Conflict check 2: this path is directly enabled, but one of its transitive required dependencies was explicitly disabled
+      pathTransitiveReqs = lib.filter (d: d != path) (resolveTransitiveRequires path);
+      conflictDep = lib.findFirst isPathExplicitlyDisabled null pathTransitiveReqs;
+
+      _checkConflictDirect =
+        if directlyEnabled && conflictDep != null then
+          throw "Evaluation conflict: Feature '${path}' enabled for user '${userName}' requires '${conflictDep}', but '${conflictDep}' is explicitly disabled (enable = false)."
+        else true;
+
+      # Find if path is recommended by any enabled feature (pruning explicitly disabled paths)
+      isPathRecommended =
+        let
+          allRecommended = lib.unique (lib.concatMap
+            (parentPath:
+              let
+                step = visited: current:
+                  if lib.elem current visited then visited
+                  else if (current != parentPath && isPathExplicitlyDisabled current) then visited
+                  else
+                    let
+                      meta = moduleMap.${current} or null;
+                      recs = if meta != null then (meta.recommends or [ ]) else [ ];
+                      reqs = if meta != null then (meta.requires or [ ]) else [ ];
+                      nextVisited = visited ++ [ current ];
+                    in
+                    lib.foldl' step nextVisited (reqs ++ recs);
+              in
+              lib.filter (p: p != parentPath) (step [ ] parentPath)
+            )
+            directlyEnabledPaths);
+        in
+        lib.elem path allRecommended;
+    in
+    assert lib.deepSeq validateDeps true;
+    assert _checkConflictRequired;
+    assert _checkConflictDirect;
+    if requiringPaths != [ ] then true
+    else if userExplicitDisabled then false
+    else if directlyEnabled then true
+    else isPathRecommended;
 
   # Resolve all active features for a user
   resolveUserFeatures =
@@ -274,8 +372,12 @@ let
         source = dotfiles.source;
         target = dotfiles.target or null;
 
+        pathParts = lib.splitString "." feature.path;
+        globalCfg = lib.foldl' (acc: p: acc.${p} or { }) (osConfig.modules or { }) pathParts;
+
         isLive =
           if (featureCfg.dotfilesLive or null) != null then featureCfg.dotfilesLive
+          else if (globalCfg.dotfilesLive or null) != null then globalCfg.dotfilesLive
           else if (dotfiles.live or null) != null then dotfiles.live
           else (osConfig.dotfiles.live or false);
 
@@ -345,9 +447,7 @@ let
       compileSingleFeature = feature:
         let
           pathParts = lib.splitString "." feature.path;
-          globalCfg = lib.foldl' (acc: p: acc.${p} or { }) (osConfig.modules or { }) pathParts;
-          userRawCfg = lib.foldl' (acc: p: acc.${p} or { }) (userCfg.modules or { }) pathParts;
-          featureCfg = lib.recursiveUpdate globalCfg userRawCfg;
+          featureCfg = lib.foldl' (acc: p: acc.${p} or { }) (userCfg.modules or { }) pathParts;
 
           dotfilesConfig = compileUserDotfiles {
             inherit osConfig feature featureCfg userName self;

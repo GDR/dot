@@ -4,7 +4,7 @@ lib.my.mkFeature {
   description = "Clavis — macOS Keychain SSH Agent & age plugin with Touch ID";
   platforms = [ "darwin" ];
 
-  extraOptions = {
+  homeOptions = {
     autostart = lib.mkOption {
       type = lib.types.bool;
       default = true;

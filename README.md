@@ -95,7 +95,7 @@ graph TD
     end
 
     subgraph Modules["Module System"]
-        HM["User Modules (mkModuleV2)<br/>modules/home/*"]
+        HM["User Features (mkFeature)<br/>modules/home/*"]
         SM["System Modules (mkSystemModuleV2)<br/>modules/systems/{all,linux,darwin}/*"]
         P --> HM
         P --> SM
@@ -247,9 +247,9 @@ nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardwa
 4. **Add to `flake.nix`:**
 
 ```nix
-nixosConfigurations.my-new-host = mkNixosConfiguration ./hosts/machines/my-new-host;
+nixosConfigurations.my-new-host = flakeHelpers.mkNixosConfiguration "my-new-host" ./hosts/machines/my-new-host;
 # or for Darwin:
-darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/machines/my-new-host;
+darwinConfigurations.my-new-host = flakeHelpers.mkDarwinConfiguration "my-new-host" ./hosts/machines/my-new-host;
 ```
 
 ---
@@ -266,7 +266,7 @@ darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/machines/my-new
   fullName = lib.mkDefault "New User";
   email = lib.mkDefault "newuser@example.com";
   github = lib.mkDefault "newuser";
-  extraGroups = lib.mkDefault [ "wheel" "audio" "video" ];
+  extraGroups = lib.mkDefault [ "audio" "video" ];
 }
 ```
 
@@ -284,7 +284,7 @@ hostUsers.newuser = importUser "newuser" // {
   }];
   # Hierarchical module enables
   modules = {
-    home.core.enable = true;
+    home.cli.enable = true;
     home.shell.enable = true;
     home.media.vlc.enable = true;  # specific module
   };
@@ -324,24 +324,24 @@ Module paths follow the directory structure: `home.<category>.<module-name>`
 
 ### Create a New Module
 
-#### User Module
+#### User Feature (`mkFeature`)
 
 ```nix
 # modules/home/tools/my-tool.nix
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "My awesome tool";
   platforms = [ "linux" "darwin" ];  # optional, defaults to both
 
-  module = {
-    # Cross-platform config (goes to home-manager.users.*)
-    allSystems.home.packages = [ pkgs.my-tool ];
-
-    # Or platform-specific
-    nixosSystems.programs.my-tool.enable = true;
-    darwinSystems.homebrew.casks = [ "my-tool" ];
+  homeModule = { pkgs, ... }: {
+    # Per-user Home Manager config (scoped strictly to users enabling the feature)
+    home.packages = [ pkgs.my-tool ];
   };
+
+  # Optional platform-specific Home Manager or system activation:
+  # homeModuleLinux = { pkgs, ... }: { programs.my-tool.enable = true; };
+  # darwinModule = { homebrew.casks = [ "my-tool" ]; };
 }
 ```
 
@@ -444,7 +444,7 @@ Enable modules hierarchically per-user:
 ```nix
 hostUsers.myuser.modules = {
   home.browsers.enable = true;    # enables all browsers
-  home.core.enable = true;        # enables htop, shell-utils
+  home.cli.enable = true;         # enables htop, shell-utils
   home.shell.enable = true;       # enables zsh, tmux
   home.editors.neovim.enable = true;  # specific module
 };
@@ -452,7 +452,7 @@ hostUsers.myuser.modules = {
 
 | Path | Modules |
 |------|---------|
-| `home.core` | htop, shell-utils (bat, fzf, wget, direnv) |
+| `home.cli` | htop, shell-utils (bat, fzf, wget, direnv) |
 | `home.shell` | zsh with oh-my-zsh, zplug, tmux |
 | `home.terminal` | ghostty |
 | `home.browsers` | chromium, vivaldi |

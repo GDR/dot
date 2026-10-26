@@ -78,15 +78,15 @@ lib.my.mkFeature {
 }
 ```
 
-### With custom options
+### With custom options (`homeOptions` / `systemOptions`)
 
 ```nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
-  description = "Feature with custom options";
+  description = "Feature with custom per-user and system options";
 
-  extraOptions = {
+  homeOptions = {
     showHostname = lib.mkOption {
       default = true;
       type = lib.types.bool;
@@ -94,17 +94,29 @@ lib.my.mkFeature {
     };
   };
 
+  systemOptions = {
+    openFirewall = lib.mkOption {
+      default = false;
+      type = lib.types.bool;
+      description = "Open firewall ports at system level";
+    };
+  };
+
   homeModule = { pkgs, featureCfg, ... }: {
     home.packages = [ pkgs.my-tool ];
-    # Access option: featureCfg.showHostname
+    # Access per-user option: featureCfg.showHostname
+  };
+
+  nixosModule = { featureCfg, ... }: {
+    # Access system option: featureCfg.openFirewall
   };
 }
 ```
 
-### With dependencies (requires)
+### With dependencies (requires / recommends)
 
 ```nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Feature with dependencies";
@@ -112,6 +124,9 @@ lib.my.mkFeature {
   requires = [
     "home.shell.zsh"
     "home.desktop.services.audio"
+  ];
+  recommends = [
+    "home.cli.htop"
   ];
 
   homeModule = { pkgs, ... }: {
@@ -126,8 +141,10 @@ lib.my.mkFeature {
 |-----------|------|----------|-------------|
 | `description` | string | No | Feature description |
 | `platforms` | list | No | `["linux" "darwin"]` (default: both) |
-| `requires` | list | No | Feature path dependencies (auto-enabled per user) |
-| `extraOptions` | attrset | No | Additional typed NixOS/HM options (merged per user) |
+| `requires` | list | No | Hard feature path dependencies (cannot be disabled while parent is enabled) |
+| `recommends` | list | No | Soft feature path dependencies (overridable by `enable = false`) |
+| `homeOptions` | attrset | No | Per-user typed Home Manager options under `hostUsers.<user>.modules` |
+| `systemOptions` | attrset | No | System-wide typed options under `modules.home` |
 | `dotfiles` | `{ path, source, target?, live? }` | No | Live-editable symlinks |
 | `homeModule` | function or attrset | No | Home Manager config for users enabling the feature |
 | `homeModuleLinux` | function or attrset | No | Linux-only Home Manager config |
@@ -152,13 +169,6 @@ lib.my.mkSystemModuleV2 args {
   # For namespace = "all", optional platform-specific additions:
   # moduleLinux = cfg: { ... };
   # moduleDarwin = cfg: { ... };
-
-  extraOptions = {
-    open = lib.mkOption {
-      default = false;
-      type = lib.types.bool;
-    };
-  };
 }
 ```
 
