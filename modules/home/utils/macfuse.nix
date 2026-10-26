@@ -1,14 +1,11 @@
 # macFUSE - FUSE filesystem support for macOS
-# Required for mounting NTFS, SSHFS, and other FUSE-based filesystems
-{ lib, ... }@args:
-lib.my.mkModuleV2 args {
-  platforms = [ "darwin" ]; # macOS only
+{ lib, ... }:
+
+lib.my.mkFeature {
+  platforms = [ "darwin" ];
   description = "macFUSE filesystem support";
 
-  module = {
-    darwinSystems = {
-      homebrew.casks = [ "macfuse" ];
-    };
+  darwinModule = {
+    homebrew.casks = [ "macfuse" ];
   };
 }
-
