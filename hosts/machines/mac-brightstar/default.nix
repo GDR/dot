@@ -39,7 +39,16 @@ in
       home.utils.obsidian.enable = true;
       # host-specific
       home.ai-tools.enable = true;
-      home.ai-tools.learnharness.enable = true;
+      home.ai-tools.learnharness = {
+        enable = true;
+        autoUpdate = false;
+        obsidianFolders = [ "/Users/dgarifullin/obsidian-vault" ];
+        models = {
+          strong = { provider = "antigravity"; id = "gemini-4-argon"; thinkingLevel = "high"; };
+          cheap = { provider = "antigravity"; id = "gemini-3.8-flash"; thinkingLevel = "high"; };
+          vision = { provider = "antigravity"; id = "gemini-4-argon"; thinkingLevel = "medium"; };
+        };
+      };
       home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
       home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
     };
