@@ -3,7 +3,7 @@
 
 lib.my.mkFeature {
   description = "Codex - OpenAI's AI coding agent CLI";
-  homeModule = { ... }: {
+  homeModule = _: {
     programs.codex = {
       enable = true;
     };

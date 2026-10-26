@@ -4,7 +4,7 @@
 lib.my.mkFeature {
   description = "Obsidian knowledge base and note-taking app";
 
-  homeModule = { ... }: {
+  homeModule = _: {
     programs.obsidian = {
       enable = true;
       cli.enable = true;
