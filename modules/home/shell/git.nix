@@ -46,7 +46,7 @@ lib.my.mkFeature {
       signingKeyPath = if gitKey != null then keyPath gitKey else null;
 
       clavisModuleEnabled = lib.my.isFeatureEnabledForUser {
-        inherit (osConfig) config;
+        config = osConfig;
         inherit userName;
         modulePath = "home.security.clavis";
       };
