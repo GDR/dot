@@ -4,7 +4,7 @@
   userModules = {
     home.browsers.enable = true;
     # Desktop infrastructure — intentionally NOT enabling home.desktop.enable broadly
-    # to avoid activating all WMs (awesomewm, gnome, hyprland). Pick a WM per host.
+    # to avoid activating all WMs (awesomewm, hyprland). Pick a WM per host.
     home.desktop.appearance.enable = true;
     home.desktop.services.enable = true;
     home.desktop.utils.enable = true;
