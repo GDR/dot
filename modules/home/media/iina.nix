@@ -1,10 +1,10 @@
 # IINA media player for macOS
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "darwin" ];
   description = "IINA media player for macOS";
-  module = {
-    darwinSystems.home.packages = [ pkgs.iina ];
+  homeModuleDarwin = { pkgs, ... }: {
+    home.packages = [ pkgs.iina ];
   };
 }
