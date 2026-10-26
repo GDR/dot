@@ -1,10 +1,9 @@
-# Telegram messenger
-{ lib, pkgs, ... }@args:
+# Claude Code CLI tool
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
-  description = "Telegram desktop messenger";
-  module = {
-    allSystems.home.packages = [ pkgs.claude-code ];
+lib.my.mkFeature {
+  description = "Claude Code CLI tool";
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.claude-code ];
   };
 }
