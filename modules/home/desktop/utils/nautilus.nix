@@ -1,11 +1,11 @@
 # Nautilus file manager (standalone, no full GNOME desktop required)
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Nautilus file manager";
-  module = {
-    nixosSystems.home.packages = with pkgs; [
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = with pkgs; [
       nautilus
       # gvfs for MTP/SFTP/trash support in Nautilus
       gvfs
