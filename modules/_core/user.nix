@@ -330,7 +330,7 @@ in
             hmArgs: {
               imports = lib.my.compileUserHomeModules {
                 osConfig = hmArgs.osConfig or config;
-                inherit userName userCfg featureCatalog modulesRegistry;
+                inherit pkgs userName userCfg featureCatalog modulesRegistry;
                 self = args.self or null;
                 inputs = args.inputs or { };
               };

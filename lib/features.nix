@@ -227,15 +227,15 @@ let
   # Resolve all active features for a user
   resolveUserFeatures =
     { osConfig
+    , pkgs ? null
     , userName
     , userCfg
     , featureCatalog ? [ ]
     , modulesRegistry ? null
     , hostPlatform ? (
-        let
-          sys = osConfig.nixpkgs.system or "";
-        in
-        if lib.hasSuffix "-darwin" sys || (osConfig ? system && osConfig.system ? primaryUser) then "darwin"
+        if pkgs != null then
+          (if pkgs.stdenv.hostPlatform.isDarwin then "darwin" else "linux")
+        else if lib.hasSuffix "-darwin" (osConfig.nixpkgs.system or "") || (osConfig ? system && osConfig.system ? primaryUser) then "darwin"
         else "linux"
       )
     }:
@@ -325,6 +325,7 @@ let
   # Compiles each user's enabled features into native Home Manager module imports
   compileUserHomeModules =
     { osConfig
+    , pkgs
     , userName
     , userCfg
     , featureCatalog ? [ ]
@@ -333,12 +334,11 @@ let
     , modulesRegistry ? null
     }:
     let
-      sys = osConfig.nixpkgs.system or "";
-      isDarwinHost = lib.hasSuffix "-darwin" sys || (osConfig ? system && osConfig.system ? primaryUser);
+      isDarwinHost = pkgs.stdenv.hostPlatform.isDarwin;
       isLinuxHost = !isDarwinHost;
 
       enabledFeatures = resolveUserFeatures {
-        inherit osConfig userName userCfg featureCatalog modulesRegistry;
+        inherit osConfig pkgs userName userCfg featureCatalog modulesRegistry;
         hostPlatform = if isDarwinHost then "darwin" else "linux";
       };
 
