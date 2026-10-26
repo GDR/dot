@@ -219,6 +219,13 @@ let
     , userCfg
     , featureCatalog ? [ ]
     , modulesRegistry ? null
+    , hostPlatform ? (
+        let
+          sys = osConfig.nixpkgs.system or "";
+        in
+        if lib.hasSuffix "-darwin" sys || (osConfig ? system && osConfig.system ? primaryUser) then "darwin"
+        else "linux"
+      )
     }:
     let
       catalog =
@@ -228,7 +235,8 @@ let
         else [ ];
     in
     lib.filter (f:
-      isFeatureEnabledForUser {
+      (lib.elem hostPlatform f.platforms)
+      && isFeatureEnabledForUser {
         config = osConfig;
         inherit userName modulesRegistry;
         featurePath = f.path;
@@ -275,9 +283,14 @@ let
       let
         isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
         defaultRepoPath =
-          if isDarwin then "/Users/${userName}/Workspaces/gdr/dot"
-          else "/home/${userName}/Workspaces/gdr/dot";
-        repoPath = osConfig.environment.variables.DOTFILES_DIR or defaultRepoPath;
+          if isDarwin then "/Users/${userName}/dot"
+          else "/home/${userName}/dot";
+        envDotfilesDir = osConfig.environment.variables.DOTFILES_DIR or null;
+        repoPath =
+          if envDotfilesDir != null
+             && (lib.hasPrefix "/home/${userName}/" envDotfilesDir || lib.hasPrefix "/Users/${userName}/" envDotfilesDir)
+          then envDotfilesDir
+          else defaultRepoPath;
 
         sourcePath =
           if isLive then "${repoPath}/${source}"
@@ -339,7 +352,7 @@ let
           (if isDarwin && feature.homeModuleDarwin != null then
             (if lib.isFunction feature.homeModuleDarwin then feature.homeModuleDarwin featureArgs else feature.homeModuleDarwin)
            else { })
-          dotfilesConfig
+          (if lib.isFunction dotfilesConfig then dotfilesConfig hmArgs else dotfilesConfig)
         ];
     in
     map compileSingleFeature enabledFeatures;
