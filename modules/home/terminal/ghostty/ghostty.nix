@@ -1,11 +1,9 @@
 # Ghostty terminal emulator
-{ lib, config, pkgs, ... }@args:
+{ lib, ... }:
 
 let
-  # Strip leading "#" — Ghostty color values don't use the hash prefix
   hex = c: lib.removePrefix "#" c;
 
-  # Generate a Ghostty theme file from a theme attrset
   mkGhosttyTheme = theme:
     let t = theme.terminal;
     in ''
@@ -35,21 +33,26 @@ let
       selection-foreground = ${hex t.selectionText}
       split-divider-color = ${hex theme.roles.border}
     '';
-
-  theme = lib.my.getTheme config;
 in
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Ghostty terminal emulator";
-  module = {
-    # Generated theme file — written by Nix, sourced by config via config-file = theme
-    # Works on both NixOS and Darwin (xdg.configFile is cross-platform in home-manager)
-    allSystems.xdg.configFile."ghostty/theme".text = mkGhosttyTheme theme;
 
-    nixosSystems.home.packages = [ pkgs.ghostty ];
-    darwinSystems.homebrew.casks = [ "ghostty" ];
+  darwinModule = {
+    homebrew.casks = [ "ghostty" ];
   };
 
-  # Symlink only the config file so home-manager can also write ghostty/theme
+  homeModule = { osConfig, lib, ... }:
+    let
+      theme = lib.my.getTheme osConfig;
+    in
+    {
+      xdg.configFile."ghostty/theme".text = mkGhosttyTheme theme;
+    };
+
+  homeModuleLinux = { pkgs, ... }: {
+    home.packages = [ pkgs.ghostty ];
+  };
+
   dotfiles = {
     path = "ghostty/config";
     source = "modules/home/terminal/ghostty/dotfiles/config";
