@@ -1,10 +1,9 @@
 # Spotify music streaming
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
-  platforms = [ "linux" "darwin" ];
+lib.my.mkFeature {
   description = "Spotify music streaming client";
-  module = {
-    allSystems.home.packages = [ pkgs.spotify ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.spotify ];
   };
 }
