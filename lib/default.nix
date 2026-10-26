@@ -2,6 +2,20 @@
   # Import module registry functions
   moduleRegistry = import ./moduleRegistry.nix { inherit lib; };
 
+  # Native feature compiler and mkFeature descriptor
+  features = import ./features.nix { inherit lib inputs; };
+  inherit (features)
+    computeModulePath
+    mkFeature
+    buildFeatureOptionTree
+    isFeatureEnabledForUser
+    resolveUserFeatures
+    compileUserDotfiles
+    compileUserHomeModules
+    compileSystemFeatureModules;
+
+  mkUserDotfilesConfig = compileUserDotfiles;
+
   # ── Theme system ─────────────────────────────────────────────────────────
   # Theme registry: lib.my.themes.getTheme "rose-pine-moon"
   themes = import ./themes { inherit lib; };
@@ -68,47 +82,86 @@
   # This scans modules and extracts metadata, returning a registry structure
   buildModuleRegistry = modulesDir: prefix:
     let
-      moduleTree = recursiveDirs modulesDir;
-      moduleFiles = flattenModules moduleTree;
-
-      # Filter out tags.nix and default.nix
-      moduleFilesFiltered = filter
-        (path:
-          ! hasSuffix "tags.nix" path &&
-          ! hasSuffix "default.nix" path
-        )
-        moduleFiles;
-
-      tryImportMeta = path:
+      makeRegistry = extFeaturesArg:
         let
+          moduleTree = recursiveDirs modulesDir;
+          moduleFiles = flattenModules moduleTree;
+
+          # Filter out tags.nix and default.nix
+          moduleFilesFiltered = filter
+            (path:
+              ! hasSuffix "tags.nix" path &&
+              ! hasSuffix "default.nix" path
+            )
+            moduleFiles;
+
           libWithMy = lib // { inherit (lib) my; };
-          moduleResult = builtins.tryEval (import path (dummySpecialArgs // { lib = libWithMy; }));
+
+          tryImportFile = path:
+            let
+              fullPath = computeModulePath path;
+              imported = import path;
+              evalResult = builtins.tryEval (
+                if isFunction imported
+                then imported (dummySpecialArgs // { lib = libWithMy; _modulePath = fullPath; })
+                else imported
+              );
+            in
+            if evalResult.success then
+              evalResult.value
+            else
+              let _ = builtins.trace "Warning: Failed to import ${toString path}: ${toString evalResult.value}" null; in null;
+
+          modulesWithMeta = map
+            (path:
+              let
+                fullPath = computeModulePath path;
+                modVal = tryImportFile path;
+                isFeature = (modVal._type or "") == "feature";
+                meta =
+                  if isFeature then
+                    (modVal.meta or { inherit (modVal) requires platforms description; })
+                  else
+                    (modVal._meta or modVal.meta or null);
+              in
+              {
+                file = path;
+                path = fullPath;
+                meta = meta;
+                isFeature = isFeature;
+                feature = if isFeature then (modVal // { path = fullPath; file = path; }) else null;
+              }
+            )
+            moduleFilesFiltered;
+
+          modulesWithMetaList = filter (m: m.meta != null) modulesWithMeta;
+          discoveredFeatures = filter (f: f != null) (map (m: m.feature) modulesWithMeta);
+
+          extFeatures = if isList extFeaturesArg then extFeaturesArg else [ ];
+          extFeaturesWithPaths = map (f:
+            let
+              path = if f ? path then f.path else (if f ? name then (if hasPrefix "home." f.name then f.name else "home." + f.name) else throw "Feature in private-extension must have path or name");
+            in f // { inherit path; }
+          ) extFeatures;
+
+          repoFeaturePaths = map (f: f.path) discoveredFeatures;
+          extFeaturePaths = map (f: f.path) extFeaturesWithPaths;
+          collisions = intersectLists repoFeaturePaths extFeaturePaths;
+          _assert = assert assertMsg (collisions == [ ])
+            "Colliding feature paths between repository and private-extension: ${toString collisions}"; true;
+
+          allFeatures = assert _assert; discoveredFeatures ++ extFeaturesWithPaths;
         in
-        if moduleResult.success then
-          (moduleResult.value._meta or moduleResult.value.meta or null)
-        else
-          builtins.trace "Warning: Failed to extract metadata from ${toString path}: ${toString moduleResult.value}" null;
-
-      modulesWithMeta = map
-        (path:
-          let
-            relativePath = removePrefix "./" (removeSuffix ".nix" path);
-            fullPath = prefix + "." + (replaceStrings [ "/" ] [ "." ] relativePath);
-            meta = tryImportMeta path;
-          in
-          {
-            file = path;
-            path = fullPath;
-            meta = meta;
-          }
-        )
-        moduleFilesFiltered;
-
-      modulesWithMetaList = filter (m: m.meta != null) modulesWithMeta;
+        {
+          modules = modulesWithMetaList;
+          allModules = modulesWithMeta;
+          features = allFeatures;
+          featureCatalog = allFeatures;
+        };
+      defaultRegistry = makeRegistry [ ];
     in
-    {
-      modules = modulesWithMetaList;
-      allModules = modulesWithMeta;
+    defaultRegistry // {
+      __functor = self: extFeatures: makeRegistry extFeatures;
     };
   mkBoolOpt = default:
     mkOption {
@@ -284,105 +337,43 @@
     in
     anyGlobal || anyUser;
 
+  shouldEnableModuleForUser = { config, userName, modulePath ? null, featurePath ? null, modulesRegistry ? null }:
+    isFeatureEnabledForUser {
+      inherit config userName modulesRegistry;
+      featurePath = if featurePath != null then featurePath else modulePath;
+    };
+
   shouldEnableModule = { config, modulePath, moduleTags ? [ ], modulesRegistry ? null }:
     let
+      usersWithMod = getUsersWithModule { inherit config modulePath modulesRegistry; };
       pathParts = splitString "." modulePath;
-
-      # Generate all parent paths: ["home", "home.browsers", "home.browsers.vivaldi"]
-      # We check .enable on each of these
-      generatePaths = parts:
-        let
-          indices = genList (i: i + 1) (length parts);
-        in
-        map (i: take i parts) indices;
-
-      allPaths = generatePaths pathParts;
-
-      # Check if any path (including parents) has .enable = true in config.modules
-      checkPathEnable = parts:
-        let
-          cfg = foldl' (acc: part: acc.${part} or { }) config.modules parts;
-        in
-          cfg.enable or false;
-
-      anyGlobalPathEnabled = any checkPathEnable allPaths;
-
-      # Per-user check: same logic but in hostUsers.<user>.modules
-      enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or { });
-
-      checkUserPathEnable = userModules: parts:
-        let
-          cfg = foldl' (acc: part: acc.${part} or { }) userModules parts;
-        in
-          cfg.enable or false;
-
-      anyUserHasPathEnabled = any
-        (ucfg:
-          let
-            userModules = ucfg.modules or { };
-          in
-          any (path: checkUserPathEnable userModules path) allPaths
-        )
-        (attrValues enabledUsers);
-
-      # Requires check: enabled if any explicitly-enabled module's transitive
-      # dependency tree includes this path. Uses resolveDeps for full transitivity
-      # (A requires B, B requires C → enabling A auto-enables both B and C).
-      # Uses isExplicitlyEnabled (not shouldEnableModule) to avoid circular evaluation.
-      isRequiredByEnabled =
-        if modulesRegistry == null then false
-        else
-          let
-            regModules = modulesRegistry.modules or [ ];
-            moduleMap = listToAttrs (map (m: { name = m.path; value = m.meta; }) regModules);
-          in
-          any
-            (m:
-              m.path != modulePath &&
-              isExplicitlyEnabled { inherit config; modulePath = m.path; } &&
-              elem modulePath (moduleRegistry.resolveDeps moduleMap m.path [ ])
-            )
-            regModules;
+      cfg = foldl' (acc: part: acc.${part} or { }) (config.modules or { }) pathParts;
+      isGloballyEnabled = (cfg.enable or false) == true;
     in
-    anyGlobalPathEnabled || anyUserHasPathEnabled || isRequiredByEnabled;
+    isGloballyEnabled || (usersWithMod != { });
 
   # Get list of users who have a module enabled (via any path level)
   # Usage: usersWithModule = lib.my.getUsersWithModule { inherit config modulePath; };
-  getUsersWithModule = { config, modulePath, moduleTags ? [ ] }:
+  getUsersWithModule = { config, modulePath, moduleTags ? [ ], modulesRegistry ? null }:
     let
-      pathParts = splitString "." modulePath;
-      generatePaths = parts:
-        let
-          indices = genList (i: i + 1) (length parts);
-        in
-        map (i: take i parts) indices;
-      allPaths = generatePaths pathParts;
-
       enabledUsers = filterAttrs (name: ucfg: ucfg.enable or false) (config.hostUsers or { });
-
-      checkUserPathEnable = userModules: parts:
-        let
-          cfg = foldl' (acc: part: acc.${part} or { }) userModules parts;
-        in
-          cfg.enable or false;
     in
     filterAttrs
-      (name: ucfg:
-        let
-          userModules = ucfg.modules or { };
-        in
-        any (path: checkUserPathEnable userModules path) allPaths
+      (userName: _:
+        isFeatureEnabledForUser {
+          inherit config userName modulePath modulesRegistry;
+        }
       )
       enabledUsers;
 
   # Get list of usernames who have a module enabled (convenience wrapper)
   # Usage: usernames = lib.my.getUsersWithModuleNames { inherit config _modulePath; };
   # Returns: [ "user1" "user2" ] - list of usernames
-  getUsersWithModuleNames = { config, modulePath ? null, _modulePath ? null, moduleTags ? [ ] }:
+  getUsersWithModuleNames = { config, modulePath ? null, _modulePath ? null, moduleTags ? [ ], modulesRegistry ? null }:
     let
       # Support both modulePath and _modulePath (from args)
       path = if _modulePath != null then _modulePath else modulePath;
-      usersWithModule = getUsersWithModule { inherit config moduleTags; modulePath = path; };
+      usersWithModule = getUsersWithModule { inherit config moduleTags modulesRegistry; modulePath = path; };
     in
     attrNames usersWithModule;
 
