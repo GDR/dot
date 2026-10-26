@@ -88,9 +88,6 @@ in
     nix.settings.enable = true;
     nix.gc.enable = true;
     fonts.enable = true;
-  };
-
-  modules.system.all = {
     shell.ssh.enable = true;
   };
 
