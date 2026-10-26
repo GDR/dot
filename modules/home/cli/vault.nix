@@ -1,9 +1,9 @@
 # HashiCorp Vault CLI
-{ lib, pkgs, ... }@args:
+{ lib, ... }:
 
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "HashiCorp Vault CLI";
-  module = {
-    allSystems.home.packages = [ pkgs.vault ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.vault ];
   };
 }
