@@ -5,6 +5,7 @@ final: _prev:
 (import ../pkgs { inherit system; pkgs = final; }) // {
   charon-key = inputs.charon-key.packages.${system}.default;
   clavis = if inputs ? clavis && inputs.clavis ? packages.${system} then inputs.clavis.packages.${system}.default else null;
+  learnharness = inputs.learnharness.packages.${system}.default;
 
   # Antigravity 2.x packages from the upstream flake
   google-antigravity = inputs.antigravity-nix.packages.${system}.google-antigravity;

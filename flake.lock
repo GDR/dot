@@ -191,6 +191,26 @@
         "type": "github"
       }
     },
+    "learnharness": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793017038,
+        "narHash": "sha256-C9NbkjfjPg1EJCjKtBR7CU5DfJ2oUqmBLiRIksIWOHU=",
+        "owner": "GDR",
+        "repo": "learnharness",
+        "rev": "e44c61a54173eed8c3457060aabb4e616def83e5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "GDR",
+        "repo": "learnharness",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -335,6 +355,7 @@
         "clavis": "clavis",
         "hardware": "hardware",
         "home-manager": "home-manager",
+        "learnharness": "learnharness",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nix-wrapper-modules": "nix-wrapper-modules",

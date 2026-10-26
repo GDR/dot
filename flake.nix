@@ -53,9 +53,14 @@
     private-extension = {
       url = "path:./extensions/empty";
     };
+
+    learnharness = {
+      url = "github:GDR/learnharness";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, charon-key, ... }:
+  outputs = inputs@{ self, nixpkgs, charon-key, learnharness, ... }:
     let
       lib = nixpkgs.lib.extend (lib: _:
         let hm = inputs.home-manager.lib.hm; in {
@@ -84,7 +89,7 @@
         let
           pkgs = import nixpkgs { inherit system; config.allowUnfree = true; nvidia.acceptLicense = true; };
         in
-        import ./packages.nix { inherit pkgs lib system charon-key; }
+        import ./packages.nix { inherit pkgs lib system charon-key learnharness; }
       );
 
       devShells = forAllSystems (system:
