@@ -30,6 +30,16 @@ let
       assert mcpJson ? mcpServers.ghidra;
       pkgs.runCommand "mcp-config-generation-check" { } "touch $out";
 
+    learnharness-config-generation =
+      let
+        brightstarHm = self.darwinConfigurations.mac-brightstar.config.home-manager.users.${user};
+      in
+      assert brightstarHm.programs.learnharness.enable;
+      assert hasPackage "learnharness" brightstarHm.home.packages;
+      assert brightstarHm.home.activation ? learnharnessSettings;
+      assert brightstarHm.programs.learnharness.models.strong.id == "gemini-4-argon";
+      pkgs.runCommand "learnharness-config-generation-check" { } "touch $out";
+
     multi-user-isolation =
       let
         testHost = self.nixosConfigurations.nix-goldstar.extendModules {
