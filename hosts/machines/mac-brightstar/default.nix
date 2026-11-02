@@ -37,6 +37,7 @@ in
       home.security.clavis.enable = true;
       home.utils.enable = false;
       home.utils.obsidian.enable = true;
+      home.utils.logseq.enable = true;
       # host-specific
       home.ai-tools.enable = true;
       home.ai-tools.learnharness = {
