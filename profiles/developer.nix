@@ -3,7 +3,10 @@
 {
   userModules = {
     home.cli.enable = true;
-    home.editors.enable = true;
+    # Intentionally NOT setting home.editors.enable broadly: home.editors also
+    # contains GUI IDEs, reverse-engineering tools, and remote daemons (cursor,
+    # antigravity, ghidra, vscode-server) that should be chosen per host.
+    home.editors.neovim.enable = true;
     home.shell.enable = true;
     home.terminal.enable = true;
     home.virtualisation.docker.enable = true;

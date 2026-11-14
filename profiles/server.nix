@@ -4,6 +4,7 @@
   userModules = {
     home.cli.enable = true;
     home.editors.neovim.enable = true;
+    home.editors.vscode-server.enable = true;
     home.shell.enable = true;
     home.virtualisation.docker.enable = true;
   };
@@ -19,6 +20,5 @@
     networking.openssh.enable = true;
     networking.tailscale.enable = true;
     networking.firewall.enable = true;
-    editors.vscode-server.enable = true;
   };
 }
