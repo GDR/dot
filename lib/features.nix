@@ -119,12 +119,95 @@ let
       home = buildSubtree [ "home" ];
     };
 
+  # Walk from leaf to root (e.g. home.utils.raycast -> home.utils -> home)
+  # and return the most specific non-null .enable setting, or null if unset.
+  findPathSetting = modules: path:
+    let
+      pathParts = lib.splitString "." path;
+      prefixes = lib.genList (i: lib.take (i + 1) pathParts) (lib.length pathParts);
+      revPrefixes = lib.reverseList prefixes;
+    in
+    lib.foldl'
+      (acc: prefix:
+        if acc != null then acc
+        else
+          let
+            sub = lib.foldl' (a: p: a.${p} or { }) modules prefix;
+          in
+            sub.enable or null
+      )
+      null
+      revPrefixes;
+
+  # Precompute the enabled feature path set ({ "<path>" = true; }) for (cfg, userName) in O(F):
+  # 1. Build moduleMap once from registry modules + feature catalog.
+  # 2. Scan allKnownPaths once to collect directlyEnabledPaths and explicitlyDisabledByUserPaths.
+  # 3. Compute the full transitive requires closure once via resolveDeps (threading visited).
+  # 4. Subtract explicitlyDisabledByUserPaths so per-user opt-out wins over transitive requires.
+  computeEnabledFeatureSetForUser =
+    { cfg
+    , userName
+    , catalog ? [ ]
+    , modulesRegistry ? null
+    }:
+    let
+      resolvedCatalog =
+        if catalog != [ ] then catalog
+        else if modulesRegistry != null then (modulesRegistry.features or modulesRegistry.featureCatalog or [ ])
+        else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.features or cfg._modulesRegistry.featureCatalog or [ ])
+        else [ ];
+
+      registryModules =
+        if modulesRegistry != null then (modulesRegistry.modules or [ ])
+        else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.modules or [ ])
+        else [ ];
+
+      moduleMap =
+        (lib.listToAttrs (map (m: { name = m.path; value = m.meta or m; }) registryModules))
+        // (lib.listToAttrs (map (f: { name = f.path; value = f; }) resolvedCatalog));
+
+      allKnownPaths = lib.attrNames moduleMap;
+      userModules = cfg.hostUsers.${userName}.modules or { };
+      globalModules = cfg.modules or { };
+
+      pathStates = map
+        (p:
+          let
+            userSetting = findPathSetting userModules p;
+            globalSetting = findPathSetting globalModules p;
+            directlyEnabled =
+              if userSetting != null then userSetting
+              else if globalSetting != null then globalSetting
+              else false;
+          in
+          {
+            path = p;
+            inherit directlyEnabled;
+            explicitlyDisabledByUser = userSetting == false;
+          }
+        )
+        allKnownPaths;
+
+      directlyEnabledPaths = map (s: s.path) (lib.filter (s: s.directlyEnabled) pathStates);
+      explicitlyDisabledByUserPaths = lib.listToAttrs (map
+        (s: { name = s.path; value = true; })
+        (lib.filter (s: s.explicitlyDisabledByUser) pathStates));
+
+      closurePaths = lib.foldl'
+        (visited: p: moduleRegistryHelper.resolveDeps moduleMap p visited)
+        [ ]
+        directlyEnabledPaths;
+    in
+    lib.listToAttrs (map
+      (p: { name = p; value = true; })
+      (lib.filter (p: !(explicitlyDisabledByUserPaths ? ${p})) closurePaths));
+
   # Check if a feature is enabled for a specific user:
   # 1. Walks from leaf to root in userModules: most specific non-null setting wins.
   # 2. If user setting is null, falls back to global config.modules hierarchy.
   # 3. If directly enabled, returns true.
   # 4. If user explicitly set enable = false, returns false (transitive requires cannot override user opt-out).
-  # 5. Otherwise, checks per-user transitive requires via moduleRegistry.resolveDeps.
+  # 5. Otherwise, checks per-user transitive requires via computeEnabledFeatureSetForUser.
   isFeatureEnabledForUser =
     { config ? null
     , osConfig ? null
@@ -138,91 +221,26 @@ let
     let
       cfg = if config != null then config else osConfig;
       path = if featurePath != null then featurePath else modulePath;
-      pathParts = lib.splitString "." path;
-
-      catalog =
-        if featureCatalog != null then featureCatalog
-        else if modulesRegistry != null then (modulesRegistry.features or modulesRegistry.featureCatalog or [ ])
-        else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.features or cfg._modulesRegistry.featureCatalog or [ ])
-        else [ ];
-
-      prefixes = lib.genList (i: lib.take (i + 1) pathParts) (lib.length pathParts);
-      revPrefixes = lib.reverseList prefixes;
-
-      findSetting = modules:
-        lib.foldl'
-          (acc: prefix:
-            if acc != null then acc
-            else
-              let
-                sub = lib.foldl' (a: p: a.${p} or { }) modules prefix;
-              in
-                sub.enable or null
-          )
-          null
-          revPrefixes;
 
       userModules = cfg.hostUsers.${userName}.modules or { };
       globalModules = cfg.modules or { };
 
-      userSetting = findSetting userModules;
-      globalSetting = findSetting globalModules;
+      userSetting = findPathSetting userModules path;
+      globalSetting = findPathSetting globalModules path;
 
       directlyEnabled =
         if userSetting != null then userSetting
         else if globalSetting != null then globalSetting
         else false;
+
+      catalog = if featureCatalog != null then featureCatalog else [ ];
+      enabledSet = computeEnabledFeatureSetForUser {
+        inherit cfg userName catalog modulesRegistry;
+      };
     in
     if directlyEnabled then true
     else if userSetting == false then false # User explicit opt-out wins over transitive requires
-    else
-    # Check transitive requirements
-      let
-        registryModules =
-          if modulesRegistry != null then (modulesRegistry.modules or [ ])
-          else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.modules or [ ])
-          else [ ];
-
-        moduleMap =
-          (lib.listToAttrs (map (m: { name = m.path; value = m.meta or m; }) registryModules))
-          // (lib.listToAttrs (map (f: { name = f.path; value = f; }) catalog));
-
-        allKnownPaths = lib.attrNames moduleMap;
-
-        isPathDirectlyEnabled = p:
-          let
-            pParts = lib.splitString "." p;
-            pPrefixes = lib.genList (i: lib.take (i + 1) pParts) (lib.length pParts);
-            pRevPrefixes = lib.reverseList pPrefixes;
-            pFindSetting = modules:
-              lib.foldl'
-                (acc: prefix:
-                  if acc != null then acc
-                  else
-                    let sub = lib.foldl' (a: part: a.${part} or { }) modules prefix; in
-                      sub.enable or null
-                )
-                null
-                pRevPrefixes;
-            uSet = pFindSetting userModules;
-            gSet = pFindSetting globalModules;
-          in
-          if uSet != null then uSet
-          else if gSet != null then gSet
-          else false;
-
-        directlyEnabledPaths = lib.filter (p: p != path && isPathDirectlyEnabled p) allKnownPaths;
-
-        isRequired = lib.any
-          (parentPath:
-            let
-              deps = moduleRegistryHelper.resolveDeps moduleMap parentPath [ ];
-            in
-            lib.elem path deps
-          )
-          directlyEnabledPaths;
-      in
-      isRequired;
+    else enabledSet ? ${path};
 
   # Resolve all active features for a user
   resolveUserFeatures =
@@ -245,17 +263,14 @@ let
         else if modulesRegistry != null then (modulesRegistry.features or modulesRegistry.featureCatalog or [ ])
         else if osConfig ? _modulesRegistry && osConfig._modulesRegistry != null then (osConfig._modulesRegistry.features or osConfig._modulesRegistry.featureCatalog or [ ])
         else [ ];
+
+      enabledSet = computeEnabledFeatureSetForUser {
+        cfg = osConfig;
+        inherit userName catalog modulesRegistry;
+      };
     in
     lib.filter
-      (f:
-      (lib.elem hostPlatform f.platforms)
-      && isFeatureEnabledForUser {
-        config = osConfig;
-        inherit userName modulesRegistry;
-        featurePath = f.path;
-        featureCatalog = catalog;
-      }
-      )
+      (f: (lib.elem hostPlatform f.platforms) && (enabledSet ? ${f.path}))
       catalog;
 
   # Single-user dotfiles compilation (scoped strictly to the user who enabled the feature)
@@ -387,6 +402,7 @@ let
     let
       isLinux = system == "x86_64-linux" || system == "aarch64-linux";
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
+      hostPlatform = if isDarwin then "darwin" else "linux";
       allUserNames = lib.attrNames (lib.filterAttrs (_: u: u.enable) (config.hostUsers or { }));
 
       catalog =
@@ -394,25 +410,30 @@ let
         else if modulesRegistry != null then (modulesRegistry.features or modulesRegistry.featureCatalog or [ ])
         else if config ? _modulesRegistry && config._modulesRegistry != null then (config._modulesRegistry.features or config._modulesRegistry.featureCatalog or [ ])
         else [ ];
+
+      # Precompute per-user enabled feature closures once rather than per (feature, user)
+      enabledSetsByUser = lib.genAttrs allUserNames (u:
+        computeEnabledFeatureSetForUser {
+          cfg = config;
+          userName = u;
+          inherit catalog modulesRegistry;
+        }
+      );
     in
     lib.mkMerge (map
       (feature:
       let
         pathParts = lib.splitString "." feature.path;
         globalCfg = lib.foldl' (acc: p: acc.${p} or { }) (config.modules or { }) pathParts;
+        platformSupported = lib.elem hostPlatform feature.platforms;
 
-        selectedUsers = lib.filter
-          (u:
-            isFeatureEnabledForUser {
-              inherit config system modulesRegistry;
-              userName = u;
-              featurePath = feature.path;
-              featureCatalog = catalog;
-            }
-          )
-          allUserNames;
+        selectedUsers =
+          if platformSupported then
+            lib.filter (u: (enabledSetsByUser.${u} or { }) ? ${feature.path}) allUserNames
+          else
+            [ ];
 
-        isGloballyEnabled = (globalCfg.enable or null) == true;
+        isGloballyEnabled = platformSupported && ((globalCfg.enable or null) == true);
         shouldActivate = (selectedUsers != [ ]) || isGloballyEnabled;
 
         systemArgs = {
