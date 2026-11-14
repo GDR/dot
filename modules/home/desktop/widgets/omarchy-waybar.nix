@@ -10,8 +10,10 @@ lib.my.mkFeature {
       omarchy = pkgs.fetchFromGitHub {
         owner = "basecamp";
         repo = "omarchy";
-        rev = "master";
-        hash = "sha256-tnAFBxdXamEG2qAy4TVUB8dSQrGVUjlQPE42lK4aoiY=";
+        # Pin immutable commit SHA instead of floating "master" ref so fixed-output
+        # hash stays reproducible across upstream pushes.
+        rev = "f4378f0de5b44d331ee943746a97872b718a6c18";
+        hash = "sha256-vPdvurq/4zRkpnnVLhvDCgVb7A8DNbLBKmd1nEqNr5A=";
       };
 
       omarchyBins = pkgs.runCommand "omarchy-bins"
