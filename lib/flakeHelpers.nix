@@ -54,13 +54,14 @@ in
     nix-darwin.lib.darwinSystem {
       inherit system;
       specialArgs = {
-        inherit self inputs lib overlays system vscode-server;
+        inherit self inputs lib overlays system;
         modulesRegistry = modulesRegistry;
       };
       modules = [ host-config ]
         ++ [
         home-manager.darwinModules.home-manager
         charon-key.darwinModules.default
+        sops-nix.darwinModules.sops
         # antigravity-nix exposes only packages/overlays (no darwinModules);
         # google-antigravity* are injected via overlays/additions.nix
       ]
