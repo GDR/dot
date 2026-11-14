@@ -3,8 +3,15 @@
 { lib, ... }:
 
 let
+  keyExt = keyType: {
+    "rsa" = "id_rsa";
+    "ed25519" = "id_ed25519";
+    "ecdsa" = "id_ecdsa";
+    "ecdsa-sk" = "id_ecdsa_sk";
+  }.${keyType};
+
   # Convert SSH array to matchBlocks attrs format
-  sshArrayToMatchBlocks = userName: sshArray:
+  sshArrayToMatchBlocks = sshArray:
     let
       sshEntryToSettingsBlock = entry:
         lib.optionalAttrs (entry.user != null)
@@ -30,12 +37,12 @@ in
 lib.my.mkFeature {
   description = "SSH client configuration (reads keys and config from hostUsers)";
 
-  homeModule = { config, osConfig, pkgs, lib, userName, ... }:
+  homeModule = { osConfig, pkgs, lib, userName, ... }:
     let
       userCfg = osConfig.hostUsers.${userName} or { };
       sshArray = userCfg.ssh or [ ];
       includes = userCfg.sshIncludes or [ "~/.ssh/config.d/*" ];
-      baseSettings = sshArrayToMatchBlocks userName sshArray;
+      baseSettings = sshArrayToMatchBlocks sshArray;
 
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
       homePrefix = if isDarwin then "/Users" else "/home";
@@ -72,7 +79,7 @@ lib.my.mkFeature {
       defaultKey = lib.findFirst (k: k.isDefault or false) null userKeys;
       defaultIdentityFile =
         if defaultKey != null
-        then "~/.ssh/${defaultKey.name}_${defaultKey.type}"
+        then "~/.ssh/${defaultKey.name}_${keyExt defaultKey.type}"
         else null;
 
       baseControlSettings = {
@@ -95,7 +102,7 @@ lib.my.mkFeature {
 
       pubKeyFiles = lib.listToAttrs (map
         (key: {
-          name = ".ssh/${key.name}_id_${key.type}.pub";
+          name = ".ssh/${key.name}_${keyExt key.type}.pub";
           value = {
             text = key.publicKey;
           };
@@ -128,6 +135,9 @@ lib.my.mkFeature {
         ''
       );
 
+      # Materialize ~/.ssh/config as a regular 0600 file rather than a symlink into
+      # /nix/store (0444): strict SSH client and VS Code / Remote-SSH permission
+      # checks reject world-readable store symlinks.
       home.activation.removeOldSshConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         sshConfig="$HOME/.ssh/config"
         if [ -f "$sshConfig" ] && [ ! -L "$sshConfig" ]; then
@@ -136,8 +146,6 @@ lib.my.mkFeature {
       '';
 
       home.activation.fixSshConfigPerms = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        mkdir -p "$HOME/.ssh/sockets"
-        chmod 700 "$HOME/.ssh/sockets"
         sshConfig="$HOME/.ssh/config"
         if [ -L "$sshConfig" ]; then
           target=$(readlink "$sshConfig")
