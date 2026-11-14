@@ -1,473 +1,470 @@
-# 🏠 Nix Configuration
+# Nix Configuration (`dot`)
 
-[![NixOS](https://img.shields.io/badge/NixOS-26.11-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org/)
+[![NixOS](https://img.shields.io/badge/NixOS-unstable-5277C3?style=flat-square&logo=nixos&logoColor=white)](https://nixos.org/)
 [![nix-darwin](https://img.shields.io/badge/nix--darwin-aarch64-000000?style=flat-square&logo=apple&logoColor=white)](https://github.com/LnL7/nix-darwin)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/check-runs/gdr/dot/master?style=flat-square&label=CI)](https://github.com/GDR/dot/actions)
 
-Personal NixOS & nix-darwin configuration with a modular, hierarchical architecture.
-
-### Why Nix?
-
-> *"Works on my machine"* → *"Works on every machine"*
-
-Nix is a purely functional package manager that treats system configuration as code. The same configuration always produces the same system — whether you're setting up a fresh laptop or rebuilding after a disaster. Made a mistake? Just boot into a previous generation and you're back to a working state in seconds.
-
-Everything is declarative: packages, services, dotfiles, even your desktop environment. No more scattered configs or forgotten setup steps. Your entire system lives in version-controlled `.nix` files that work across all your machines — Linux desktops, macOS laptops, headless servers.
-
-Updates are atomic (they fully apply or don't touch anything), and different package versions coexist peacefully. No dependency hell, no "I updated X and now Y is broken". Just reproducible, reliable systems.
+Personal NixOS & nix-darwin configuration built on a typed, per-user feature compiler (`mkFeature`), role-based profiles, and cross-platform system modules (`mkSystemModuleV2`).
 
 ---
 
-## ✨ Features
+## Features
 
-- 🖥️ **Multi-platform** — Same structure for NixOS and macOS (nix-darwin)
-- 👥 **Multi-user ready** — Each user can have different modules enabled
-- 🎯 **Hierarchical enables** — Enable at any path level: `home.browsers.enable` or `home.browsers.vivaldi.enable`
-- ✏️ **Live-editable dotfiles** — Config files are symlinked to this repo, edit in place without rebuild
-- 🔍 **Auto-discovery** — Drop a `.nix` file in any module directory, it's automatically imported
+- **Multi-platform** — Unified flake architecture across NixOS (`x86_64-linux`) and macOS (`aarch64-darwin`).
+- **Isolated per-user features (`mkFeature`)** — Home Manager configuration compiles strictly per enabled user, with optional two-stage system activation (`nixosModule` / `darwinModule`) and transitive `requires` resolution.
+- **Hierarchical enables & composable profiles** — Enable whole categories (`home.browsers.enable = true`), individual features (`home.browsers.vivaldi.enable = true`), or compose role bundles (`profiles/*.nix` via `lib.my.mergeProfiles`).
+- **Dual-mode dotfiles** — Switch seamlessly between immutable `/nix/store` generation-safe symlinks and out-of-store live editing (`dotfiles.live` / `<feature>.dotfilesLive`).
+- **Hardware-backed SSH & zero-drift auth** — macOS Keychain/Touch ID SSH & `age` agent (`clavis`), Git SSH commit signing, dynamic GitHub `AuthorizedKeysCommand` (`charon-key`), and `sops-nix` + Bitwarden secret workflows.
+- **Auto-discovery** — Drop a `.nix` file under `modules/home/` or `modules/systems/{all,linux,darwin}/` and it is registered automatically.
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Architecture](#-architecture)
+- [Quick Start](#quick-start)
+- [Architecture](#architecture)
   - [Architecture Diagram](#architecture-diagram)
   - [Directory Structure](#directory-structure)
   - [Module Types](#module-types)
-- [Guides](#-guides)
+- [Guides](#guides)
   - [Create a New Host](#create-a-new-host)
   - [Create a New User](#create-a-new-user)
-  - [Per-User Module Configuration](#per-user-module-configuration)
+  - [Profiles & Hierarchical Enables](#profiles--hierarchical-enables)
   - [Create a New Module](#create-a-new-module)
-- [Secrets Management (SOPS)](#-secrets-management-sops)
-- [Host Configuration](#-host-configuration)
-- [License](#-license)
+  - [Dotfile Symlink Modes](#dotfile-symlink-modes)
+- [Security & Secrets Management](#security--secrets-management)
+- [Host Configuration](#host-configuration)
+- [Module Reference](#module-reference)
+- [License](#license)
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/gdr/dot.git ~/Workspaces/gdr/dot
 cd ~/Workspaces/gdr/dot
 
-# Apply configuration
-# NixOS:
+# Apply on NixOS:
 sudo nixos-rebuild switch --flake .#<hostname>
 
-# macOS:
+# Apply on macOS (nix-darwin):
 darwin-rebuild switch --flake .#<hostname>
 ```
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ### Architecture Diagram
 
 ```mermaid
-graph TD
-    subgraph Inputs["Flake Inputs & Outputs"]
-        FI["flake.nix Inputs<br/>(nixpkgs, nix-darwin, home-manager, sops-nix)"]
-        FO["flakeOutputs<br/>(nixosConfigurations, darwinConfigurations, packages, devShells, checks, formatter)"]
-        FI --> FO
+flowchart TD
+    subgraph Flake ["Flake Inputs & Helpers"]
+        FI["flake.nix Inputs (nixpkgs, nix-darwin, home-manager, clavis, charon-key, sops-nix)"]
+        FH["lib/flakeHelpers.nix (mkNixosConfiguration, mkDarwinConfiguration)"]
+        FI --> FH
     end
 
-    subgraph Hosts["Host Configurations"]
-        NG["nix-goldstar<br/>(NixOS Desktop)"]
-        NO["nix-oldstar<br/>(NixOS Server)"]
-        MB["mac-brightstar<br/>(Darwin Laptop)"]
-        FO --> NG
-        FO --> NO
-        FO --> MB
+    subgraph Hosts ["Machine Configurations"]
+        NG["nix-goldstar (NixOS Desktop, Hyprland, NVIDIA)"]
+        NO["nix-oldstar (NixOS Server & Remote Builder)"]
+        MB["mac-brightstar (macOS Laptop, Clavis, Homebrew)"]
+        FH --> NG
+        FH --> NO
+        FH --> MB
     end
 
-    subgraph Profiles["Profiles & Users"]
-        U["User Defaults<br/>(hosts/users/dgarifullin.nix)"]
-        P["Profiles & Enables<br/>(developer, desktop, server, gaming)"]
-        NG --> U
-        NO --> U
-        MB --> U
-        U --> P
+    subgraph Composition ["Users & Profiles"]
+        UD["User Defaults (hosts/users/dgarifullin.nix)"]
+        PR["Role Profiles (profiles/*.nix + lib.my.mergeProfiles)"]
+        NG --> UD
+        NO --> UD
+        MB --> UD
+        UD --> PR
     end
 
-    subgraph Modules["Module System"]
-        HM["User Modules (mkModuleV2)<br/>modules/home/*"]
-        SM["System Modules (mkSystemModuleV2)<br/>modules/systems/{all,linux,darwin}/*"]
-        P --> HM
-        P --> SM
+    subgraph Compiler ["Module & Feature Engine"]
+        MF["User Features (lib.my.mkFeature in modules/home/*)"]
+        MS["System Modules (lib.my.mkSystemModuleV2 in modules/systems/*)"]
+        PR --> MF
+        PR --> MS
     end
 
-    subgraph Targets["System State & Config"]
-        DOT["Live-Editable Dotfiles<br/>(mkDotfilesSymlink → ~/.config/*)"]
-        SECR["SOPS Secrets<br/>(sops-nix / age / Bitwarden integration)"]
-        HM --> DOT
-        SM --> SECR
+    subgraph Runtime ["Compiled System State"]
+        HM["Per-User Home Manager + Two-Stage System Hooks"]
+        DF["Dotfiles (Nix Store or Live Out-of-Store Symlinks)"]
+        SEC["Security (clavis, charon-key, Git SSH Signing, sops-nix)"]
+        MF --> HM
+        MF --> DF
+        MF --> SEC
+        MS --> SEC
     end
 ```
 
 ### Directory Structure
 
-```
-.
-├── flake.nix                 # Entry point - defines hosts and imports
+```text
+dot/
+├── flake.nix                 # Entry point — inputs, overlays, host outputs, checks
+├── docs/                     # Architecture & operational documentation
+│   ├── security-architecture.md
+│   └── security-runbook.md
 ├── hosts/
-│   ├── users/                # User defaults (imported by machines)
-│   │   └── dgarifullin.nix
-│   └── machines/             # Machine configurations
-│       ├── nix-goldstar/     # NixOS host
-│       │   ├── default.nix
-│       │   └── hardware-configuration.nix
-│       └── mac-brightstar/   # Darwin host
-│           └── default.nix
+│   ├── users/                # Shared user defaults (dgarifullin.nix)
+│   └── machines/             # Per-host configurations
+│       ├── nix-goldstar/     # NixOS desktop (Hyprland, NVIDIA)
+│       ├── nix-oldstar/      # NixOS server & remote builder
+│       └── mac-brightstar/   # macOS workstation (nix-darwin)
 ├── lib/
-│   └── default.nix           # Helper functions (mkModule, mkDotfilesSymlink)
+│   ├── default.nix           # Core library namespace (lib.my.*)
+│   ├── features.nix          # mkFeature compiler, option tree builder, dotfiles compiler
+│   ├── flakeHelpers.nix      # mkNixosConfiguration, mkDarwinConfiguration
+│   ├── moduleRegistry.nix    # Auto-discovery & transitive dependency resolver
+│   └── themes/               # Color themes (rose-pine-moon, catppuccin-macchiato, etc.)
+├── profiles/                 # Composable role bundles (developer, desktop, gaming, server, macos)
 ├── modules/
-│   ├── _core/                # Core module infrastructure
-│   │   ├── registry.nix      # Module registry builder
-│   │   └── user.nix          # hostUsers options & home-manager setup
-│   ├── systems/
-│   │   ├── all/              # Cross-platform system modules
-│   │   │   ├── fonts.nix
-│   │   │   ├── nix/
-│   │   │   │   ├── gc.nix
-│   │   │   │   └── settings.nix
-│   │   │   └── shell/
-│   │   │       ├── git.nix
-│   │   │       └── ssh.nix
-│   │   ├── linux/            # Linux-only system modules
-│   │   │   ├── desktop/
-│   │   │   │   ├── awesomewm/
-│   │   │   │   └── hyprland/
-│   │   │   ├── graphics/
-│   │   │   ├── keyboards/
-│   │   │   ├── networking/
-│   │   │   └── sound.nix
-│   │   └── darwin/           # macOS-only system modules
-│   └── home/                 # User-level modules (enabled hierarchically)
-│       ├── browsers/
-│       ├── cli/
-│       ├── desktop/
-│       │   ├── appearance/
-│       │   ├── services/
-│       │   ├── utils/
-│       │   └── widgets/
-│       ├── editors/
-│       ├── games/
-│       ├── media/
-│       ├── messengers/
-│       ├── security/
-│       ├── shell/
-│       └── terminal/
-└── pkgs/                     # Custom packages
+│   ├── _core/                # Core infrastructure (registry.nix, user.nix, system.nix, theme.nix)
+│   ├── home/                 # Auto-discovered user features (mkFeature)
+│   │   ├── ai-tools/         # claude, codex, gemini-cli, learnharness
+│   │   ├── browsers/         # chromium, vivaldi
+│   │   ├── cli/              # gcloud, htop, shell-utils, vault
+│   │   ├── desktop/          # appearance, awesomewm, hyprland, services, utils, widgets
+│   │   ├── downloads/        # qbittorrent
+│   │   ├── editors/          # antigravity, cursor, ghidra, neovim, vscode-server
+│   │   ├── games/            # lutris, soundpad, steam
+│   │   ├── media/            # iina, spotify, vlc
+│   │   ├── messengers/       # telegram
+│   │   ├── security/         # bitwarden, clavis, keepassxc
+│   │   ├── shell/            # git, ssh, tmux, zsh
+│   │   ├── terminal/         # ghostty
+│   │   ├── utils/            # logseq, macfuse, obsidian, raycast
+│   │   └── virtualisation/   # docker, virtualbox
+│   └── systems/              # Auto-discovered system modules (mkSystemModuleV2)
+│       ├── all/              # fonts, sops, nix/{gc,settings}, shell/ssh
+│       ├── linux/            # graphics, keyboards, networking, power-management, sound
+│       └── darwin/           # homebrew, macos-settings, openssh, ssh
+├── overlays/                 # Nixpkgs overlays & patches
+├── pkgs/                     # Custom package derivations
+└── templates/                # Project flake templates (python, tex)
 ```
 
 ### Module Types
 
-| Type | Location | Enabled via | Scope |
-|------|----------|-------------|-------|
-| **System (All)** | `systems/all/` | `modules.system.all.<name>.enable` | System-wide, cross-platform |
-| **System (Linux)** | `systems/linux/` | `modules.system.linux.<name>.enable` | System-wide, Linux only |
-| **System (Darwin)** | `systems/darwin/` | `modules.system.darwin.<name>.enable` | System-wide, macOS only |
-| **User** | `home/` | `hostUsers.<user>.modules.<path>.enable` | Per-user, hierarchical enables |
+| Type | Location | Constructor | Enabled via | Scope |
+|------|----------|-------------|-------------|-------|
+| **User Feature** | `modules/home/` | `lib.my.mkFeature` | `hostUsers.<user>.modules.home.<path>.enable` (or global `modules.home.<path>.enable`) | Per-user Home Manager + optional system hooks (`nixosModule` / `darwinModule`) |
+| **System (All)** | `modules/systems/all/` | `lib.my.mkSystemModuleV2` | `modules.system.all.<name>.enable` (or `modules.system.all.enable`) | System-wide, cross-platform |
+| **System (Linux)** | `modules/systems/linux/` | `lib.my.mkSystemModuleV2` | `modules.system.linux.<name>.enable` (or `modules.system.linux.enable`) | System-wide, NixOS only |
+| **System (Darwin)** | `modules/systems/darwin/` | `lib.my.mkSystemModuleV2` | `modules.system.darwin.<name>.enable` (or `modules.system.darwin.enable`) | System-wide, macOS only |
 
 ---
 
-## 📖 Guides
+## Guides
 
 ### Create a New Host
 
-1. **Create host directory:**
+1. **Create the host directory and generate hardware config (NixOS):**
 
 ```bash
 mkdir -p hosts/machines/my-new-host
+nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardware-configuration.nix
 ```
 
-2. **Create `default.nix`:**
+2. **Create `hosts/machines/my-new-host/default.nix`:**
 
 ```nix
-# hosts/machines/my-new-host/default.nix
-{ config, lib, pkgs, ... }:
+{ lib, ... }:
 let
-  importUser = name: import ../../users/${name}.nix { inherit lib; };
+  userDefaults = import ../../users/dgarifullin.nix { inherit lib; };
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+  ];
 in
 {
   imports = [ ./hardware-configuration.nix ];
 
-  # User configuration
-  hostUsers.dgarifullin = importUser "dgarifullin" // {
+  networking.hostName = "my-new-host";
+  environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
+
+  hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
     keys = [{
       name = "my-new-host";
-      type = "rsa";
+      type = "ed25519";
       purpose = [ "git" "ssh" ];
       isDefault = true;
     }];
-    # Hierarchical module enables
-    modules = {
-      home.cli.enable = true;
-      home.shell.enable = true;
-      home.editors.enable = true;
-      # Or enable specific modules:
-      # home.browsers.vivaldi.enable = true;
+    ssh = [
+      {
+        host = "*";
+        identityFile = "~/.ssh/my-new-host_id_ed25519";
+        extraOptions.AddKeysToAgent = "yes";
+      }
+      {
+        host = "github.com";
+        user = "git";
+        identityFile = "~/.ssh/my-new-host_id_ed25519";
+      }
+    ] ++ userDefaults.ssh.knownHosts;
+
+    modules = lib.recursiveUpdate profiles.userModules {
+      home.desktop.hyprland.enable = true;
+      home.browsers.vivaldi.enable = true;
     };
   };
 
-  networking.hostName = "my-new-host";
-
-  # System modules
-  modules.system.all = {
+  modules.system.all = lib.recursiveUpdate profiles.system.all {
     fonts.enable = true;
-    nix.settings.enable = true;
-    nix.gc.enable = true;
-    shell.ssh.enable = true;
-    shell.git.enable = true;
+    sops.enable = true;
   };
 
-  # Linux-specific (remove for Darwin)
-  modules.system.linux = {
-    desktop.hyprland.enable = true;
-    networking.networkmanager.enable = true;
-    sound.enable = true;
+  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+    networking.openssh = {
+      enable = true;
+      userMap = { "dgarifullin" = "gdr"; };
+    };
   };
 
   time.timeZone = "Europe/Moscow";
+  theme.name = "rose-pine-moon";
 }
 ```
 
-3. **Generate hardware config (NixOS):**
-
-```bash
-nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardware-configuration.nix
-```
-
-4. **Add to `flake.nix`:**
+3. **Register in `flake.nix`:**
 
 ```nix
-nixosConfigurations.my-new-host = mkNixosConfiguration ./hosts/machines/my-new-host;
-# or for Darwin:
-darwinConfigurations.my-new-host = mkDarwinConfiguration ./hosts/machines/my-new-host;
+nixosConfigurations.my-new-host = flakeHelpers.mkNixosConfiguration ./hosts/machines/my-new-host;
+# or for macOS:
+darwinConfigurations.my-new-host = flakeHelpers.mkDarwinConfiguration ./hosts/machines/my-new-host;
 ```
 
 ---
 
 ### Create a New User
 
-1. **Create user defaults:**
+1. **Define shared user defaults in `hosts/users/newuser.nix`:**
 
 ```nix
-# hosts/users/newuser.nix
 { lib, ... }:
 {
-  enable = lib.mkDefault false;
-  fullName = lib.mkDefault "New User";
-  email = lib.mkDefault "newuser@example.com";
-  github = lib.mkDefault "newuser";
-  extraGroups = lib.mkDefault [ "wheel" "audio" "video" ];
+  user = {
+    fullName = "New User";
+    email = "newuser@example.com";
+    github = "newuser";
+    extraGroups = [ "wheel" "audio" ];
+    uid = 1001;
+  };
 }
 ```
 
-2. **Enable in host config:**
+2. **Enable the user on a host:**
 
 ```nix
-# hosts/machines/my-host/default.nix
-hostUsers.newuser = importUser "newuser" // {
-  enable = true;
-  keys = [{
-    name = "my-host";
-    type = "rsa";
-    purpose = [ "git" "ssh" ];
-    isDefault = true;
-  }];
-  # Hierarchical module enables
-  modules = {
-    home.core.enable = true;
-    home.shell.enable = true;
-    home.media.vlc.enable = true;  # specific module
+let
+  newUserDefaults = import ../../users/newuser.nix { inherit lib; };
+in
+{
+  hostUsers.newuser = newUserDefaults.user // {
+    enable = true;
+    modules = {
+      home.cli.enable = true;
+      home.shell.enable = true;
+      home.editors.neovim.enable = true;
+    };
   };
-};
+}
 ```
 
 ---
 
-### Per-User Module Configuration
+### Profiles & Hierarchical Enables
 
-Configure modules per-user using hierarchical enables:
+Role profiles in [`profiles/`](profiles) bundle common `userModules` and `system.{all,linux,darwin}` enables:
+
+| Profile | Included Modules |
+|---------|------------------|
+| `developer.nix` | `home.{cli,editors,shell,terminal}`, `home.virtualisation.docker`, `system.all.{nix.settings,nix.gc,shell.ssh}` |
+| `desktop.nix` | `home.{browsers,downloads,media,messengers,security,utils}`, `home.desktop.{appearance,services,utils,widgets}`, `system.linux.{sound,networking}` |
+| `gaming.nix` | `home.games` |
+| `server.nix` | `home.{cli,shell}`, `home.editors.neovim`, `home.virtualisation.docker`, `system.linux.networking.{openssh,tailscale,firewall}` |
+| `macos.nix` | `system.darwin.macos-settings` |
+
+Merge multiple profiles safely with `lib.my.mergeProfiles` and `lib.recursiveUpdate` (never `//`, which clobbers sibling attributes):
 
 ```nix
-hostUsers.dgarifullin = importUser "dgarifullin" // {
-  enable = true;
-
-  modules = {
-    # Enable entire categories
-    home.browsers.enable = true;     # enables vivaldi, chromium, etc.
-    home.editors.enable = true;      # enables neovim, cursor, etc.
-
-    # Or enable specific modules
-    home.media.vlc.enable = true;    # just vlc
-    home.media.spotify.enable = true;
+let
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+  ];
+in
+{
+  hostUsers.dgarifullin.modules = lib.recursiveUpdate profiles.userModules {
+    home.utils.enable = false;          # Disable category
+    home.utils.obsidian.enable = true;  # Selective opt-in wins over parent false
   };
-};
+}
 ```
 
-**Hierarchical enables:**
-- `home.enable = true` → enables ALL home modules
-- `home.browsers.enable = true` → enables all browsers
-- `home.browsers.vivaldi.enable = true` → enables just vivaldi
-
-Module paths follow the directory structure: `home.<category>.<module-name>`
+**Resolution rules (`lib.my.isFeatureEnabledForUser`):**
+- Most specific path wins (`home.utils.obsidian.enable = true` overrides `home.utils.enable = false`).
+- Per-user settings (`hostUsers.<user>.modules.*`) override global defaults (`modules.*`).
+- Enabling a feature automatically enables its transitive `requires` graph per user (unless explicitly opted out with `enable = false`).
 
 ---
 
 ### Create a New Module
 
-#### User Module
+#### User Feature (`mkFeature`)
+
+Create a file under `modules/home/<category>/<name>.nix` — it is auto-discovered and typed options are generated automatically:
 
 ```nix
-# modules/home/tools/my-tool.nix
+# modules/home/cli/my-tool.nix
+{ lib, ... }:
+
+lib.my.mkFeature {
+  description = "My CLI tool";
+  platforms = [ "linux" "darwin" ];
+  requires = [ "home.shell.zsh" ];
+
+  extraOptions = {
+    defaultFormat = lib.mkOption {
+      type = lib.types.str;
+      default = "json";
+      description = "Default output format";
+    };
+  };
+
+  dotfiles = {
+    path = "my-tool";
+    source = "modules/home/cli/my-tool/dotfiles";
+  };
+
+  homeModule = { pkgs, featureCfg, ... }: {
+    home.packages = [ pkgs.my-tool ];
+    home.sessionVariables.MY_TOOL_FORMAT = featureCfg.defaultFormat;
+  };
+
+  homeModuleLinux = { ... }: { };
+  homeModuleDarwin = { ... }: { };
+  nixosModule = { selectedUsers, ... }: { };
+  darwinModule = { selectedUsers, ... }: { };
+}
+```
+
+#### System Module (`mkSystemModuleV2`)
+
+Create a file under `modules/systems/{all,linux,darwin}/`:
+
+```nix
+# modules/systems/linux/networking/my-daemon.nix
 { lib, pkgs, ... }@args:
 
-lib.my.mkModuleV2 args {
-  description = "My awesome tool";
-  platforms = [ "linux" "darwin" ];  # optional, defaults to both
-
-  module = {
-    # Cross-platform config (goes to home-manager.users.*)
-    allSystems.home.packages = [ pkgs.my-tool ];
-
-    # Or platform-specific
-    nixosSystems.programs.my-tool.enable = true;
-    darwinSystems.homebrew.casks = [ "my-tool" ];
-  };
-}
-```
-
-#### System Module (Linux)
-
-```nix
-# modules/systems/linux/services/my-service.nix
-{ lib, pkgs, config, ... }@args:
-
-let
-  enabledUsers = lib.filterAttrs (_: u: u.enable) config.hostUsers;
-in
 lib.my.mkSystemModuleV2 args {
-  namespace = "linux";
-  description = "My service";
+  namespace = "linux"; # "all" | "linux" | "darwin"
+  description = "My Linux system daemon";
 
-  module = _: {
-    # System-level NixOS options
-    services.my-service.enable = true;
+  extraOptions = {
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 9000;
+      description = "Listening port";
+    };
+  };
 
-    # User packages via home-manager
-    home-manager.users = lib.mapAttrs (name: _: {
-      home.packages = [ pkgs.my-tool-client ];
-    }) enabledUsers;
+  module = cfg: {
+    services.my-daemon = {
+      enable = true;
+      port = cfg.port;
+    };
   };
 }
 ```
 
-#### Auto-discovery
-
-Modules are **auto-discovered** recursively! Just create your `.nix` file in the right directory and it's automatically imported. No manual import lists needed.
-
 ---
 
-### Dotfile Symlink Modes (Nix Store vs. Live Edit)
+### Dotfile Symlink Modes
 
-Dotfiles support two modes on a per-module basis:
+Features declaring `dotfiles = { path; source; target?; live?; }` support two symlink modes:
 
-1. 📦 **Settled / Store Mode (`live = false`, default):** Copies dotfiles into `/nix/store`. Store paths are captured in NixOS / Home Manager generations, allowing NixOS & GRUB generation rollbacks (`nixos-rebuild switch --rollback` or GRUB boot menu) to restore historical dotfile revisions cleanly.
-2. 🛠️ **Live Mode (`live = true`):** Symlinks point out-of-store directly to `$DOTFILES_DIR`. Edit files directly during active development and changes apply immediately without `nixos-rebuild switch`.
+1. **Store Mode (`live = false`, default):** Copies dotfiles into `/nix/store`. Store paths are bound to NixOS / Home Manager generations so rollbacks restore exact historical configs.
+2. **Live Mode (`live = true`):** Creates out-of-store symlinks directly into `$DOTFILES_DIR` (or `~/dot` fallback) via `mkOutOfStoreSymlink`. Edits take effect immediately without rebuilding.
 
-#### How to Configure
+Configure globally, per feature definition, or per host/user override (most specific wins):
 
-- **In Module Definition:**
 ```nix
-dotfiles = {
-  path = "ghostty/config";
-  source = "modules/home/terminal/ghostty/dotfiles/config";
-  live = true; # Set to true during active development
-};
-```
+# Global host toggle:
+dotfiles.live = true;
 
-- **Per-Module Override in Host Config:**
-```nix
-# hosts/machines/nix-goldstar/default.nix
-modules.home.terminal.ghostty.dotfilesLive = true;  # Enable live edit for active dev
-modules.home.editors.neovim.dotfilesLive = false;   # Store mode for settled neovim config
+# Per-feature override (global or under hostUsers.<user>.modules):
+modules.home.terminal.ghostty.dotfilesLive = true;
+modules.home.editors.neovim.dotfilesLive = false;
 ```
 
 ---
 
-## 🔐 Secrets Management (SOPS)
+## Security & Secrets Management
 
-Secrets across the repository are managed using [`sops-nix`](https://github.com/Mic92/sops-nix) with `age` encryption.
+Full architectural details and operational commands live in:
+- **[Security Architecture](docs/security-architecture.md)** — `clavis` Keychain/Touch ID SSH agent, static vs. dynamic Git SSH commit signing, `charon-key` GitHub `AuthorizedKeysCommand`, and `sops-nix`.
+- **[Security & Key Management Runbook](docs/security-runbook.md)** — Day-to-day commands for provisioning keys, verifying `sshd` / `charon-key`, and managing SOPS secrets.
 
-### Key Derivation (`ssh-to-age`)
-Host age keys are derived directly from SSH host keys (`/etc/ssh/ssh_host_ed25519_key.pub`), eliminating the need to store secondary key files on machine hosts:
-
-```bash
-# Derive host age key from SSH host key
-nix-shell -p ssh-to-age --run 'ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub'
-```
-
-### Age Key Locations
-- **Linux / NixOS**: `~/.config/sops/age/keys.txt` (XDG standard compliant).
-- **macOS / Darwin**: `~/Library/Application Support/sops/age/keys.txt` (Environment variable `SOPS_AGE_KEY_FILE` is automatically set by `modules.system.all.sops.enable`).
-
-### Shell Wrapper & Bitwarden Integration
-A shell wrapper (`sops`) is provided in Zsh (`common.zsh`). If `SOPS_AGE_KEY` is not present, it dynamically fetches the per-machine SOPS key from Bitwarden CLI (`bw get notes "SOPS Age Key <hostname>"`) and caches it in RAM (`/tmp/.sops-age-key-<hostname>-<uid>`) for 15 minutes.
-
-### Managing Secrets
-Secrets are managed via SOPS with age keys configured per host.
+Summary of key conventions:
+- **Outbound SSH & Git Signing**: `gpg.format = "ssh"` everywhere. macOS uses `clavis` (`~/.ssh/clavis.sock`) with dynamic key resolution (`ssh-add -L | head -1`); Linux uses per-host keys declared in `hostUsers.<user>.keys` (`~/.ssh/<name>_id_<type>`) or `bitwardenSshAgent`.
+- **Inbound SSH (`charon-key`)**: `modules.system.{linux.networking,darwin}.openssh.userMap` maps local users to GitHub usernames via `AuthorizedKeysCommand`.
+- **Secrets (`sops-nix` + `age`)**:
+  - Linux `SOPS_AGE_KEY_FILE`: `~/.config/sops/age/keys.txt` (XDG default).
+  - macOS `SOPS_AGE_KEY_FILE`: `$HOME/Library/Application Support/sops/age/keys.txt` (exported by `modules.system.all.sops.enable = true`).
+  - Interactive Zsh `sops()` wrapper (`modules/home/shell/zsh/dotfiles/common.zsh`) fetches `bw get notes "SOPS Age Key <hostname>"` from Bitwarden CLI and caches it (`0600`) in `${XDG_RUNTIME_DIR:-${TMPDIR%/}}` for 15 minutes.
 
 ---
 
-## 🖥 Host Configuration
+## Host Configuration
 
 | Host | Platform | Description |
 |------|----------|-------------|
-| `nix-goldstar` | NixOS (x86_64-linux) | Desktop workstation with Hyprland & NVIDIA |
-| `nix-oldstar` | NixOS (x86_64-linux) | Server & remote builder (ThinkPad T480 homelab) |
-| `mac-brightstar` | Darwin (aarch64-darwin) | MacBook Pro workstation |
+| `nix-goldstar` | NixOS (`x86_64-linux`) | Desktop workstation — Hyprland, NVIDIA, gaming, remote builder |
+| `nix-oldstar` | NixOS (`x86_64-linux`) | Homelab server & remote builder (ThinkPad T480) |
+| `mac-brightstar` | nix-darwin (`aarch64-darwin`) | MacBook workstation — `clavis`, `nix-homebrew`, distributed Linux builds |
 
 ---
 
-## 📂 Module Reference
+## Module Reference
 
-Enable modules hierarchically per-user:
+### User Features (`modules/home/`)
 
-```nix
-hostUsers.myuser.modules = {
-  home.browsers.enable = true;    # enables all browsers
-  home.core.enable = true;        # enables htop, shell-utils
-  home.shell.enable = true;       # enables zsh, tmux
-  home.editors.neovim.enable = true;  # specific module
-};
-```
+| Category | Modules |
+|----------|---------|
+| `home.ai-tools` | `claude`, `codex`, `gemini-cli`, `learnharness` |
+| `home.browsers` | `chromium`, `vivaldi` |
+| `home.cli` | `gcloud`, `htop`, `shell-utils` (bat, fzf, fastfetch, wget, direnv), `vault` |
+| `home.desktop` | `appearance.cursor`, `awesomewm`, `hyprland`, `services.{audio,brightness,notifications}`, `utils.{nautilus,wayland}`, `widgets.{launcher,network-applet,omarchy-waybar,tailscale-systray,waybar}` |
+| `home.downloads` | `qbittorrent` |
+| `home.editors` | `antigravity`, `cursor`, `ghidra`, `neovim` (`nvim.nix`), `vscode-server` |
+| `home.games` | `lutris`, `soundpad`, `steam` |
+| `home.media` | `iina` (darwin), `spotify`, `vlc` |
+| `home.messengers` | `telegram` |
+| `home.security` | `bitwarden`, `clavis` (darwin), `keepassxc` |
+| `home.shell` | `git`, `ssh`, `tmux`, `zsh` |
+| `home.terminal` | `ghostty` |
+| `home.utils` | `logseq`, `macfuse` (darwin), `obsidian`, `raycast` (darwin) |
+| `home.virtualisation` | `docker`, `virtualbox` |
 
-| Path | Modules |
-|------|---------|
-| `home.core` | htop, shell-utils (bat, fzf, wget, direnv) |
-| `home.shell` | zsh with oh-my-zsh, zplug, tmux |
-| `home.terminal` | ghostty |
-| `home.browsers` | chromium, vivaldi |
-| `home.editors` | cursor, neovim (nixvim) |
-| `home.desktop` | rofi, dunst, brightnessctl, pamixer, wayland-utils |
-| `home.media` | vlc, spotify |
-| `home.messengers` | telegram |
-| `home.games` | steam |
-| `home.security` | keepassxc, bitwarden |
-| `home.downloads` | qbittorrent |
-| `home.virtualisation` | docker |
-| `home.utils` | raycast (darwin), macfuse (darwin) |
+### System Modules (`modules/systems/`)
+
+| Namespace | Modules |
+|-----------|---------|
+| `modules.system.all` | `fonts`, `nix.gc`, `nix.settings`, `shell.ssh`, `sops` |
+| `modules.system.linux` | `graphics.{amd,intel,nvidia}`, `keyboards.keychron`, `networking.{firewall,networkmanager,openssh,tailscale}`, `power-management`, `sound` |
+| `modules.system.darwin` | `homebrew`, `macos-settings`, `openssh`, `ssh` |
 
 ---
 
-## 📄 License
+## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
