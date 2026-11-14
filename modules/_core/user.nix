@@ -226,6 +226,16 @@ let
 
 in
 {
+  options.dotfiles.live = mkOption {
+    type = types.bool;
+    default = false;
+    description = ''
+      Global default for dotfile symlinking mode across all features.
+      When true, creates live-editable out-of-store symlinks to DOTFILES_DIR;
+      when false, symlinks immutable copies from the Nix store.
+    '';
+  };
+
   options.modules = generatedFeatureOptions;
 
   options._modulesRegistry = mkOption {

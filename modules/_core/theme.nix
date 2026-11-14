@@ -12,12 +12,12 @@
 {
   options.theme = {
     name = lib.mkOption {
-      type = lib.types.str;
+      type = lib.types.enum lib.my.themes.availableThemes;
       default = "rose-pine-moon";
       description = ''
         Name of the active color theme.
-        Must match a file in lib/themes/<name>.nix.
-        Available: rose-pine-moon (add more in lib/themes/default.nix)
+        Must match an entry registered in lib/themes/default.nix.
+        Available: ${lib.concatStringsSep ", " lib.my.themes.availableThemes}
       '';
     };
   };

@@ -119,6 +119,24 @@ let
       assert hasPackage "hack-font" testHost.config.fonts.packages;
       pkgs.runCommand "system-tier-opt-out-check" { } "touch $out";
 
+    dotfiles-live-global-option =
+      let
+        testDarwin = self.darwinConfigurations.mac-brightstar.extendModules {
+          modules = [
+            {
+              dotfiles.live = true;
+            }
+          ];
+        };
+        ghosttySource = testDarwin.config.home-manager.users.${user}.xdg.configFile."ghostty/config".source;
+      in
+      assert testDarwin.config.dotfiles.live == true;
+      # mkOutOfStoreSymlink wraps the live repo path in an hm_* symlink derivation
+      assert lib.isDerivation ghosttySource;
+      assert lib.hasPrefix "hm_" (ghosttySource.name or "");
+      assert lib.hasInfix "/Users/${user}/Workspaces/gdr/dot/modules/home/terminal/ghostty/dotfiles/config" (ghosttySource.buildCommand or "");
+      pkgs.runCommand "dotfiles-live-global-option-check" { } "touch $out";
+
     neovim-config = neovimConfig;
   };
 in
