@@ -23,50 +23,6 @@ let
     else
       originalModule;
 
-  # Compute module path from file path for modules
-  # e.g., "/path/to/modules/home/cli/htop.nix" -> "home.cli.htop"
-  # e.g., "/path/to/modules/home/cli/htop/htop.nix" -> "home.cli.htop" (dedup)
-  computeModulePath = lib.my.computeModulePath or (filePath:
-    let
-      pathStr = toString filePath;
-      # Check if this is a modules module
-      isModulePath = lib.hasInfix "modules/" pathStr;
-      # Extract path after modules/
-      afterModules = lib.last (lib.splitString "modules/" pathStr);
-      # Remove .nix and split into parts
-      withoutNix = lib.removeSuffix ".nix" afterModules;
-      parts = lib.splitString "/" withoutNix;
-      # If last two parts are the same (e.g., htop/htop), deduplicate
-      fileName = lib.last parts;
-      parentDir = if lib.length parts >= 2 then lib.elemAt parts (lib.length parts - 2) else null;
-      dedupedParts =
-        if parentDir == fileName
-        then lib.init parts # Remove last element
-        else parts;
-      modulePath = lib.concatStringsSep "." dedupedParts;
-    in
-    if isModulePath then modulePath else null);
-
-  # Process module directories (like modules/home) that have a default.nix
-  # exporting a .modules list
-  mkConfigurationModules = lib.concatMap
-    (moduleDirPath:
-      let
-        moduleDir = import moduleDirPath { inherit inputs lib overlays; };
-        modules = moduleDir.modules or [ ];
-      in
-      # Wrap each module file to filter meta
-      map
-        (filePath:
-          if builtins.isString filePath then
-          # Return a function that wraps the module
-            wrapModuleFile filePath (computeModulePath filePath)
-          else
-            filePath
-        )
-        modules
-    );
-
   # Wrap system modules (systems/all, systems/darwin, systems/linux)
   # These get auto-discovered and wrapped to receive _modulePath
   mkSystemModules = moduleDirPath:
@@ -76,7 +32,7 @@ let
     in
     map
       (filePath:
-        wrapModuleFile filePath (computeModulePath filePath)
+        wrapModuleFile filePath (lib.my.computeModulePath filePath)
       )
       moduleFiles;
 
@@ -87,7 +43,8 @@ let
 
 in
 {
-  inherit wrapModuleFile computeModulePath mkConfigurationModules mkSystemModules;
+  inherit wrapModuleFile mkSystemModules;
+  inherit (lib.my) computeModulePath;
 
   # Build a Darwin (macOS) system configuration
   mkDarwinConfiguration = host-config:
@@ -109,9 +66,6 @@ in
       ]
         ++ (privateExtension.systemModules.all or [ ])
         ++ (privateExtension.systemModules.darwin or [ ])
-        ++ mkConfigurationModules [
-        ../modules/home
-      ]
         ++ mkSystemModules ../modules/systems/all
         ++ mkSystemModules ../modules/systems/darwin
         ++ [
@@ -143,9 +97,6 @@ in
       ]
         ++ (privateExtension.systemModules.all or [ ])
         ++ (privateExtension.systemModules.linux or [ ])
-        ++ mkConfigurationModules [
-        ../modules/home
-      ]
         ++ mkSystemModules ../modules/systems/all
         ++ mkSystemModules ../modules/systems/linux
         ++ [
