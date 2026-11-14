@@ -1,3 +1,5 @@
+default_stages: [pre-commit]
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v3.4.0
@@ -16,8 +18,6 @@ repos:
     pass_filenames: false
     always_run: true
 
-- repo: local
-  hooks:
   - id: nixpkgs-fmt
     name: Nixpkgs Fmt
     entry: nixpkgs-fmt . --check
@@ -25,11 +25,27 @@ repos:
     pass_filenames: false
     always_run: true
 
-- repo: local
-  hooks:
+  - id: deadnix
+    name: Deadnix
+    entry: deadnix --fail --no-lambda-pattern-names --no-lambda-arg .
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-commit]
+
+  - id: statix
+    name: Statix
+    entry: statix check .
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-commit]
+
+  # Defer full multi-system flake check to git push so local commits stay fast
   - id: nix-flake-check
     name: Nix Flake Check
     entry: nix flake check --all-systems
     language: system
     pass_filenames: false
     always_run: true
+    stages: [pre-push]
