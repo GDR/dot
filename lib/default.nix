@@ -433,19 +433,22 @@
       inherit imports;
 
       options = setAttrByPath pathParts ({
+        # Tri-state enable (null = inherit tier cascade, false = explicit opt-out, true = explicit enable)
         enable = mkOption {
-          default = false;
-          type = bool;
+          default = null;
+          type = types.nullOr types.bool;
           description = description;
         };
       } // extraOptions);
 
       config =
         let
-          # Tier-level cascade: modules.system.linux.enable = true activates all linux modules
+          # Tier-level cascade: modules.system.<namespace>.enable = true activates unset child modules,
+          # while an explicit child enable = false opts out of the cascade.
           tierEnable = config.modules.system.${namespace}.enable or false;
+          enabled = if (cfg.enable or null) != null then cfg.enable else tierEnable;
         in
-        mkIf (platformActive && ((cfg.enable or false) || tierEnable)) (
+        mkIf (platformActive && enabled) (
           let
             # module can be attrset or function (cfg -> attrset)
             resolvedModule = if isFunction module then module cfg else module;

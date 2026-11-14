@@ -99,6 +99,26 @@ let
       assert !(hasPackage "raycast" pkgsList);
       pkgs.runCommand "cascade-child-opt-out-check" { } "touch $out";
 
+    system-tier-opt-out =
+      let
+        testHost = self.nixosConfigurations.nix-oldstar.extendModules {
+          modules = [
+            {
+              modules.system.all = {
+                enable = true;
+                # Clear host-level explicit enable so fonts activates purely via tier cascade
+                fonts.enable = lib.mkForce null;
+                sops.enable = lib.mkForce false;
+              };
+            }
+          ];
+        };
+      in
+      assert !(hasPackage "sops" testHost.config.environment.systemPackages);
+      assert testHost.config.fonts.packages != [ ];
+      assert hasPackage "hack-font" testHost.config.fonts.packages;
+      pkgs.runCommand "system-tier-opt-out-check" { } "touch $out";
+
     neovim-config = neovimConfig;
   };
 in
