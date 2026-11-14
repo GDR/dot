@@ -87,7 +87,13 @@
 
       packages = forAllSystems (system:
         let
-          pkgs = import nixpkgs { inherit system; config.allowUnfree = true; nvidia.acceptLicense = true; };
+          pkgs = import nixpkgs {
+            inherit system;
+            config = {
+              allowUnfree = true;
+              nvidia.acceptLicense = true;
+            };
+          };
         in
         import ./packages.nix { inherit pkgs lib system charon-key learnharness; }
       );
@@ -116,6 +122,10 @@
         python = {
           path = ./templates/python;
           description = "A template for a Python project using poetry";
+        };
+        tex = {
+          path = ./templates/tex;
+          description = "A template for a LaTeX document using texlive";
         };
       };
     };
