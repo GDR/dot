@@ -7,37 +7,46 @@ Personal NixOS & nix-darwin configuration with modular, hierarchical architectur
 ```
 dot/
 ├── flake.nix                 # Entry point — inputs, host declarations
+├── docs/                     # Security architecture & operational runbook
 ├── hosts/
 │   ├── users/                # User defaults (shared across hosts)
 │   │   └── dgarifullin.nix
 │   └── machines/             # Machine configurations
 │       ├── nix-goldstar/     # NixOS desktop (Hyprland, NVIDIA)
-│       ├── nix-oldstar/      # NixOS host
-│       └── mac-brightstar/   # Darwin host
+│       ├── nix-oldstar/      # NixOS server & remote builder
+│       └── mac-brightstar/   # Darwin workstation (clavis, nix-homebrew)
 ├── lib/
-│   ├── default.nix           # Core helpers: mkFeature, mkSystemModuleV2, mkDotfilesSymlink, etc.
+│   ├── default.nix           # Core helpers: mkFeature, mkSystemModuleV2, mergeProfiles, getTheme
+│   ├── features.nix          # Feature descriptor & per-user compiler (mkFeature, dotfiles, etc.)
 │   ├── flakeHelpers.nix      # mkDarwinConfiguration, mkNixosConfiguration
-│   ├── moduleRegistry.nix    # Module discovery/registry
-│   └── themes/               # Theme system (rose-pine-moon, etc.)
+│   ├── moduleRegistry.nix    # Module discovery & transitive dependency resolver
+│   └── themes/               # Theme system (rose-pine-moon, catppuccin-macchiato, etc.)
+├── profiles/                 # Composable role bundles (developer, desktop, gaming, server, macos)
 ├── modules/
 │   ├── _core/                # Core infrastructure
-│   │   ├── registry.nix      # Module registry builder
-│   │   └── user.nix          # hostUsers option & home-manager setup
-│   ├── home/                 # User modules (auto-discovered, hierarchical enables)
+│   │   ├── registry.nix      # Module registry & feature catalog builder
+│   │   ├── system.nix        # Tier-level system enable options
+│   │   ├── theme.nix         # Global theme.name option
+│   │   └── user.nix          # hostUsers option & per-user home-manager compilation
+│   ├── home/                 # User features (auto-discovered, hierarchical enables)
+│   │   ├── ai-tools/         # claude, codex, gemini-cli, learnharness
 │   │   ├── browsers/         # chromium, vivaldi
-│   │   ├── cli/              # htop, shell-utils
-│   │   ├── desktop/          # hyprland, awesomewm, appearance, services, widgets
-│   │   ├── editors/          # cursor, neovim (nixvim)
-│   │   ├── games/            # steam
-│   │   ├── media/            # vlc, spotify
+│   │   ├── cli/              # gcloud, htop, shell-utils, vault
+│   │   ├── desktop/          # appearance, awesomewm, hyprland, services, utils, widgets
+│   │   ├── downloads/        # qbittorrent
+│   │   ├── editors/          # antigravity, cursor, ghidra, neovim, vscode-server
+│   │   ├── games/            # lutris, soundpad, steam
+│   │   ├── media/            # iina, spotify, vlc
 │   │   ├── messengers/       # telegram
-│   │   ├── security/         # keepassxc, bitwarden
-│   │   ├── shell/            # zsh, tmux
-│   │   └── terminal/         # ghostty
-│   └── systems/              # System modules (manual import)
-│       ├── all/              # Cross-platform (fonts, nix settings, git, ssh)
-│       ├── linux/            # NixOS-only (nvidia, sound, networking, keyboards)
-│       └── darwin/           # macOS-only (homebrew, macos-settings)
+│   │   ├── security/         # bitwarden, clavis, keepassxc
+│   │   ├── shell/            # git, ssh, tmux, zsh
+│   │   ├── terminal/         # ghostty
+│   │   ├── utils/            # logseq, macfuse, obsidian, raycast
+│   │   └── virtualisation/   # docker, virtualbox
+│   └── systems/              # System modules (auto-discovered, mkSystemModuleV2)
+│       ├── all/              # Cross-platform (fonts, nix/{gc,settings}, shell/ssh, sops)
+│       ├── linux/            # NixOS-only (graphics, keyboards, networking, power-management, sound)
+│       └── darwin/           # macOS-only (homebrew, macos-settings, openssh, ssh)
 ├── overlays/                 # Nixpkgs overlays
 ├── pkgs/                     # Custom packages
 └── templates/                # Flake templates
@@ -49,11 +58,11 @@ Role-based bundles of module enables. Compose multiple profiles per host.
 
 ```
 profiles/
-  developer.nix   # home: cli, editors, shell, terminal, docker + nix/git system baseline
-  desktop.nix     # home: browsers, desktop infrastructure, downloads, media, messengers, security
+  developer.nix   # home: cli, editors, shell, terminal, docker + nix/ssh system baseline
+  desktop.nix     # home: browsers, desktop infrastructure, downloads, media, messengers, security, utils
                   # system.linux: sound, networkmanager, tailscale, firewall
   gaming.nix      # home: games.*
-  server.nix      # home: cli, shell, neovim, docker + system openssh/tailscale/vscode-server
+  server.nix      # home: cli, shell, neovim, docker + system openssh/tailscale/firewall/vscode-server
   macos.nix       # system.darwin: macos-settings
 ```
 
@@ -121,9 +130,11 @@ lib.my.mkFeature {
   requires = [ "home.shell.zsh" ];   # Dependencies auto-enabled per user
   extraOptions = { ... };            # Per-user typed extra options
 
-  dotfiles = {                       # Optional dotfiles symlinking
+  dotfiles = {                       # Optional dotfiles management
     path = "app";
     source = "modules/home/.../dotfiles";
+    # target = "~/.config/app";      # Optional explicit target (defaults to ~/.config/${path})
+    # live = true;                   # Optional live-mode default override
   };
 
   homeModule = { config, osConfig, pkgs, lib, featureCfg, userName, ... }: {
@@ -138,31 +149,27 @@ lib.my.mkFeature {
 
 Home-manager configuration is scoped strictly per-user to users who enable the feature.
 
-## Key Helpers (lib/default.nix)
+## Key Helpers (lib/default.nix & lib/features.nix)
 
 - `lib.my.mkFeature { description?, platforms?, requires?, extraOptions?, dotfiles?, homeModule?, homeModuleLinux?, homeModuleDarwin?, nixosModule?, darwinModule? }` — User feature descriptors
-- `lib.my.mkSystemModuleV2 args { namespace, module, moduleLinux?, moduleDarwin?, ... }` — System modules
-- `lib.my.shouldEnableModule { config, modulePath }` — Check hierarchical enable
-- `lib.my.isFeatureEnabledForUser { config, userName, modulePath }` — Check per-user feature enable
-- `lib.my.getUsersWithModule { config, modulePath }` — Users with module enabled
-- `lib.my.getUsersWithModuleNames { config, _modulePath }` — Usernames list
-- `lib.my.mkDotfilesSymlink { config, self, path, source, target? }` — Live-editable dotfile symlinks
-- `lib.my.mkUsersAttrs usernames fn` — Creates `users.users` attrset
+- `lib.my.mkSystemModuleV2 args { namespace, description?, module?, moduleLinux?, moduleDarwin?, extraOptions?, imports? }` — System modules
+- `lib.my.mergeProfiles profiles` — Deep-merge profile attrsets (`userModules`, `system.{all,linux,darwin}`)
+- `lib.my.isFeatureEnabledForUser { config, userName, featurePath?, modulePath? }` — Check per-user feature enable (hierarchy + transitive `requires`)
+- `lib.my.resolveUserFeatures { osConfig, pkgs?, userName, userCfg, ... }` — Resolve active features for a user on the target platform
 - `lib.my.getTheme config` — Get active theme (set via `config.theme.name`)
 
 ## Live-Editable Dotfiles
 
-Store config files in `<module>/dotfiles/`, symlinked to `~/.config/<app>`:
+Store config files in `<module>/dotfiles/` and declare `dotfiles = { path; source; target?; live?; }` in `mkFeature` (target defaults to `~/.config/<path>`):
 ```
 modules/home/terminal/ghostty/
 ├── ghostty.nix
 └── dotfiles/
-    ├── config
-    └── themes/catppuccin-mocha
+    └── config
 ```
-Changes apply immediately without `nixos-rebuild`.
+Dotfiles default to immutable `/nix/store` mode (`live = false`) for generation rollback safety. Enable live out-of-store symlinks (`mkOutOfStoreSymlink`) globally via `dotfiles.live = true` or per feature via `modules.home.<cat>.<mod>.dotfilesLive = true` (or `hostUsers.<user>.modules.home.<cat>.<mod>.dotfilesLive = true`) so edits apply immediately without rebuilding.
 
-Requires `DOTFILES_DIR` environment variable set in host config.
+Live mode uses `DOTFILES_DIR` environment variable set in host config (falling back to `~/dot`).
 
 ## Git Conventions (ZeroMQ C4)
 
@@ -200,4 +207,4 @@ Optional scope: `refactor(flake):`, `feat(zsh):`
 |------|----------|-------------|
 | `nix-goldstar` | NixOS | Desktop, Hyprland, NVIDIA |
 | `nix-oldstar` | NixOS | Server, remote builder |
-| `mac-brightstar` | Darwin | MacBook, nix-homebrew |
+| `mac-brightstar` | Darwin | MacBook, clavis, nix-homebrew |
