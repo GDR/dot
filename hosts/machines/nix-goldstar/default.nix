@@ -2,6 +2,11 @@
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+    (import ../../../profiles/gaming.nix)
+  ];
 in
 {
   imports = [
@@ -29,31 +34,9 @@ in
         identityFile = "~/.ssh/goldstar_id_rsa";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = {
-      # developer profile
-      home.cli.enable = true;
-      home.shell.enable = true;
-      home.terminal.enable = true;
-      home.virtualisation.docker.enable = true;
-      # desktop profile
-      home.browsers.enable = true;
-      home.desktop.appearance.enable = true;
-      home.desktop.services.enable = true;
-      home.desktop.utils.enable = true;
-      home.desktop.widgets.enable = true;
-      home.downloads.enable = true;
-      home.media.enable = true;
-      home.messengers.enable = true;
-      home.security.enable = true;
-      home.utils.enable = true;
-      # gaming profile
-      home.games.enable = true;
-      # host-specific
+    modules = lib.recursiveUpdate profiles.userModules {
       home.browsers.vivaldi.enable = true;
-      home.desktop = {
-        hyprland.enable = true;
-      };
-      home.editors.neovim.enable = true;
+      home.desktop.hyprland.enable = true;
       home.editors.ghidra.enable = true;
       home.editors.antigravity = userDefaults.antigravity // {
         enable = true;
@@ -82,21 +65,12 @@ in
   networking.hostName = "nix-goldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = {
-    nix.settings.enable = true;
-    nix.gc.enable = true;
+  modules.system.all = lib.recursiveUpdate profiles.system.all {
     fonts.enable = true;
-    shell.ssh.enable = true;
   };
 
-  modules.system.linux = {
-    sound.enable = true;
-    networking.networkmanager.enable = true;
-    networking.tailscale.enable = true;
-    networking.firewall = {
-      enable = true;
-      allowedTCPPorts = [ 8080 ];
-    };
+  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+    networking.firewall.allowedTCPPorts = [ 8080 ];
     networking.openssh = {
       enable = true;
       userMap = { "*" = "gdr"; };

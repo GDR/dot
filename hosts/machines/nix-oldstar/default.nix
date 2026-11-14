@@ -2,6 +2,9 @@
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/server.nix)
+  ];
 in
 {
   imports = [
@@ -39,14 +42,7 @@ in
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = {
-      # server profile
-      home.cli.enable = true;
-      home.editors.neovim.enable = true;
-      home.editors.vscode-server.enable = true;
-      home.shell.enable = true;
-      home.virtualisation.docker.enable = true;
-      # host-specific
+    modules = lib.recursiveUpdate profiles.userModules {
       home.editors.ghidra.enable = true;
     };
     sudo.nopasswd = true;
@@ -54,20 +50,15 @@ in
 
   time.timeZone = "Europe/Moscow";
 
-  modules.system.all = {
-    nix.settings.enable = true;
-    nix.gc.enable = true;
-    fonts.enable = true;
-    shell.ssh.enable = true;
+  modules.system.all = lib.recursiveUpdate profiles.system.all {
     sops.enable = true;
   };
 
-  modules.system.linux = {
+  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
     networking.networkmanager.enable = true;
-    networking.openssh = {
-      enable = true;
-      userMap = { "dgarifullin" = "gdr"; };
-    };
+    # server profile enables tailscale by default; oldstar runs on LAN only
+    networking.tailscale.enable = false;
+    networking.openssh.userMap = { "dgarifullin" = "gdr"; };
     graphics.intel = {
       enable = true;
       enableHybridCodec = true;
@@ -80,7 +71,6 @@ in
       lidSwitch = "ignore";
     };
     networking.firewall = {
-      enable = true;
       # 8089: GhidraMCP HTTP server (goldstar bridge → oldstar Ghidra)
       allowedTCPPorts = [ 22 80 443 8080 8089 ];
       allowedUDPPorts = [ 80 443 8080 ];

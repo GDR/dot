@@ -2,6 +2,11 @@
 let
   importUser = name: import ../../users/${name}.nix { inherit lib; };
   userDefaults = importUser "dgarifullin";
+  profiles = lib.my.mergeProfiles [
+    (import ../../../profiles/developer.nix)
+    (import ../../../profiles/desktop.nix)
+    (import ../../../profiles/macos.nix)
+  ];
 in
 {
   nix.enable = true;
@@ -16,29 +21,15 @@ in
         user = "git";
       }
     ] ++ userDefaults.ssh.knownHosts;
-    modules = {
-      # developer profile
-      home.cli.enable = true;
+    modules = lib.recursiveUpdate profiles.userModules {
       home.editors.cursor.enable = true;
-      home.editors.neovim.enable = true;
-      home.shell.enable = true;
-      home.terminal.enable = true;
-      home.virtualisation.docker.enable = true;
-      # desktop profile
-      home.browsers.enable = true;
-      home.desktop.appearance.enable = true;
-      home.desktop.services.enable = true;
-      home.desktop.utils.enable = true;
-      home.desktop.widgets.enable = true;
-      home.downloads.enable = true;
-      home.media.enable = true;
-      home.messengers.enable = true;
-      home.security.enable = true;
+      home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
       home.security.clavis.enable = true;
+      # desktop profile enables home.utils broadly; select Darwin-supported utils explicitly
       home.utils.enable = false;
       home.utils.obsidian.enable = true;
       home.utils.logseq.enable = true;
-      # host-specific
+      home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
       home.ai-tools.enable = true;
       home.ai-tools.learnharness = {
         enable = true;
@@ -50,8 +41,6 @@ in
           vision = { provider = "antigravity"; id = "gemini-4-argon"; thinkingLevel = "medium"; };
         };
       };
-      home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
-      home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
     };
   };
 
@@ -83,16 +72,12 @@ in
     }
   ];
 
-  modules.system.all = {
-    nix.settings.enable = true;
-    nix.gc.enable = true;
-    shell.ssh.enable = true;
+  modules.system.all = lib.recursiveUpdate profiles.system.all {
     sops.enable = true;
     # fonts.enable = true;  # disabled on Darwin
   };
 
-  modules.system.darwin = {
-    macos-settings.enable = true;
+  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
     homebrew = {
       enable = true;
       user = "dgarifullin";
