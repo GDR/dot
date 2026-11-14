@@ -1,151 +1,163 @@
-# 🛡️ Security Architecture
+# Security Architecture
 
-Comprehensive guide to key management, authentication agent architecture, secret decryption, and SSH multiplexing across NixOS and macOS hosts in `GDR/dot`.
+Comprehensive reference for SSH authentication, Git SSH commit signing, dynamic inbound authorization, and secret management across NixOS (`nix-goldstar`, `nix-oldstar`) and macOS (`mac-brightstar`) hosts in `GDR/dot`.
 
 ---
 
-## 📐 System Architecture
+## System Overview
 
-The dotfiles repository uses a **unified `gpg-agent` architecture** across both macOS (`mac-brightstar`) and Linux (`nix-goldstar`, `nix-oldstar`).
+Security across the fleet is structured around three decoupled subsystems:
+
+1. **Outbound SSH & Git Signing** — Hardware-backed `clavis` Keychain/Touch ID agent on macOS, per-host SSH keys (or Bitwarden SSH Agent) on Linux, and universal SSH commit signing (`gpg.format = "ssh"`).
+2. **Inbound SSH Authorization** — Zero-drift GitHub public key resolution via `charon-key` (`AuthorizedKeysCommand`) on both NixOS and nix-darwin.
+3. **Secret Management** — `sops-nix` + `age` encryption backed by OS-native key paths and an interactive Zsh wrapper that fetches per-host keys from Bitwarden CLI with a 15-minute runtime cache.
 
 ```mermaid
 flowchart TD
-    subgraph Operations [" User Operations "]
-        GitCommit["git commit / git rebase"]
-        SSHConn["ssh host / git push"]
-        SOPSDecrypt["sops / sops-nix"]
+    subgraph Outbound ["Outbound Auth & Git Signing"]
+        Git["Git CLI (gpg.format = ssh)"]
+        SSHClient["OpenSSH Client (~/.ssh/config)"]
+        Clavis["macOS: clavis-agent (~/.ssh/clavis.sock)"]
+        LinuxAgent["Linux: ssh-agent / Bitwarden SSH Agent"]
+        HostKeys["Linux: Per-Host Keys (~/.ssh/<name>_id_<type>)"]
     end
 
-    subgraph Agent [" Unified Agent Layer "]
-        GPGAgent["gpg-agent\n(SSH_AUTH_SOCK = ~/.gnupg/S.gpg-agent.ssh)"]
-        RAMCache["10-Minute RAM Cache\n(defaultCacheTtl = 600s)"]
+    subgraph Inbound ["Inbound SSH Authorization"]
+        SSHD["OpenSSH Daemon (sshd)"]
+        Charon["charon-key AuthorizedKeysCommand"]
+        GitHubKeys["GitHub Public Keys (userMap)"]
     end
 
-    subgraph Pinentry [" Platform Auth Providers "]
-        MacPinentry["macOS: pinentry_mac\n(Keychain Integration / Touch ID)"]
-        LinuxPinentry["Linux: pinentry-curses\n(Terminal TTY Prompt)"]
+    subgraph Secrets ["Secret Management"]
+        SopsNix["sops-nix / sops CLI"]
+        AgeFile["SOPS_AGE_KEY_FILE (age keys.txt)"]
+        ZshWrapper["Zsh sops() Wrapper (15m Runtime Cache)"]
+        BitwardenVault["Bitwarden CLI (SOPS Age Key <host>)"]
     end
 
-    subgraph Storage [" Key Stores & Cryptography "]
-        GPGStore["~/.gnupg/\n(OpenPGP / SSH Keys)"]
-        AgeStore["ssh-to-age\n(~/.ssh/id_ed25519 -> age1...)"]
-    end
+    Git --> SSHClient
+    Git --> Clavis
+    Git --> LinuxAgent
+    SSHClient --> Clavis
+    SSHClient --> LinuxAgent
+    LinuxAgent --> HostKeys
 
-    GitCommit --> GPGAgent
-    SSHConn --> GPGAgent
-    SOPSDecrypt --> AgeStore
+    SSHD --> Charon
+    Charon --> GitHubKeys
 
-    GPGAgent <--> RAMCache
-    GPGAgent <--> MacPinentry
-    GPGAgent <--> LinuxPinentry
-    GPGAgent <--> GPGStore
-
-    style Operations fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
-    style Agent fill:#181825,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4
-    style Pinentry fill:#181825,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
-    style Storage fill:#181825,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4
+    SopsNix --> AgeFile
+    ZshWrapper --> BitwardenVault
+    ZshWrapper --> SopsNix
 ```
 
 ---
 
-## 🔑 Core Security Subsystems
+## 1. Outbound SSH & Agent Architecture
 
-### 1. Unified Authentication Agent (`gpg-agent`)
+### Platform Agents
 
-> [!NOTE]
-> Single daemon managing both OpenPGP commit signing and OpenSSH authentication.
+| Platform / Mode | Module | Agent / Backing Store | Socket Path |
+| :--- | :--- | :--- | :--- |
+| **macOS (Primary)** | [`modules/home/security/clavis.nix`](../modules/home/security/clavis.nix) | `clavis-agent --daemon` via `launchd` (`com.clavis.agent`), macOS Keychain + Touch ID | `~/.ssh/clavis.sock` |
+| **Linux (Default)** | [`modules/systems/all/shell/ssh.nix`](../modules/systems/all/shell/ssh.nix) | System `ssh-agent` (`programs.ssh.startAgent = true`) + per-host `IdentityFile` | `$SSH_AUTH_SOCK` (system default) |
+| **Bitwarden (Optional)** | [`modules/home/shell/ssh/ssh.nix`](../modules/home/shell/ssh/ssh.nix) | Bitwarden Desktop SSH Agent (`hostUsers.<user>.bitwardenSshAgent.enable = true`) | macOS: `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` / Linux: `~/.bitwarden/ssh-agent.sock` |
 
-| Component | Configuration | Purpose |
-| :--- | :--- | :--- |
-| **Agent Daemon** | `services.gpg-agent.enable = true` | Manages private keys in memory. |
-| **SSH Emulation** | `services.gpg-agent.enableSshSupport = true` | Exposes `~/.gnupg/S.gpg-agent.ssh` for SSH. |
-| **Cache TTL** | `defaultCacheTtl = 600` (10 mins) | Eliminates repetitive prompts during multi-commit rebases. |
-| **Max TTL** | `maxCacheTtl = 7200` (2 hours) | Hard upper bound before re-authentication. |
+### Per-User SSH Client Wiring (`modules/home/shell/ssh/ssh.nix`)
+
+User SSH client settings are compiled per user from `osConfig.hostUsers.<user>`:
+
+- **Agent Precedence**:
+  1. **Clavis** (macOS only — guarded by `isDarwin` so `home.security.enable = true` on Linux never activates it): active when `hostUsers.<user>.clavisAgent.enable = true` or `home.security.clavis` is enabled for the user.
+  2. **Bitwarden SSH Agent**: active when `hostUsers.<user>.bitwardenSshAgent.enable = true`.
+  3. **Standard `ssh-agent` + Static Keys**: fallback when neither external agent is enabled.
+- **`~/.ssh/config` Generation**:
+  - When an external agent (`clavis` or Bitwarden) is active: sets `IdentityAgent` to the resolved socket, `IdentitiesOnly = "no"`, and `AddKeysToAgent = "no"`.
+  - When using static per-host keys: sets `IdentitiesOnly = "yes"` and `AddKeysToAgent = "yes"`, wiring `hostUsers.<user>.ssh` match blocks (such as `identityFile = "~/.ssh/goldstar_id_rsa"` or `"~/.ssh/oldstar_id_ed25519"`).
+  - Forces `AddressFamily = "inet"` for `github.com` to avoid IPv6 timeouts on dual-stack networks.
+  - Copies `~/.ssh/config` out of the Nix store symlink with `0600` permissions during Home Manager activation (`fixSshConfigPerms`) so OpenSSH strict permission checks succeed.
+- **Environment & Forwarded Agent Safety**:
+  - Exports `SSH_AUTH_SOCK` in `home.sessionVariables` and `launchctl setenv SSH_AUTH_SOCK` on macOS so GUI apps and IDEs inherit the socket.
+  - Guards Zsh `SSH_AUTH_SOCK` export with `if [ -z "${SSH_CONNECTION-}" ]` so inbound SSH sessions with `ForwardAgent = true` preserve their forwarded agent socket instead of overwriting it locally.
+- **Public Key Materialization**:
+  - Any entry in `hostUsers.<user>.keys` with a non-null `publicKey` is written to `~/.ssh/<name>_id_<type>.pub`.
 
 ---
 
-### 2. Authentication Flow & Caching
+## 2. Git SSH Commit Signing (`modules/home/shell/git.nix`)
 
-The diagram below illustrates how `gpg-agent` handles authentication during interactive commands versus cached sub-ops:
+All hosts sign Git commits and tags using **SSH signatures** (`gpg.format = "ssh"`). [`modules/home/shell/git.nix`](../modules/home/shell/git.nix) supports two automatic modes depending on how keys are provisioned on the host:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as 👤 Developer
-    participant Git as 📦 Git / SSH Client
-    participant Agent as 🛡️ gpg-agent (RAM)
-    participant Pinentry as 🔐 pinentry_mac / Keychain
-    participant Remote as 🌐 Remote Host / GitHub
+    actor Dev as Developer
+    participant Git as git commit / rebase
+    participant KeyCmd as defaultKeyCommand (ssh-add -L)
+    participant Agent as Clavis / SSH Agent
+    participant TouchID as macOS Touch ID / Keyfile
 
-    User->>Git: git rebase -i / git commit
-    Git->>Agent: Request Signature / Auth
-    alt Passphrase Cached in RAM (< 10 mins)
-        Agent-->>Git: Return Signature instantly (0 prompts)
-    else Cache Expired / First Request
-        Agent->>Pinentry: Request Passphrase / Touch ID
-        Pinentry->>User: Display GUI / Keychain Prompt
-        User-->>Pinentry: Authorize / Touch ID
-        Pinentry-->>Agent: Passphrase Authorized
-        Agent->>Agent: Store in RAM Cache (600s)
-        Agent-->>Git: Return Signature
+    Dev->>Git: git commit -m "feat: ..."
+    alt Static Key Mode (keys has purpose "git")
+        Git->>Agent: Sign payload using ~/.ssh/<name>_id_<type>.pub
+    else Dynamic Agent Mode (clavis / Bitwarden, no static key)
+        Git->>KeyCmd: sh -c 'echo key::$(ssh-add -L | head -1)'
+        KeyCmd->>Agent: Query loaded public keys
+        Agent-->>KeyCmd: Return primary public key
+        KeyCmd-->>Git: key::ssh-ed25519 AAAA...
+        Git->>Agent: Request signature for resolved key
     end
-    Git->>Remote: Complete SSH / Signed Push
+    Agent->>TouchID: Authorize private key operation
+    TouchID-->>Agent: Approved
+    Agent-->>Git: SSH signature
 ```
+
+| Mode | Condition | Git Configuration Produced | Active Hosts |
+| :--- | :--- | :--- | :--- |
+| **Static Signing Key** | `hostUsers.<user>.keys` has an entry with `"git"` in `purpose` (prefers `isDefault = true`, else first match) | `user.signingkey = ~/.ssh/<name>_id_<type>.pub`, `commit.gpgsign = true`, `gpg.format = "ssh"` | `nix-goldstar`, `nix-oldstar` |
+| **Dynamic Agent Key** | No static Git key in `hostUsers.<user>.keys`, and `clavis` or `bitwardenSshAgent` is active | `gpg.ssh.defaultKeyCommand = "sh -c 'echo key::$(ssh-add -L \| head -1)'"`, `commit.gpgsign = true`, `gpg.format = "ssh"` | `mac-brightstar` |
 
 ---
 
-### 3. Secret Management (`sops-nix` & `ssh-to-age`)
+## 3. Inbound SSH Authorization (`charon-key`)
 
-> [!IMPORTANT]
-> `sops-nix` encrypts repository secrets using `age` public keys derived directly from `Ed25519` SSH keys.
+Inbound `sshd` access on both NixOS and nix-darwin delegates public key lookup to [`GDR/charon-key`](https://github.com/GDR/charon-key), eliminating manual `~/.ssh/authorized_keys` synchronization across machines.
+
+- **NixOS ([`modules/systems/linux/networking/openssh.nix`](../modules/systems/linux/networking/openssh.nix))**:
+  - Enables `services.openssh.enable = true`.
+  - Maps `modules.system.linux.networking.openssh.userMap` (`{ "<localUser>" = "<githubUser>"; }` or wildcard `{ "*" = "gdr"; }`) into `services.charon-key.userMap`.
+- **macOS ([`modules/systems/darwin/openssh.nix`](../modules/systems/darwin/openssh.nix))**:
+  - Maps `modules.system.darwin.openssh.userMap` into `services.charon-key.userMap` via `charon-key.darwinModules.default`.
+  - **Darwin `101-authorized-keys.conf` Override**: `nix-darwin` writes `/etc/ssh/sshd_config.d/101-authorized-keys.conf` (`/bin/cat`), which sorts lexicographically before `charon-key`'s `50-charon-key.conf` (`'1' < '5'`). Because OpenSSH honors only the **first** `AuthorizedKeysCommand` it parses, nix-darwin's default file would shadow `charon-key`. The Darwin module forces `environment.etc."ssh/sshd_config.d/101-authorized-keys.conf".text = lib.mkForce ""` so `50-charon-key.conf` is authoritative.
 
 ```mermaid
 flowchart LR
-    SSHKey["~/.ssh/id_ed25519.pub\n(Ed25519 Public Key)"]
-    Converter["ssh-to-age"]
-    AgeKey["age1wa37p3gvk7p0m0rwzg43xlnhdm75...\n(Age Recipient Key)"]
-    SopsYaml[".sops.yaml\n(Creation Rules)"]
-    EncryptedSecrets["hosts/machines/<host>/secrets/\n(SOPS Encrypted YAML)"]
-
-    SSHKey --> Converter --> AgeKey --> SopsYaml --> EncryptedSecrets
-
-    style SSHKey fill:#1e1e2e,stroke:#89b4fa,color:#cdd6f4
-    style Converter fill:#313244,stroke:#f9e2af,color:#cdd6f4
-    style AgeKey fill:#181825,stroke:#a6e3a1,color:#cdd6f4
-    style SopsYaml fill:#181825,stroke:#cba6f7,color:#cdd6f4
-    style EncryptedSecrets fill:#181825,stroke:#f38ba8,color:#cdd6f4
+    Client["Remote SSH Client"] --> SSHD["sshd (Port 22)"]
+    SSHD --> Config["/etc/ssh/sshd_config.d/50-charon-key.conf"]
+    Config --> Wrapper["charon-key AuthorizedKeysCommand"]
+    Wrapper --> Map["userMap (local user -> GitHub user)"]
+    Map --> GH["GitHub SSH Keys"]
 ```
 
 ---
 
-### 4. SSH Connection Multiplexing (`ControlMaster`)
+## 4. Secret Management (`sops-nix`, `age`, & Bitwarden)
 
-> [!TIP]
-> Connection multiplexing reuses a single TCP tunnel for multiple connections to the same host within 3 minutes.
+Encrypted secrets use [`sops-nix`](https://github.com/Mic92/sops-nix) and `age` recipients configured per host.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as 💻 Terminal Process
-    participant OpenSSH as 🔒 OpenSSH Engine
-    participant Socket as 🔌 ~/.ssh/sockets/git@github.com:22
-    participant Remote as 🐙 GitHub / Remote Server
+### System SOPS Configuration (`modules/systems/all/sops.nix`)
 
-    Note over Client,Remote: Connection 1: Initial SSH / Git Fetch
-    Client->>OpenSSH: ssh -T git@github.com
-    OpenSSH->>Remote: Perform SSH Handshake & Agent Auth
-    OpenSSH->>Socket: Create Master Control Socket
-    Remote-->>Client: Authenticated Session Established
+Enabling `modules.system.all.sops.enable = true` installs `sops` system-wide and standardizes `SOPS_AGE_KEY_FILE` across platforms:
 
-    Note over Client,Remote: Connection 2..N: Submodules / Parallel Fetch (< 3 mins)
-    Client->>OpenSSH: git submodule update / git fetch
-    OpenSSH->>Socket: Re-use Active Master Control Socket
-    Socket-->>Client: Session Connected Instantly (0 Handshakes / 0 Prompts!)
-```
-
-| Directive | Value | Purpose |
+| Platform | Age Key File Path | Wiring |
 | :--- | :--- | :--- |
-| `ControlMaster` | `auto` | Automatically creates a master connection if none exists. |
-| `ControlPath` | `~/.ssh/sockets/%r@%h:%p` | Path template for control sockets (`0700` permissions). |
-| `ControlPersist` | `3m` | Keeps background connection alive for 3 minutes after idle. |
-| `IdentitiesOnly` | `yes` | Restricts key offerings to explicitly defined `IdentityFile` entries. |
+| **Linux / NixOS** | `~/.config/sops/age/keys.txt` (user) / `/etc/ssh/ssh_host_ed25519_key` (system `sops-nix`) | Native XDG default for `sops` CLI; `sops-nix.nixosModules.sops` imported in `mkNixosConfiguration`. |
+| **macOS / Darwin** | `$HOME/Library/Application Support/sops/age/keys.txt` | Explicitly exported via `environment.variables.SOPS_AGE_KEY_FILE` (`/etc/zshenv` + `launchctl`). `clavis` also provides an `age` Keychain/Touch ID plugin. |
+
+### Interactive Zsh `sops` Wrapper (`modules/home/shell/zsh/dotfiles/common.zsh`)
+
+For interactive secret editing without leaving plaintext `age` private keys on disk permanently, [`common.zsh`](../modules/home/shell/zsh/dotfiles/common.zsh) defines a `sops()` shell wrapper:
+
+1. **Per-Host Lookup Key**: Resolves short hostname via `hostname -s` (e.g., `mac-brightstar`, `nix-goldstar`, `nix-oldstar`).
+2. **15-Minute Runtime Cache**: Stores the retrieved `age` key with `0600` (`umask 077`) permissions in `${XDG_RUNTIME_DIR:-${TMPDIR%/}}` (per-user runtime directory) with a 900-second TTL.
+3. **Automatic Expiration**: Before each `sops` invocation, inspects file `mtime`; if older than 900 seconds, deletes the cache file and unsets `SOPS_AGE_KEY`.
+4. **Bitwarden CLI Fallback**: When `SOPS_AGE_KEY` is unset and no valid cache file exists, queries `bw get notes "SOPS Age Key <hostname>"` from an unlocked Bitwarden CLI session, exports `SOPS_AGE_KEY`, populates the `0600` cache file, and delegates to `command sops "$@"`.

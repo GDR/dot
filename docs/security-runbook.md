@@ -1,160 +1,230 @@
-# 📘 Security & Key Management Runbook
+# Security & Key Management Runbook
 
-Step-by-step operational runbook for key generation, agent setup, Git commit signing, and secret management in `GDR/dot`.
+Operational runbook for managing `clavis`, per-host SSH keys, Git SSH commit signing, `charon-key` inbound SSH authorization, and `sops` + Bitwarden secret workflows in `GDR/dot`.
 
 ---
 
-## 🚀 Quick Reference Workflow
+## Quick Reference Workflow
 
 ```mermaid
 flowchart LR
-    Task{"What do you want to do?"}
-    Task -->|"1. New SSH Key"| GenSSH["ssh-keygen -t ed25519 -C 'email'\nssh-add ~/.ssh/id_ed25519"]
-    Task -->|"2. New GPG Key"| GenGPG["gpg --full-generate-key\ngit config user.signingkey <ID>"]
-    Task -->|"3. New SOPS Key"| GenSOPS["ssh-to-age < id_ed25519.pub\nAdd to .sops.yaml"]
-    Task -->|"4. Flush Cache"| FlushCache["gpgconf --kill gpg-agent"]
+    Task{"Operation"}
+    Task -->|"macOS SSH / Touch ID"| ClavisOps["clavis CLI & ~/.ssh/clavis.sock"]
+    Task -->|"Linux Host SSH Key"| LinuxKey["ssh-keygen + hostUsers.<user>.keys"]
+    Task -->|"Inbound SSH Access"| CharonOps["Add key to GitHub + openssh.userMap"]
+    Task -->|"Edit SOPS Secret"| SopsOps["bw unlock + sops <secret-file>"]
 
     style Task fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
-    style GenSSH fill:#181825,stroke:#a6e3a1,color:#cdd6f4
-    style GenGPG fill:#181825,stroke:#f9e2af,color:#cdd6f4
-    style GenSOPS fill:#181825,stroke:#cba6f7,color:#cdd6f4
-    style FlushCache fill:#181825,stroke:#f38ba8,color:#cdd6f4
+    style ClavisOps fill:#181825,stroke:#a6e3a1,color:#cdd6f4
+    style LinuxKey fill:#181825,stroke:#f9e2af,color:#cdd6f4
+    style CharonOps fill:#181825,stroke:#cba6f7,color:#cdd6f4
+    style SopsOps fill:#181825,stroke:#f38ba8,color:#cdd6f4
 ```
 
 ---
 
-## 🔑 1. Key Generation Guide
+## 1. Outbound SSH Keys & Agents
 
-### A. Generating a New SSH Key (Ed25519)
+### A. macOS: Clavis Keychain SSH Agent (`mac-brightstar`)
 
-> [!NOTE]
-> `Ed25519` is the modern standard for SSH keys, offering fast performance and clean cryptographic design.
+`clavis` stores SSH keys in the macOS Keychain gated by Touch ID and serves them over `~/.ssh/clavis.sock` via `launchd` (`com.clavis.agent`).
 
-1. **Generate the key pair**:
-   ```bash
-   ssh-keygen -t ed25519 -C "gosugdr@gmail.com" -f ~/.ssh/id_ed25519
+1. **Enable in host configuration** ([`hosts/machines/mac-brightstar/default.nix`](../hosts/machines/mac-brightstar/default.nix)):
+   ```nix
+   hostUsers.dgarifullin = userDefaults.user // {
+     enable = true;
+     clavisAgent.enable = true;
+     modules.home.security.clavis.enable = true;
+   };
    ```
 
-2. **Add the key to `gpg-agent`**:
+2. **Manage keys & inspect agent status**:
    ```bash
-   ssh-add ~/.ssh/id_ed25519
+   # Inspect clavis CLI commands (generate/import/list Keychain keys)
+   clavis --help
+
+   # List public keys currently exposed by clavis-agent
+   ssh-add -L
+
+   # Verify SSH_AUTH_SOCK points to ~/.ssh/clavis.sock
+   echo "$SSH_AUTH_SOCK"
+   ls -la ~/.ssh/clavis.sock
+
+   # Check or restart the launchd agent
+   launchctl print "gui/$(id -u)/com.clavis.agent"
+   launchctl kickstart -k "gui/$(id -u)/com.clavis.agent"
    ```
 
-3. **Verify loaded keys**:
+3. **Test outbound authentication**:
    ```bash
-   ssh-add -l
+   ssh -T git@github.com
    ```
 
 ---
 
-### B. Generating a New GPG Key for Git Commit Signing
+### B. Linux: Per-Host SSH Keys (`nix-goldstar`, `nix-oldstar`)
+
+Linux hosts declare per-machine SSH keys in `hostUsers.<user>.keys` and match blocks in `hostUsers.<user>.ssh`.
+
+1. **Generate a per-host Ed25519 key pair**:
+   ```bash
+   ssh-keygen -t ed25519 -C "gosugdr@gmail.com" -f ~/.ssh/oldstar_id_ed25519
+   chmod 600 ~/.ssh/oldstar_id_ed25519
+   chmod 644 ~/.ssh/oldstar_id_ed25519.pub
+   ```
+
+2. **Declare the key in `hosts/machines/<host>/default.nix`**:
+   ```nix
+   hostUsers.dgarifullin = userDefaults.user // {
+     enable = true;
+     keys = [{
+       name = "oldstar";
+       type = "ed25519";           # "ed25519" | "rsa" | "ecdsa" | "ecdsa-sk"
+       purpose = [ "git" "ssh" ];  # "git" wires ~/.ssh/<name>_id_<type>.pub for commit signing
+       isDefault = true;
+       # Optional: commits ~/.ssh/oldstar_id_ed25519.pub declaratively via Home Manager
+       # publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...";
+     }];
+     ssh = [
+       {
+         host = "*";
+         identityFile = "~/.ssh/oldstar_id_ed25519";
+         extraOptions.AddKeysToAgent = "yes";
+       }
+       {
+         host = "github.com";
+         user = "git";
+         identityFile = "~/.ssh/oldstar_id_ed25519";
+       }
+     ] ++ userDefaults.ssh.knownHosts;
+   };
+   ```
+
+3. **Rebuild and verify**:
+   ```bash
+   sudo nixos-rebuild switch --flake .#<hostname>
+   ssh-add -l
+   ssh -T git@github.com
+   ```
 
 > [!TIP]
-> Use **ECC (Ed25519)** for lightweight, fast GPG keys.
+> To use the Bitwarden Desktop SSH Agent instead of local key files, set `hostUsers.<user>.bitwardenSshAgent.enable = true` (socket defaults to `~/.bitwarden/ssh-agent.sock` on Linux and `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` on macOS).
 
-1. **Run interactive key generator**:
-   ```bash
-   gpg --full-generate-key
-   ```
-   * **Key type**: `(9) ECC and ECC` (or `(1) RSA and RSA`)
-   * **Elliptic Curve**: `(1) Curve 25519`
-   * **Expiration**: `0` (does not expire) or `2y`
-   * **Real Name**: `Damir Garifullin`
-   * **Email**: `gosugdr@gmail.com`
+---
 
-2. **Find your Key ID**:
-   ```bash
-   gpg --list-secret-keys --keyid-format=long
-   ```
-   Output:
-   ```text
-   sec   ed25519/3AA5C34371567BD2 2026-07-22 [SC]
-   uid                 [ultimate] Damir Garifullin <gosugdr@gmail.com>
-   ```
-   👉 Key ID is **`3AA5C34371567BD2`**.
+## 2. Git SSH Commit Signing
 
-3. **Configure Git to use your GPG Key**:
+Git is configured with `gpg.format = "ssh"` and `commit.gpgsign = true` in [`modules/home/shell/git.nix`](../modules/home/shell/git.nix).
+
+1. **Register your public key on GitHub as BOTH Authentication and Signing key**:
+   - Export the active public key:
+     ```bash
+     # Agent-backed (macOS clavis / Bitwarden):
+     ssh-add -L | head -1
+
+     # Static key host (Linux):
+     cat ~/.ssh/<name>_id_<type>.pub
+     ```
+   - Add it under **GitHub → Settings → SSH and GPG keys → New SSH key** with **Key type: Signing Key** (in addition to Authentication Key if used for `git push`).
+
+2. **Inspect active Git signing configuration**:
    ```bash
-   git config --global user.signingkey 3AA5C34371567BD2
-   git config --global gpg.format openpgp
-   git config --global commit.gpgSign true
+   git config --get gpg.format
+   git config --get commit.gpgsign
+   git config --get user.signingkey             # Set in static key mode
+   git config --get gpg.ssh.defaultKeyCommand   # Set in dynamic agent mode
+   ```
+
+3. **Verify signature creation locally**:
+   ```bash
+   git commit --allow-empty -m "chore: test ssh commit signing"
+   git log -1 --show-signature
+   git reset --hard HEAD~1
    ```
 
 ---
 
-### C. Generating / Deriving an Age Key for SOPS Secrets
+## 3. Inbound SSH Authorization (`charon-key`)
 
-> [!IMPORTANT]
-> `sops-nix` uses `age` public keys. Convert your `id_ed25519.pub` using `ssh-to-age`.
+Inbound SSH access is authorized dynamically from GitHub public keys via `charon-key` — adding or revoking an SSH key on your GitHub account updates fleet access without editing `authorized_keys`.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as 👤 Developer
-    participant Terminal as 💻 Terminal
-    participant SopsYaml as 📄 .sops.yaml
-    participant Sops as 🔒 sops CLI
+1. **Configure `userMap` on a host**:
+   ```nix
+   # NixOS (hosts/machines/nix-oldstar/default.nix)
+   modules.system.linux.networking.openssh = {
+     enable = true;
+     userMap = { "dgarifullin" = "gdr"; }; # or { "*" = "gdr"; }
+   };
 
-    User->>Terminal: nix-shell -p ssh-to-age --run "ssh-to-age < ~/.ssh/id_ed25519.pub"
-    Terminal-->>User: Outputs age1wa37p3gvk7p0m0rwzg43xlnhdm75...
-    User->>SopsYaml: Add age1... recipient key under creation_rules
-    User->>Sops: sops updatekeys hosts/machines/mac-brightstar/secrets/my-secret.yaml
-    Sops-->>User: Secret file re-encrypted cleanly!
-```
-
-1. **Derive Age public key from SSH key**:
-   ```bash
-   nix-shell -p ssh-to-age --run "ssh-to-age < ~/.ssh/id_ed25519.pub"
-   ```
-   *(Output: `age1wa37p3gvk7p0m0rwzg43xlnhdm75...`)*
-
-2. **Add recipient key to [.sops.yaml](file:///Users/dgarifullin/Workspaces/gdr/dot/.sops.yaml)**:
-   ```yaml
-   creation_rules:
-     - path_regex: hosts/machines/mac-brightstar/secrets/.*
-       age:
-         - age1wa37p3gvk7p0m0rwzg43xlnhdm75... # id_ed25519
+   # macOS (hosts/machines/mac-brightstar/default.nix)
+   modules.system.darwin.openssh = {
+     enable = true;
+     userMap = { "dgarifullin" = "gdr"; };
+   };
    ```
 
-3. **Re-encrypt existing secrets**:
+2. **Verify `sshd` picks up `charon-key`**:
    ```bash
-   sops updatekeys hosts/machines/mac-brightstar/secrets/<secret-name>.yaml
+   # Check effective AuthorizedKeysCommand in sshd
+   sudo sshd -T | grep -i authorizedkeyscommand
+
+   # Inspect generated drop-in config
+   cat /etc/ssh/sshd_config.d/50-charon-key.conf
+
+   # On macOS: confirm nix-darwin's 101-authorized-keys.conf is blanked so it does not shadow 50-charon-key.conf
+   cat /etc/ssh/sshd_config.d/101-authorized-keys.conf
+   ```
+
+3. **Test key resolution directly**:
+   ```bash
+   # Extract and run the AuthorizedKeysCommand wrapper for your local user
+   cmd=$(sudo sshd -T | awk '/^authorizedkeyscommand / {print $2}')
+   sudo "$cmd" dgarifullin
    ```
 
 ---
 
-## 🌐 2. Authorizing SSH Access to Remote Hosts (`nix-oldstar`)
+## 4. Secret Management (`sops`, `age`, & Bitwarden CLI)
 
-### Declarative Method (Recommended)
-Add your public key to `keys` in [hosts/machines/nix-oldstar/default.nix](file:///Users/dgarifullin/Workspaces/gdr/dot/hosts/machines/nix-oldstar/default.nix#L31-L36):
+### A. Deriving or Generating `age` Keys
 
-```nix
-hostUsers.dgarifullin = userDefaults.user // {
-  enable = true;
-  keys = [
-    {
-      name = "brightstar";
-      type = "ed25519";
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...";
-      purpose = [ "ssh" ];
-    }
-  ];
-};
-```
+- **Derive a host `age` recipient from a NixOS SSH host key**:
+  ```bash
+  nix-shell -p ssh-to-age --run "ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub"
+  ```
 
-### Imperative Method
-```bash
-ssh-copy-id -i ~/.ssh/id_ed25519.pub dgarifullin@nix-oldstar
-```
+- **Generate a dedicated user/machine `age` key pair**:
+  ```bash
+  # Linux path:  ~/.config/sops/age/keys.txt
+  # macOS path:  ~/Library/Application Support/sops/age/keys.txt
+  nix-shell -p age --run "age-keygen"
+  ```
+
+### B. Provisioning Bitwarden Note for Interactive `sops` Wrapper
+
+The Zsh `sops()` wrapper in [`modules/home/shell/zsh/dotfiles/common.zsh`](../modules/home/shell/zsh/dotfiles/common.zsh) automatically fetches per-machine `age` keys from Bitwarden when `SOPS_AGE_KEY` is unset:
+
+1. Create a Bitwarden **Secure Note** named `SOPS Age Key <short-hostname>` (matching `hostname -s`, e.g., `SOPS Age Key mac-brightstar` or `SOPS Age Key nix-oldstar`) containing the `AGE-SECRET-KEY-1...` private key in its notes body.
+2. Unlock Bitwarden CLI in your terminal session:
+   ```bash
+   export BW_SESSION="$(bw unlock --raw)"
+   bw sync
+   ```
+3. Run `sops` normally — the wrapper fetches the key and caches it with `0600` permissions in `${XDG_RUNTIME_DIR:-${TMPDIR%/}}` for 15 minutes (`ttl=900`):
+   ```bash
+   sops path/to/secret.yaml
+   ```
 
 ---
 
-## 🛠️ 3. Maintenance & Troubleshooting
+## 5. Troubleshooting & Diagnostics Cheatsheet
 
-| Goal | Command |
+| Symptom / Task | Command |
 | :--- | :--- |
-| **Flush RAM Passphrase Cache** | `gpgconf --kill gpg-agent` |
-| **Close Stuck ControlMaster Socket** | `ssh -O exit nix-oldstar` |
-| **List Active Control Sockets** | `ls -la ~/.ssh/sockets/` |
-| **List Loaded Agent Keys** | `ssh-add -l` |
-| **Test SSH Authentication** | `ssh -v -T git@github.com` |
+| **List keys loaded in active SSH agent** | `ssh-add -l` (fingerprints) / `ssh-add -L` (full public keys) |
+| **Restart `clavis` agent on macOS** | `launchctl kickstart -k "gui/$(id -u)/com.clavis.agent"` |
+| **Propagate `SSH_AUTH_SOCK` to macOS GUI apps** | `launchctl setenv SSH_AUTH_SOCK "$HOME/.ssh/clavis.sock"` |
+| **Debug outbound SSH key selection** | `ssh -v -T git@github.com` |
+| **Verify `sshd` `AuthorizedKeysCommand`** | `sudo sshd -T \| grep -i authorizedkeys` |
+| **Flush cached SOPS age key early** | `unset SOPS_AGE_KEY && rm -f "${XDG_RUNTIME_DIR:-${TMPDIR%/}}/.sops-age-key-$(hostname -s)-${UID}"` |
+| **Check `SOPS_AGE_KEY_FILE` path** | `echo "${SOPS_AGE_KEY_FILE:-~/.config/sops/age/keys.txt}"` |
