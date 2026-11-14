@@ -55,7 +55,7 @@ in
       };
       home.editors.neovim.enable = true;
       home.editors.ghidra.enable = true;
-      home.editors.antigravity = {
+      home.editors.antigravity = userDefaults.antigravity // {
         enable = true;
         # Global MCP servers — written to ~/.gemini/antigravity/mcp_config.json
         # Applies to ALL workspaces opened in Antigravity IDE
@@ -67,7 +67,6 @@ in
           };
           context7 = {
             url = "https://mcp.context7.com/mcp";
-            headers.CONTEXT7_API_KEY = builtins.getEnv "CONTEXT7_API_KEY";
           };
           ghidra = {
             command = "bridge-mcp-ghidra";

@@ -83,7 +83,7 @@ in
       enable = true;
       # 8089: GhidraMCP HTTP server (goldstar bridge → oldstar Ghidra)
       allowedTCPPorts = [ 22 80 443 8080 8089 ];
-      allowedUDPPorts = [ 22 80 443 8080 ];
+      allowedUDPPorts = [ 80 443 8080 ];
     };
     sound.enable = true;
   };
