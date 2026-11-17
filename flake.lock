@@ -327,15 +327,14 @@
     },
     "private-extension": {
       "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-qUFY+RNeKb60AJ0AKlZanfta+KYQLs4L5DsRVTPNkpQ=",
         "path": "./extensions/empty",
         "type": "path"
       },
       "original": {
         "path": "./extensions/empty",
         "type": "path"
-      }
+      },
+      "parent": []
     },
     "root": {
       "inputs": {
