@@ -7,11 +7,13 @@ description: Creating new NixOS user features and system modules using mkFeature
 
 ## User Feature (mkFeature)
 
+Feature descriptors receive `{ lib, inputs, _modulePath, ... }` at registry-build time (never `pkgs` or `config`); runtime dependencies like `pkgs`, `osConfig`, and `featureCfg` are passed inside `homeModule` / `nixosModule` / `darwinModule`.
+
 ### Simple feature
 
 ```nix
 # modules/home/<category>/<name>.nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Description of the feature";
@@ -30,7 +32,7 @@ lib.my.mkFeature {
 
 ```nix
 # modules/home/<category>/<name>/<name>.nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Tool with live-editable config";
@@ -57,10 +59,11 @@ modules/home/<category>/<name>/
 ### With system-level config
 
 ```nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Feature with system-level configuration";
+  cascade = false;  # optional: require explicit opt-in instead of category cascade
 
   nixosModule = { ... }: {
     programs.hyprland.enable = true;
@@ -81,7 +84,7 @@ lib.my.mkFeature {
 ### With custom options
 
 ```nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Feature with custom options";
@@ -104,7 +107,7 @@ lib.my.mkFeature {
 ### With dependencies (requires)
 
 ```nix
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Feature with dependencies";
@@ -127,6 +130,7 @@ lib.my.mkFeature {
 | `description` | string | No | Feature description |
 | `platforms` | list | No | `["linux" "darwin"]` (default: both) |
 | `requires` | list | No | Feature path dependencies (auto-enabled per user) |
+| `cascade` | bool | No | `true` (default) allows category `.enable` cascade; `false` requires explicit enable |
 | `extraOptions` | attrset | No | Additional typed NixOS/HM options (merged per user) |
 | `dotfiles` | `{ path, source, target?, live? }` | No | Live-editable symlinks |
 | `homeModule` | function or attrset | No | Home Manager config for users enabling the feature |

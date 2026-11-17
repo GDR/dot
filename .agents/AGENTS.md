@@ -16,7 +16,7 @@ dot/
 │       ├── nix-oldstar/      # NixOS server & remote builder
 │       └── mac-brightstar/   # Darwin workstation (clavis, nix-homebrew)
 ├── lib/
-│   ├── default.nix           # Core helpers: mkFeature, mkSystemModuleV2, mergeProfiles, getTheme
+│   ├── default.nix           # Core helpers: mkSystemModuleV2, buildModuleRegistry, getTheme
 │   ├── features.nix          # Feature descriptor & per-user compiler (mkFeature, dotfiles, etc.)
 │   ├── flakeHelpers.nix      # mkDarwinConfiguration, mkNixosConfiguration
 │   ├── moduleRegistry.nix    # Module discovery & transitive dependency resolver
@@ -47,7 +47,7 @@ dot/
 │   └── systems/              # System modules (auto-discovered, mkSystemModuleV2)
 │       ├── all/              # Cross-platform (fonts, nix/{gc,settings}, shell/ssh, sops)
 │       ├── linux/            # NixOS-only (graphics, keyboards, networking, power-management, sound)
-│       └── darwin/           # macOS-only (homebrew, macos-settings, openssh, ssh)
+│       └── darwin/           # macOS-only (homebrew, macos-settings, openssh)
 ├── overlays/                 # Nixpkgs overlays
 ├── pkgs/                     # Custom packages
 └── templates/                # Flake templates
@@ -69,24 +69,32 @@ profiles/
 
 ### Using profiles in a host
 
+Profiles and user defaults are native NixOS/nix-darwin modules composed with `imports` and `lib.mkDefault`:
+
 ```nix
-let
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/gaming.nix)
+{ ... }:
+{
+  imports = [
+    ./hardware-configuration.nix
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+    ../../../profiles/gaming.nix
   ];
-in {
-  hostUsers.x.modules = lib.recursiveUpdate profiles.userModules {
-    home.browsers.vivaldi.enable = true;  # host-specific additions
+
+  system.stateVersion = "26.05";
+
+  hostUsers.x = {
+    imports = [ ../../users/x.nix ];
+    enable = true;
+    modules.home.browsers.vivaldi.enable = true;  # host-specific additions
   };
 
-  modules.system.all   = lib.recursiveUpdate profiles.system.all   { fonts.enable = true; };
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux { graphics.nvidia.enable = true; };
+  modules.system.all.fonts.enable = true;
+  modules.system.linux.graphics.nvidia.enable = true;
 }
 ```
 
-Use `lib.recursiveUpdate` (not `//`) to merge nested attrsets without clobbering siblings.
+Profiles populate `profileModules.home.*` with `lib.mkDefault true`, inherited by users setting `inheritProfiles = true`.
 
 ### Module dependency requires
 
@@ -152,10 +160,9 @@ Home-manager configuration is scoped strictly per-user to users who enable the f
 
 ## Key Helpers (lib/default.nix & lib/features.nix)
 
-- `lib.my.mkFeature { description?, platforms?, requires?, extraOptions?, dotfiles?, homeModule?, homeModuleLinux?, homeModuleDarwin?, nixosModule?, darwinModule? }` — User feature descriptors
-- `lib.my.mkSystemModuleV2 args { namespace, description?, module?, moduleLinux?, moduleDarwin?, extraOptions?, imports? }` — System modules
-- `lib.my.mergeProfiles profiles` — Deep-merge profile attrsets (`userModules`, `system.{all,linux,darwin}`)
-- `lib.my.isFeatureEnabledForUser { config, userName, featurePath?, modulePath? }` — Check per-user feature enable (hierarchy + transitive `requires`)
+- `lib.my.mkFeature { description?, platforms?, requires?, cascade?, extraOptions?, dotfiles?, homeModule?, homeModuleLinux?, homeModuleDarwin?, nixosModule?, darwinModule? }` — User feature descriptors
+- `lib.my.mkSystemModuleV2 args { namespace, description?, module?, moduleLinux?, moduleDarwin?, moduleDisabled?, cascade?, extraOptions?, imports? }` — System modules
+- `lib.my.isFeatureEnabledForUser { config, userName, featurePath?, modulePath?, hostPlatform? }` — Check per-user feature enable (hierarchy + transitive `requires`)
 - `lib.my.resolveUserFeatures { osConfig, pkgs?, userName, userCfg, ... }` — Resolve active features for a user on the target platform
 - `lib.my.getTheme config` — Get active theme (set via `config.theme.name`)
 

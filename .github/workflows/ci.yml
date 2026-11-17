@@ -24,15 +24,15 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: Gitleaks Secret Check
-        run: nix run nixpkgs#gitleaks -- git --redact --no-banner .
+        run: nix develop -c gitleaks git --redact --no-banner .
       - name: Nixpkgs Format Check
-        run: nix run nixpkgs#nixpkgs-fmt -- --check .
+        run: nix develop -c nixpkgs-fmt --check .
       - name: Deadnix Check
-        run: nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names --no-lambda-arg .
+        run: nix develop -c deadnix --fail --no-lambda-pattern-names --no-lambda-arg .
       - name: Statix Check
-        run: nix run nixpkgs#statix -- check .
+        run: nix develop -c statix check .
       - name: Actionlint
-        run: nix run nixpkgs#actionlint
+        run: nix develop -c actionlint
 
   flake-check:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
       - name: Flake Check
         run: |
           nix flake check
-          nix eval .#checks.aarch64-darwin.module-platform-merge.drvPath
+          nix eval --json .#checks.aarch64-darwin --apply 'c: builtins.mapAttrs (_: v: v.drvPath) c'
 
   eval-hosts:
     runs-on: ubuntu-latest

@@ -41,10 +41,10 @@ repos:
     always_run: true
     stages: [pre-commit]
 
-  # Defer full multi-system flake check to git push so local commits stay fast
+  # Run current-platform flake check on push (multi-system checks run in CI)
   - id: nix-flake-check
     name: Nix Flake Check
-    entry: nix flake check --all-systems
+    entry: nix flake check
     language: system
     pass_filenames: false
     always_run: true

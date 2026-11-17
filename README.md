@@ -13,7 +13,7 @@ Personal NixOS & nix-darwin configuration built on a typed, per-user feature com
 
 - **Multi-platform** — Unified flake architecture across NixOS (`x86_64-linux`) and macOS (`aarch64-darwin`).
 - **Isolated per-user features (`mkFeature`)** — Home Manager configuration compiles strictly per enabled user, with optional two-stage system activation (`nixosModule` / `darwinModule`) and transitive `requires` resolution.
-- **Hierarchical enables & composable profiles** — Enable whole categories (`home.browsers.enable = true`), individual features (`home.browsers.vivaldi.enable = true`), or compose role bundles (`profiles/*.nix` via `lib.my.mergeProfiles`).
+- **Hierarchical enables & composable profiles** — Enable whole categories (`home.browsers.enable = true`), individual features (`home.browsers.vivaldi.enable = true`), or compose native role modules (`profiles/*.nix`).
 - **Dual-mode dotfiles** — Switch seamlessly between immutable `/nix/store` generation-safe symlinks and out-of-store live editing (`dotfiles.live` / `<feature>.dotfilesLive`).
 - **Hardware-backed SSH & zero-drift auth** — macOS Keychain/Touch ID SSH & `age` agent (`clavis`), Git SSH commit signing, dynamic GitHub `AuthorizedKeysCommand` (`charon-key`), and `sops-nix` + Bitwarden secret workflows.
 - **Auto-discovery** — Drop a `.nix` file under `modules/home/` or `modules/systems/{all,linux,darwin}/` and it is registered automatically.
@@ -79,7 +79,7 @@ flowchart TD
 
     subgraph Composition ["Users & Profiles"]
         UD["User Defaults (hosts/users/dgarifullin.nix)"]
-        PR["Role Profiles (profiles/*.nix + lib.my.mergeProfiles)"]
+        PR["Role Profiles (profiles/*.nix modules)"]
         NG --> UD
         NO --> UD
         MB --> UD
@@ -145,7 +145,7 @@ dot/
 │   └── systems/              # Auto-discovered system modules (mkSystemModuleV2)
 │       ├── all/              # fonts, sops, nix/{gc,settings}, shell/ssh
 │       ├── linux/            # graphics, keyboards, networking, power-management, sound
-│       └── darwin/           # homebrew, macos-settings, openssh, ssh
+│       └── darwin/           # homebrew, macos-settings, openssh
 ├── overlays/                 # Nixpkgs overlays & patches
 ├── pkgs/                     # Custom package derivations
 └── templates/                # Project flake templates (python, tex)
@@ -176,21 +176,20 @@ nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardwa
 2. **Create `hosts/machines/my-new-host/default.nix`:**
 
 ```nix
-{ lib, ... }:
-let
-  userDefaults = import ../../users/dgarifullin.nix { inherit lib; };
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-  ];
-in
+{ ... }:
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+  ];
 
+  system.stateVersion = "26.05";
   networking.hostName = "my-new-host";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  hostUsers.dgarifullin = userDefaults.user // {
+  hostUsers.dgarifullin = {
+    imports = [ ../../users/dgarifullin.nix ];
     enable = true;
     keys = [{
       name = "my-new-host";
@@ -209,24 +208,22 @@ in
         user = "git";
         identityFile = "~/.ssh/my-new-host_id_ed25519";
       }
-    ] ++ userDefaults.ssh.knownHosts;
+    ];
 
-    modules = lib.recursiveUpdate profiles.userModules {
+    modules = {
       home.desktop.hyprland.enable = true;
       home.browsers.vivaldi.enable = true;
     };
   };
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
+  modules.system.all = {
     fonts.enable = true;
     sops.enable = true;
   };
 
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
-    networking.openssh = {
-      enable = true;
-      userMap = { "dgarifullin" = "gdr"; };
-    };
+  modules.system.linux.networking.openssh = {
+    enable = true;
+    userMap = { "dgarifullin" = "gdr"; };
   };
 
   time.timeZone = "Europe/Moscow";
@@ -251,24 +248,20 @@ darwinConfigurations.my-new-host = flakeHelpers.mkDarwinConfiguration ./hosts/ma
 ```nix
 { lib, ... }:
 {
-  user = {
-    fullName = "New User";
-    email = "newuser@example.com";
-    github = "newuser";
-    extraGroups = [ "wheel" "audio" ];
-    uid = 1001;
-  };
+  fullName = lib.mkDefault "New User";
+  email = lib.mkDefault "newuser@example.com";
+  github = lib.mkDefault "newuser";
+  extraGroups = [ "wheel" "audio" ];
+  uid = lib.mkDefault 1001;
 }
 ```
 
 2. **Enable the user on a host:**
 
 ```nix
-let
-  newUserDefaults = import ../../users/newuser.nix { inherit lib; };
-in
 {
-  hostUsers.newuser = newUserDefaults.user // {
+  hostUsers.newuser = {
+    imports = [ ../../users/newuser.nix ];
     enable = true;
     modules = {
       home.cli.enable = true;
@@ -283,7 +276,7 @@ in
 
 ### Profiles & Hierarchical Enables
 
-Role profiles in [`profiles/`](profiles) bundle common `userModules` and `system.{all,linux,darwin}` enables:
+Role profiles in [`profiles/`](profiles) are NixOS/nix-darwin modules setting `profileModules.home.*` and `modules.system.{all,linux,darwin}.*` with `lib.mkDefault`:
 
 | Profile | Included Modules |
 |---------|------------------|
@@ -293,19 +286,21 @@ Role profiles in [`profiles/`](profiles) bundle common `userModules` and `system
 | `server.nix` | `home.{cli,shell}`, `home.editors.neovim`, `home.virtualisation.docker`, `system.linux.networking.{openssh,tailscale,firewall}` |
 | `macos.nix` | `system.darwin.macos-settings` |
 
-Merge multiple profiles safely with `lib.my.mergeProfiles` and `lib.recursiveUpdate` (never `//`, which clobbers sibling attributes):
+Import multiple profiles in `imports = [ ... ];` and override cleanly via normal NixOS module priority:
 
 ```nix
-let
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-  ];
-in
 {
-  hostUsers.dgarifullin.modules = lib.recursiveUpdate profiles.userModules {
-    home.utils.enable = false;          # Disable category
-    home.utils.obsidian.enable = true;  # Selective opt-in wins over parent false
+  imports = [
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+  ];
+
+  hostUsers.dgarifullin = {
+    inheritProfiles = true;
+    modules = {
+      home.utils.enable = false;          # Disable category
+      home.utils.obsidian.enable = true;  # Selective opt-in wins over parent false
+    };
   };
 }
 ```
@@ -403,7 +398,7 @@ dotfiles.live = true;
 
 # Per-feature override (global or under hostUsers.<user>.modules):
 modules.home.terminal.ghostty.dotfilesLive = true;
-modules.home.editors.neovim.dotfilesLive = false;
+modules.home.desktop.hyprland.dotfilesLive = false;
 ```
 
 ---
@@ -415,7 +410,7 @@ Full architectural details and operational commands live in:
 - **[Security & Key Management Runbook](docs/security-runbook.md)** — Day-to-day commands for provisioning keys, verifying `sshd` / `charon-key`, and managing SOPS secrets.
 
 Summary of key conventions:
-- **Outbound SSH & Git Signing**: `gpg.format = "ssh"` everywhere. macOS uses `clavis` (`~/.ssh/clavis.sock`) with dynamic key resolution (`ssh-add -L | head -1`); Linux uses per-host keys declared in `hostUsers.<user>.keys` (`~/.ssh/<name>_id_<type>`) or `bitwardenSshAgent`.
+- **Outbound SSH & Git Signing**: `gpg.format = "ssh"` everywhere. macOS uses `clavis` (`~/.ssh/clavis.sock`) with dynamic key resolution (`ssh-add -L | head -1`); Linux uses per-host keys declared in `hostUsers.<user>.keys` (`~/.ssh/<name>_id_<type>`) or `home.security.bitwarden.sshAgent`.
 - **Inbound SSH (`charon-key`)**: `modules.system.{linux.networking,darwin}.openssh.userMap` maps local users to GitHub usernames via `AuthorizedKeysCommand`.
 - **Secrets (`sops-nix` + `age`)**:
   - Linux `SOPS_AGE_KEY_FILE`: `~/.config/sops/age/keys.txt` (XDG default).

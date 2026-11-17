@@ -9,20 +9,19 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
 
 ```nix
 # hosts/machines/<hostname>/default.nix
-{ inputs, lib, config, pkgs, home-manager, hardware, ... }:
-let
-  importUser = name: import ../../users/${name}.nix { inherit lib; };
-  userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    # (import ../../../profiles/gaming.nix)
-  ];
-in
+{ ... }:
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ./hardware-configuration.nix
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+    # ../../../profiles/gaming.nix
+  ];
 
-  hostUsers.dgarifullin = userDefaults.user // {
+  system.stateVersion = "26.05";
+
+  hostUsers.dgarifullin = {
+    imports = [ ../../users/dgarifullin.nix ];
     enable = true;
     keys = [{
       name = "<hostname>";
@@ -33,9 +32,10 @@ in
     ssh = [
       { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
       { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
-    ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    ];
+    modules = {
       home.desktop.hyprland.enable = true;  # WM choice is host-specific
+      home.editors.antigravity.enable = true;
     };
     sudo.nopasswd = true;                   # remove if not needed
   };
@@ -43,16 +43,13 @@ in
   networking.hostName = "<hostname>";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
-    fonts.enable = true;
-  };
+  modules.system.all.fonts.enable = true;
 
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+  modules.system.linux = {
     networking.openssh = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
-    graphics.nvidia   = { enable = true; open = true; };
+    graphics.nvidia = { enable = true; open = true; };
   };
 
-  modules.home.editors.antigravity = userDefaults.antigravity;
   time.timeZone = "Europe/Moscow";
   theme.name = "catppuccin-macchiato";
 }
@@ -61,41 +58,36 @@ in
 ## Host Template (Darwin)
 
 ```nix
-{ self, inputs, pkgs, lib, overlays, ... }:
-let
-  importUser = name: import ../../users/${name}.nix { inherit lib; };
-  userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/macos.nix)
-  ];
-in
+{ ... }:
 {
+  imports = [
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+    ../../../profiles/macos.nix
+  ];
+
+  system.stateVersion = 5;
   nix.enable = true;
 
-  hostUsers.dgarifullin = userDefaults.user // {
+  hostUsers.dgarifullin = {
+    imports = [ ../../users/dgarifullin.nix ];
     enable = true;
-    keys = [{ name = "<hostname>"; type = "ed25519"; purpose = [ "git" "ssh" ]; isDefault = true; }];
-    ssh = [
-      { host = "*"; identityFile = "~/.ssh/<hostname>_id_ed25519"; extraOptions.AddKeysToAgent = "yes"; }
-      { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
-    ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    modules = {
       home.ai-tools.enable = true;
+      home.security.clavis.enable = true;
+      home.editors.antigravity.enable = true;
     };
   };
 
   networking.hostName = "<hostname>";
   environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all { sops.enable = true; };
-  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
+  modules.system.all.sops.enable = true;
+  modules.system.darwin = {
     homebrew = { enable = true; user = "dgarifullin"; };
     openssh  = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
   };
 
-  modules.home.editors.antigravity = userDefaults.antigravity;
   time.timeZone = "Europe/Moscow";
   theme.name = "rose-pine-moon";
 }
@@ -123,19 +115,22 @@ Generate: `nixos-generate-config --show-hardware-config`
 ## User Defaults
 
 ```nix
-# hosts/users/<username>.nix — host-invariant user data
+# hosts/users/<username>.nix — host-invariant user module
 { lib, ... }: {
-  user = {
-    fullName = "Full Name";
-    email    = "email@example.com";
-    github   = "github-username";
-    extraGroups = [ "wheel" "networkmanager" "docker" ];
-    uid = 1000;                       # explicit UID prevents drift if second user added
-  };
-  ssh.knownHosts = [                  # topology entries shared across all hosts
-    { host = "nix-oldstar"; forwardAgent = true; }
+  fullName = lib.mkDefault "Full Name";
+  email = lib.mkDefault "email@example.com";
+  github = lib.mkDefault "github-username";
+  extraGroups = [ "wheel" "audio" ];
+  uid = lib.mkDefault 1000;            # explicit UID prevents collision if second user added
+  stateVersion = lib.mkDefault "26.05";
+  isPrimary = lib.mkDefault true;
+  nixTrusted = lib.mkDefault true;
+  inheritProfiles = lib.mkDefault true;
+
+  ssh = [
+    { host = "nix-oldstar"; forwardAgent = false; }
   ];
-  antigravity = { rules = ''...''; cavemanEnable = true; };
+  modules.home.editors.antigravity.rules = lib.mkDefault ''...'';
 }
 ```
 

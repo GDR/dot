@@ -51,18 +51,16 @@ mac-brightstar:
 	@printf "\033[1m\033[32m▶ Switching mac-brightstar (local)…\033[0m\n"
 	sudo SSH_AUTH_SOCK=$SSH_AUTH_SOCK darwin-rebuild switch --flake .#mac-brightstar
 
-# ── NixOS hosts (SSH + nixos-rebuild) ─────────────────────────────────────────
-# SSH into the remote host, pull latest config, and nixos-rebuild switch.
-# Each host has DOTFILES_DIR set in its NixOS config.
+# ── NixOS hosts (local flake push-deploy via nixos-rebuild) ───────────────────
 [doc('nixos-rebuild switch for nix-oldstar (remote)')]
 nix-oldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-oldstar…\033[0m\n"
-	ssh -t nix-oldstar 'cd ${DOTFILES_DIR:-$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-oldstar'
+	nix develop -c nixos-rebuild switch --flake .#nix-oldstar --target-host nix-oldstar --build-host nix-oldstar --sudo
 
 [doc('nixos-rebuild switch for nix-goldstar (remote)')]
 nix-goldstar:
 	@printf "\033[1m\033[32m▶ Rebuilding nix-goldstar…\033[0m\n"
-	ssh -t nix-goldstar 'cd ${DOTFILES_DIR:-$HOME/Workspaces/gdr/dot} && git pull && sudo nixos-rebuild switch --flake .#nix-goldstar'
+	nix develop -c nixos-rebuild switch --flake .#nix-goldstar --target-host nix-goldstar --build-host nix-goldstar --sudo
 
 # ── Maintenance ───────────────────────────────────────────────────────────────
 [doc('nix flake update (refresh lock file)')]
@@ -73,18 +71,18 @@ update:
 [doc('nixpkgs-fmt on all *.nix files')]
 fmt:
 	@printf "\033[1m\033[32m▶ Formatting Nix files…\033[0m\n"
-	nix run nixpkgs#nixpkgs-fmt -- .
+	nix develop -c nixpkgs-fmt .
 
 [doc('Check formatting without modifying files')]
 fmt-check:
 	@printf "\033[1m\033[32m▶ Checking Nix formatting…\033[0m\n"
-	nix run nixpkgs#nixpkgs-fmt -- --check .
+	nix develop -c nixpkgs-fmt --check .
 
 [doc('Run deadnix and statix checks')]
 lint:
 	@printf "\033[1m\033[32m▶ Running deadnix & statix…\033[0m\n"
-	nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names --no-lambda-arg .
-	nix run nixpkgs#statix -- check .
+	nix develop -c deadnix --fail --no-lambda-pattern-names --no-lambda-arg .
+	nix develop -c statix check .
 
 [doc('Dry-run build/eval host configurations')]
 check-hosts:
@@ -96,4 +94,4 @@ check-hosts:
 [doc('Composite target (fmt-check + lint + check-hosts + flake check)')]
 check: fmt-check lint check-hosts
 	@printf "\033[1m\033[32m▶ Running nix flake check…\033[0m\n"
-	nix flake check --all-systems
+	nix flake check

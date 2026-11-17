@@ -1,91 +1,68 @@
 ---
 name: dotfiles-management
-description: Managing live-editable dotfiles with mkDotfilesSymlink and dotfiles/ directories
+description: Managing live-editable and store-immutable dotfiles with mkFeature and dotfiles/ directories
 ---
 
 # Dotfiles Management
 
 ## Concept
 
-Dotfiles are config files stored in the repo and **symlinked** to their expected locations (e.g., `~/.config/<app>`). Changes to these files apply immediately — no `nixos-rebuild` needed.
+Dotfiles are config files stored inside a feature's `dotfiles/` directory and symlinked via `mkFeature`. Changes in **live mode** (`dotfiles.live = true` or `dotfilesLive = true`) apply immediately without rebuilding; **store mode** (`live = false`, the default) symlinks `/nix/store` copies for generation-safe rollbacks.
 
 ## Directory Convention
 
 ```
 modules/home/<category>/<app>/
-├── <app>.nix          # Module definition
+├── <app>.nix          # Feature definition (mkFeature)
 └── dotfiles/          # Config files (symlinked)
     ├── config
     └── themes/
         └── catppuccin-mocha
 ```
 
-## API: mkDotfilesSymlink
+## Using `dotfiles` in `mkFeature`
 
 ```nix
-lib.my.mkDotfilesSymlink {
-  inherit config self;
-  path = "ghostty";                                    # Target: ~/.config/ghostty
-  source = "modules/home/terminal/ghostty/dotfiles";  # Source in repo
-  # target = "~/.config/ghostty";                     # Optional: explicit target path
-}
-```
+# modules/home/terminal/ghostty/ghostty.nix
+{ lib, ... }:
 
-- Default target: `~/.config/${path}`
-- Custom target: set `target` explicitly (e.g., `"~/.tmux"`)
-- Requires `DOTFILES_DIR` env variable in host config
-
-## Using in mkModuleV2
-
-Preferred way — use the `dotfiles` parameter:
-
-```nix
-lib.my.mkModuleV2 args {
+lib.my.mkFeature {
   description = "Ghostty terminal";
 
-  module = {
-    allSystems.home.packages = [ pkgs.ghostty ];
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.ghostty ];
   };
 
   dotfiles = {
-    path = "ghostty";
-    source = "modules/home/terminal/ghostty/dotfiles";
-    # target = "~/.config/ghostty";  # optional, defaults to ~/.config/${path}
+    path = "ghostty";                                   # Target: ~/.config/ghostty
+    source = "modules/home/terminal/ghostty/dotfiles";  # Source in repo
+    # target = "~/.config/ghostty";                     # Optional: explicit target path
+    # live = true;                                      # Optional: per-feature default override
   };
 }
 ```
 
-## Custom Target Paths
+- Default target: `~/.config/${path}` (mapped to `xdg.configFile`).
+- Custom target outside `~/.config/` (e.g., `target = "~/.tmux"`): mapped to `home.file`.
 
-For configs that live outside `~/.config/`:
+## Live vs. Nix Store Symlink Modes
 
-```nix
-dotfiles = {
-  path = "tmux";
-  source = "modules/home/shell/tmux/dotfiles";
-  target = "~/.tmux";  # → symlinks to ~/.tmux instead of ~/.config/tmux
-};
-```
+Resolution order (most specific wins):
+1. Per-user or global feature toggle: `hostUsers.<user>.modules.home.<cat>.<mod>.dotfilesLive = true;` or `modules.home.<cat>.<mod>.dotfilesLive = true;`
+2. Feature descriptor default: `dotfiles.live = true;`
+3. Host-wide toggle: `dotfiles.live = true;` (defaults to `false`)
 
-## How It Works
+## `DOTFILES_DIR`
 
-1. `mkDotfilesSymlink` reads `DOTFILES_DIR` from host config
-2. Constructs full source path: `${DOTFILES_DIR}/${source}`
-3. Creates `xdg.configFile` (for `~/.config/`) or `home.file` (for other paths) via `mkOutOfStoreSymlink`
-4. Symlink created for all enabled `hostUsers`
-
-## DOTFILES_DIR
-
-Must be set in each host config:
+Set in each host config (`default.nix`) when live editing is used:
 ```nix
 environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 ```
+When unset, `compileUserDotfiles` falls back to `~/dot`.
 
-Without it, `mkDotfilesSymlink` throws an error.
+## Adding Dotfiles to an Existing Feature
 
-## Adding Dotfiles to an Existing Module
-
-1. Create `dotfiles/` directory next to the module `.nix` file
-2. Put config files inside
-3. Add `dotfiles` parameter to `mkModuleV2` call
-4. No rebuild needed for future config edits — just edit files in `dotfiles/`
+1. Move `<app>.nix` into `modules/home/<category>/<app>/<app>.nix` if it isn't already a directory.
+2. Create `dotfiles/` next to `<app>.nix` and put config files inside.
+3. Add `dotfiles = { path = "..."; source = "modules/home/<category>/<app>/dotfiles"; };` to `mkFeature`.
+4. `git add` the new files, then rebuild; once `dotfilesLive = true` (or `dotfiles.live = true`) is active, edits inside `dotfiles/` apply without rebuilding.

@@ -1,5 +1,5 @@
 # Minimal pre-commit package to avoid Swift dependency on Darwin
-{ lib, python3Packages, git, gitleaks, nixpkgs-fmt }:
+{ lib, python3Packages, git, gitleaks, nixpkgs-fmt, deadnix, statix }:
 
 python3Packages.buildPythonApplication rec {
   pname = "pre-commit";
@@ -31,7 +31,7 @@ python3Packages.buildPythonApplication rec {
     "--prefix"
     "PATH"
     ":"
-    (lib.makeBinPath [ git gitleaks nixpkgs-fmt ])
+    (lib.makeBinPath [ git gitleaks nixpkgs-fmt deadnix statix ])
   ];
 
   # Skip tests entirely - no test files in PyPI tarball
