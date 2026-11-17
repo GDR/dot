@@ -24,6 +24,7 @@ in
     modules = lib.recursiveUpdate profiles.userModules {
       home.editors.cursor.enable = true;
       home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
+      home.networking.sing-box.enable = true;
       home.security.clavis.enable = true;
       # desktop profile enables home.utils broadly; select Darwin-supported utils explicitly
       home.utils.enable = false;

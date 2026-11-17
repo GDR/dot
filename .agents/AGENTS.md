@@ -38,6 +38,7 @@ dot/
 │   │   ├── games/            # lutris, soundpad, steam
 │   │   ├── media/            # iina, spotify, vlc
 │   │   ├── messengers/       # telegram
+│   │   ├── networking/       # sing-box
 │   │   ├── security/         # bitwarden, clavis, keepassxc
 │   │   ├── shell/            # git, ssh, tmux, zsh
 │   │   ├── terminal/         # ghostty
