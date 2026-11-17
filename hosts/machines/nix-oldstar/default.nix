@@ -15,18 +15,28 @@
   nix.settings = {
     trusted-users = [ "@wheel" ];
     max-jobs = "auto";
-    system-features = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+    system-features = [
+      "nixos-test"
+      "benchmark"
+      "big-parallel"
+      "kvm"
+    ];
   };
 
   hostUsers.dgarifullin = {
     imports = [ ../../users/dgarifullin.nix ];
     enable = true;
-    keys = [{
-      name = "oldstar";
-      type = "ed25519";
-      purpose = [ "git" "ssh" ];
-      isDefault = true;
-    }];
+    keys = [
+      {
+        name = "oldstar";
+        type = "ed25519";
+        purpose = [
+          "git"
+          "ssh"
+        ];
+        isDefault = true;
+      }
+    ];
     ssh = [
       {
         host = "*";
@@ -53,7 +63,9 @@
     networking.networkmanager.enable = true;
     # server profile enables tailscale by default; oldstar runs on LAN only
     networking.tailscale.enable = false;
-    networking.openssh.userMap = { "dgarifullin" = "gdr"; };
+    networking.openssh.userMap = {
+      "dgarifullin" = "gdr";
+    };
     graphics.intel = {
       enable = true;
       tearFree = true;
@@ -65,8 +77,17 @@
       lidSwitch = "ignore";
     };
     networking.firewall = {
-      allowedTCPPorts = [ 22 80 443 8080 ];
-      allowedUDPPorts = [ 80 443 8080 ];
+      allowedTCPPorts = [
+        22
+        80
+        443
+        8080
+      ];
+      allowedUDPPorts = [
+        80
+        443
+        8080
+      ];
     };
     sound.enable = true;
   };

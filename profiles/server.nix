@@ -16,7 +16,8 @@
     nix.gc.enable = lib.mkDefault true;
     shell.ssh.enable = lib.mkDefault true;
   };
-} // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
+}
+// lib.optionalAttrs (lib.hasSuffix "-linux" system) {
   modules.system.linux = {
     networking.openssh.enable = lib.mkDefault true;
     networking.tailscale.enable = lib.mkDefault true;

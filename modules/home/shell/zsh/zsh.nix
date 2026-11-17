@@ -2,7 +2,10 @@
 { lib, ... }:
 
 lib.my.mkFeature {
-  platforms = [ "linux" "darwin" ];
+  platforms = [
+    "linux"
+    "darwin"
+  ];
   description = "Zsh shell configuration with oh-my-zsh and Nixpkgs plugins";
 
   extraOptions = {
@@ -13,21 +16,41 @@ lib.my.mkFeature {
     };
   };
 
-  nixosModule = { pkgs, lib, selectedUsers, ... }: {
-    programs.zsh.enable = true;
-    users.users = lib.genAttrs selectedUsers (_: {
-      shell = pkgs.zsh;
-    });
-  };
+  nixosModule =
+    {
+      pkgs,
+      lib,
+      selectedUsers,
+      ...
+    }:
+    {
+      programs.zsh.enable = true;
+      users.users = lib.genAttrs selectedUsers (_: {
+        shell = pkgs.zsh;
+      });
+    };
 
-  darwinModule = { pkgs, lib, selectedUsers, ... }: {
-    programs.zsh.enable = true;
-    users.users = lib.genAttrs selectedUsers (_: {
-      shell = pkgs.zsh;
-    });
-  };
+  darwinModule =
+    {
+      pkgs,
+      lib,
+      selectedUsers,
+      ...
+    }:
+    {
+      programs.zsh.enable = true;
+      users.users = lib.genAttrs selectedUsers (_: {
+        shell = pkgs.zsh;
+      });
+    };
 
-  homeModule = { pkgs, lib, featureCfg, ... }:
+  homeModule =
+    {
+      pkgs,
+      lib,
+      featureCfg,
+      ...
+    }:
     let
       isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
       showHostname = featureCfg.showHostname or true;
@@ -88,11 +111,13 @@ lib.my.mkFeature {
           }
           zle -N edit-last-or-current
           bindkey "\C-e" edit-last-or-current
-        '' + lib.optionalString (!showHostname) ''
+        ''
+        + lib.optionalString (!showHostname) ''
           # Hide hostname in prompt (set by modules.home.shell.zsh.showHostname = false)
           typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%n'
           typeset -g POWERLEVEL9K_CONTEXT_ROOT_TEMPLATE='%n'
-        '' + lib.optionalString isDarwin ''
+        ''
+        + lib.optionalString isDarwin ''
           if [[ $(uname -m) == 'arm64' ]]; then
             eval "$(/opt/homebrew/bin/brew shellenv)"
           fi

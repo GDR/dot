@@ -26,6 +26,10 @@ lib.my.mkSystemModuleV2 args {
   };
 
   moduleDarwin = _: {
-    nix.gc.interval = { Weekday = 0; Hour = 3; Minute = 0; };
+    nix.gc.interval = {
+      Weekday = 0;
+      Hour = 3;
+      Minute = 0;
+    };
   };
 }

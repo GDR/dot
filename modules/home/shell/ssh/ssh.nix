@@ -3,41 +3,57 @@
 { lib, ... }:
 
 let
-  keyExt = keyType: {
-    "rsa" = "id_rsa";
-    "ed25519" = "id_ed25519";
-    "ecdsa" = "id_ecdsa";
-    "ecdsa-sk" = "id_ecdsa_sk";
-  }.${keyType};
+  keyExt =
+    keyType:
+    {
+      "rsa" = "id_rsa";
+      "ed25519" = "id_ed25519";
+      "ecdsa" = "id_ecdsa";
+      "ecdsa-sk" = "id_ecdsa_sk";
+    }
+    .${keyType};
 
   # Convert SSH array to matchBlocks attrs format
-  sshArrayToMatchBlocks = sshArray:
+  sshArrayToMatchBlocks =
+    sshArray:
     let
-      sshEntryToSettingsBlock = entry:
-        lib.optionalAttrs (entry.user != null)
-          {
-            User = entry.user;
-          } // lib.optionalAttrs (entry.identityFile != null) {
+      sshEntryToSettingsBlock =
+        entry:
+        lib.optionalAttrs (entry.user != null) {
+          User = entry.user;
+        }
+        // lib.optionalAttrs (entry.identityFile != null) {
           IdentityFile = entry.identityFile;
-        } // lib.optionalAttrs (entry.forwardAgent != null) {
+        }
+        // lib.optionalAttrs (entry.forwardAgent != null) {
           ForwardAgent = entry.forwardAgent;
-        } // lib.optionalAttrs (entry.port != null) {
+        }
+        // lib.optionalAttrs (entry.port != null) {
           Port = entry.port;
-        } // lib.optionalAttrs (entry.hostname != null) {
+        }
+        // lib.optionalAttrs (entry.hostname != null) {
           Hostname = entry.hostname;
-        } // entry.extraOptions;
+        }
+        // entry.extraOptions;
     in
-    lib.listToAttrs (map
-      (entry: {
+    lib.listToAttrs (
+      map (entry: {
         name = entry.host;
         value = sshEntryToSettingsBlock entry;
-      })
-      sshArray);
+      }) sshArray
+    );
 in
 lib.my.mkFeature {
   description = "SSH client configuration (reads keys and config from hostUsers)";
 
-  homeModule = { osConfig, pkgs, lib, userName, ... }:
+  homeModule =
+    {
+      osConfig,
+      pkgs,
+      lib,
+      userName,
+      ...
+    }:
     let
       userCfg = osConfig.hostUsers.${userName} or { };
       sshArray = userCfg.ssh or [ ];
@@ -56,7 +72,8 @@ lib.my.mkFeature {
       clavisCfg = userCfg.modules.home.security.clavis or { };
       clavisEnabled = isDarwin && clavisModuleEnabled;
       defaultClavisSocket = "${homePrefix}/${userName}/.ssh/clavis.sock";
-      clavisSocket = if (clavisCfg.socketPath or null) != null then clavisCfg.socketPath else defaultClavisSocket;
+      clavisSocket =
+        if (clavisCfg.socketPath or null) != null then clavisCfg.socketPath else defaultClavisSocket;
 
       # Bitwarden SSH Agent integration
       bwModuleEnabled = lib.my.isFeatureEnabledForUser {
@@ -67,15 +84,20 @@ lib.my.mkFeature {
       bwAgentCfg = userCfg.modules.home.security.bitwarden.sshAgent or { };
       bwEnabled = bwModuleEnabled && (bwAgentCfg.enable or false);
       defaultBwSocket =
-        if isDarwin
-        then "~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
-        else "~/.bitwarden/ssh-agent.sock";
-      bwSocket = if (bwAgentCfg.socketPath or null) != null then bwAgentCfg.socketPath else defaultBwSocket;
+        if isDarwin then
+          "~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
+        else
+          "~/.bitwarden/ssh-agent.sock";
+      bwSocket =
+        if (bwAgentCfg.socketPath or null) != null then bwAgentCfg.socketPath else defaultBwSocket;
 
       agentSocket =
-        if clavisEnabled then clavisSocket
-        else if bwEnabled then bwSocket
-        else null;
+        if clavisEnabled then
+          clavisSocket
+        else if bwEnabled then
+          bwSocket
+        else
+          null;
 
       agentEnabled = clavisEnabled || bwEnabled;
 
@@ -83,15 +105,14 @@ lib.my.mkFeature {
       userKeys = userCfg.keys or [ ];
       defaultKey = lib.findFirst (k: k.isDefault or false) null userKeys;
       defaultIdentityFile =
-        if defaultKey != null
-        then "~/.ssh/${defaultKey.name}_${keyExt defaultKey.type}"
-        else null;
+        if defaultKey != null then "~/.ssh/${defaultKey.name}_${keyExt defaultKey.type}" else null;
 
       baseControlSettings = {
         "*" = {
           IdentitiesOnly = if agentEnabled then "no" else "yes";
           AddKeysToAgent = if agentEnabled then "no" else "yes";
-        } // lib.optionalAttrs (defaultIdentityFile != null) {
+        }
+        // lib.optionalAttrs (defaultIdentityFile != null) {
           IdentityFile = defaultIdentityFile;
         };
         "github.com" = {
@@ -101,18 +122,22 @@ lib.my.mkFeature {
 
       settings =
         if agentEnabled then
-          lib.recursiveUpdate (lib.recursiveUpdate baseControlSettings { "*" = { IdentityAgent = agentSocket; }; }) baseSettings
+          lib.recursiveUpdate (lib.recursiveUpdate baseControlSettings {
+            "*" = {
+              IdentityAgent = agentSocket;
+            };
+          }) baseSettings
         else
           lib.recursiveUpdate baseControlSettings baseSettings;
 
-      pubKeyFiles = lib.listToAttrs (map
-        (key: {
+      pubKeyFiles = lib.listToAttrs (
+        map (key: {
           name = ".ssh/${key.name}_${keyExt key.type}.pub";
           value = {
             text = key.publicKey;
           };
-        })
-        (builtins.filter (k: (k.publicKey or null) != null) (userCfg.keys or [ ])));
+        }) (builtins.filter (k: (k.publicKey or null) != null) (userCfg.keys or [ ]))
+      );
     in
     {
       programs.ssh = {

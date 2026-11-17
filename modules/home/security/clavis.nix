@@ -22,7 +22,13 @@ lib.my.mkFeature {
     };
   };
 
-  homeModuleDarwin = { pkgs, lib, featureCfg, ... }:
+  homeModuleDarwin =
+    {
+      pkgs,
+      lib,
+      featureCfg,
+      ...
+    }:
     let
       package = if (featureCfg.package or null) != null then featureCfg.package else pkgs.clavis or null;
     in
@@ -32,7 +38,10 @@ lib.my.mkFeature {
       launchd.agents.clavis-agent = lib.mkIf ((featureCfg.autostart or true) && package != null) {
         enable = true;
         config = {
-          ProgramArguments = [ "${package}/bin/clavis-agent" "--daemon" ];
+          ProgramArguments = [
+            "${package}/bin/clavis-agent"
+            "--daemon"
+          ];
           Label = "com.clavis.agent";
           RunAtLoad = true;
           KeepAlive = false;

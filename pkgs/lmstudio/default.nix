@@ -1,4 +1,11 @@
-{ lib, fetchurl, stdenv, appimageTools, ocl-icd, patchelf }:
+{
+  lib,
+  fetchurl,
+  stdenv,
+  appimageTools,
+  ocl-icd,
+  patchelf,
+}:
 
 let
   pname = "lmstudio";

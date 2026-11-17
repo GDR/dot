@@ -1,19 +1,31 @@
 # Flake helper functions for building Darwin and NixOS configurations
 # These are extracted from flake.nix to keep it clean and declarative
-{ inputs, lib, self, overlays }:
+{
+  inputs,
+  lib,
+  self,
+  overlays,
+}:
 
 let
-  inherit (inputs) nixpkgs nix-darwin home-manager vscode-server hardware charon-key sops-nix;
+  inherit (inputs)
+    nixpkgs
+    nix-darwin
+    home-manager
+    vscode-server
+    hardware
+    charon-key
+    sops-nix
+    ;
 
   # Helper to wrap a system module file and pass computed _modulePath while preserving functionArgs and _file
   # System modules in modules/systems are passed through directly
-  wrapModuleFile = filePath: computedModulePath:
+  wrapModuleFile =
+    filePath: computedModulePath:
     let
       imported = import filePath;
-      attachFile = mod:
-        if lib.isAttrs mod && !(mod ? _file)
-        then mod // { _file = toString filePath; }
-        else mod;
+      attachFile =
+        mod: if lib.isAttrs mod && !(mod ? _file) then mod // { _file = toString filePath; } else mod;
       defaultModuleArgs = {
         config = true;
         options = true;
@@ -28,27 +40,27 @@ let
       };
     in
     if lib.isFunction imported then
-      lib.setFunctionArgs
-        (args: attachFile (imported (args // { _modulePath = computedModulePath; })))
-        (defaultModuleArgs // (builtins.removeAttrs (lib.functionArgs imported) [ "_modulePath" ]))
+      lib.setFunctionArgs (args: attachFile (imported (args // { _modulePath = computedModulePath; }))) (
+        defaultModuleArgs // (builtins.removeAttrs (lib.functionArgs imported) [ "_modulePath" ])
+      )
     else
       attachFile imported;
 
   # Wrap system modules (systems/all, systems/darwin, systems/linux)
   # These get auto-discovered and wrapped to receive _modulePath
-  mkSystemModules = moduleDirPath:
+  mkSystemModules =
+    moduleDirPath:
     let
       moduleTree = lib.my.recursiveDirs moduleDirPath;
       moduleFiles = lib.my.flattenModules moduleTree;
     in
-    map
-      (filePath:
-        wrapModuleFile filePath (lib.my.computeModulePath filePath)
-      )
-      moduleFiles;
+    map (filePath: wrapModuleFile filePath (lib.my.computeModulePath filePath)) moduleFiles;
 
   # Build registry during import time (not module evaluation time)
-  modulesRegistry = (import ../modules/_core/registry.nix { inherit lib inputs; }).moduleRegistry or { modules = [ ]; };
+  modulesRegistry =
+    (import ../modules/_core/registry.nix { inherit lib inputs; }).moduleRegistry or {
+      modules = [ ];
+    };
 
   privateExtension = inputs.private-extension.dotExtension or { };
 
@@ -61,8 +73,15 @@ let
     permittedInsecurePackages = [ "electron-39.8.10" ];
   };
 
-  resolveHostSpec = defaultSystem: spec:
-    if builtins.isAttrs spec && !(spec ? _file) && !(spec ? options) && !(spec ? config) && spec ? hostConfig then
+  resolveHostSpec =
+    defaultSystem: spec:
+    if
+      builtins.isAttrs spec
+      && !(spec ? _file)
+      && !(spec ? options)
+      && !(spec ? config)
+      && spec ? hostConfig
+    then
       {
         hostConfig = spec.hostConfig;
         system = spec.system or defaultSystem;
@@ -79,7 +98,8 @@ in
   inherit (lib.my) computeModulePath;
 
   # Build a Darwin (macOS) system configuration (accepts path/module or { hostConfig, system? })
-  mkDarwinConfiguration = hostSpec:
+  mkDarwinConfiguration =
+    hostSpec:
     let
       resolved = resolveHostSpec "aarch64-darwin" hostSpec;
       inherit (resolved) hostConfig system;
@@ -87,7 +107,13 @@ in
     nix-darwin.lib.darwinSystem {
       inherit system;
       specialArgs = {
-        inherit self inputs lib overlays system;
+        inherit
+          self
+          inputs
+          lib
+          overlays
+          system
+          ;
         modulesRegistry = modulesRegistry;
       };
       modules = [
@@ -117,7 +143,8 @@ in
     };
 
   # Build a NixOS (Linux) system configuration (accepts path/module or { hostConfig, system? })
-  mkNixosConfiguration = hostSpec:
+  mkNixosConfiguration =
+    hostSpec:
     let
       resolved = resolveHostSpec "x86_64-linux" hostSpec;
       inherit (resolved) hostConfig system;
@@ -125,7 +152,14 @@ in
     nixpkgs.lib.nixosSystem {
       inherit system;
       specialArgs = {
-        inherit self inputs lib overlays system hardware;
+        inherit
+          self
+          inputs
+          lib
+          overlays
+          system
+          hardware
+          ;
         modulesRegistry = modulesRegistry;
       };
       modules = [

@@ -1,16 +1,22 @@
-{ self, inputs, pkgs, lib, system }:
+{
+  self,
+  inputs,
+  pkgs,
+  lib,
+  system,
+}:
 
 let
   user = "dgarifullin";
-  hasPackage = expectedName: packages:
-    lib.any
-      (package:
-        let
-          pname = package.pname or (builtins.parseDrvName (package.name or "")).name;
-        in
-        pname == expectedName || (package.name or "") == expectedName
-      )
-      packages;
+  hasPackage =
+    expectedName: packages:
+    lib.any (
+      package:
+      let
+        pname = package.pname or (builtins.parseDrvName (package.name or "")).name;
+      in
+      pname == expectedName || (package.name or "") == expectedName
+    ) packages;
 
   neovimConfig = inputs.nvim-nix.checks.${system}.neovim-config;
   moduleRegistry = (import ./modules/_core/registry.nix { inherit lib inputs; }).moduleRegistry;
@@ -21,55 +27,62 @@ let
         featureCatalog = moduleRegistry.features;
         knownModulePaths = map (m: m.path) moduleRegistry.allModules;
       };
-      forwardTree = cond: priority: skipEnable: optTree: schemaTree:
-        lib.concatMapAttrs
-          (k: v:
-            if lib.isOption v then
-              if skipEnable && k == "enable" then { }
-              else
-                let
-                  gOpt = optTree.${k};
-                  explicitlySet = gOpt.isDefined && gOpt.highestPrio < 1500;
-                in
-                { ${k} = lib.mkIf (cond && explicitlySet) (lib.mkOverride priority gOpt.value); }
+      forwardTree =
+        cond: priority: skipEnable: optTree: schemaTree:
+        lib.concatMapAttrs (
+          k: v:
+          if lib.isOption v then
+            if skipEnable && k == "enable" then
+              { }
             else
-              { ${k} = forwardTree cond priority skipEnable optTree.${k} v; }
-          )
-          schemaTree;
+              let
+                gOpt = optTree.${k};
+                explicitlySet = gOpt.isDefined && gOpt.highestPrio < 1500;
+              in
+              {
+                ${k} = lib.mkIf (cond && explicitlySet) (lib.mkOverride priority gOpt.value);
+              }
+          else
+            { ${k} = forwardTree cond priority skipEnable optTree.${k} v; }
+        ) schemaTree;
 
-      evalDsl = extraMod: lib.evalModules {
-        modules = [
-          ({ options, ... }: {
-            options.modules = schema;
-            options.profileModules = schema;
-            options.hostUsers = lib.mkOption {
-              type = lib.types.attrsOf (lib.types.submoduleWith {
-                modules = [
-                  ({ config, ... }: {
-                    options.inheritProfiles = lib.mkEnableOption "inherit profiles";
-                    options.modules = lib.mkOption {
-                      type = lib.types.submoduleWith {
-                        modules = [
-                          {
-                            options = schema;
-                            config = lib.mkMerge [
-                              (forwardTree true 1100 true options.modules schema)
-                              (forwardTree config.inheritProfiles 1050 false options.profileModules schema)
+      evalDsl =
+        extraMod:
+        lib.evalModules {
+          modules = [
+            ({ options, ... }: {
+              options.modules = schema;
+              options.profileModules = schema;
+              options.hostUsers = lib.mkOption {
+                type = lib.types.attrsOf (
+                  lib.types.submoduleWith {
+                    modules = [
+                      ({ config, ... }: {
+                        options.inheritProfiles = lib.mkEnableOption "inherit profiles";
+                        options.modules = lib.mkOption {
+                          type = lib.types.submoduleWith {
+                            modules = [
+                              {
+                                options = schema;
+                                config = lib.mkMerge [
+                                  (forwardTree true 1100 true options.modules schema)
+                                  (forwardTree config.inheritProfiles 1050 false options.profileModules schema)
+                                ];
+                              }
                             ];
-                          }
-                        ];
-                      };
-                      default = { };
-                    };
-                  })
-                ];
-              });
-              default = { };
-            };
-          })
-          extraMod
-        ];
-      };
+                          };
+                          default = { };
+                        };
+                      })
+                    ];
+                  }
+                );
+                default = { };
+              };
+            })
+            extraMod
+          ];
+        };
 
       forwardingEval = evalDsl {
         modules.home.shell.git.editor = "helix";
@@ -78,18 +91,58 @@ let
         hostUsers.u2.modules.home.shell.git.editor = lib.mkDefault "kak";
       };
 
-      typoEval = builtins.tryEval
-        (evalDsl {
-          hostUsers.u.modules.home.nonexistent.enable = true;
-        }).config.hostUsers.u.modules.home;
+      typoEval =
+        builtins.tryEval
+          (evalDsl {
+            hostUsers.u.modules.home.nonexistent.enable = true;
+          }).config.hostUsers.u.modules.home;
 
       syntheticMap = {
-        "home.a" = { requires = [ "home.b" ]; platforms = [ "linux" "darwin" ]; cascade = true; };
-        "home.b" = { requires = [ "home.c" ]; platforms = [ "linux" "darwin" ]; cascade = true; };
-        "home.c" = { requires = [ ]; platforms = [ "linux" "darwin" ]; cascade = true; };
-        "home.req" = { requires = [ "home.utils.obsidian" ]; platforms = [ "linux" "darwin" ]; cascade = true; };
-        "home.utils.obsidian" = { requires = [ ]; platforms = [ "linux" "darwin" ]; cascade = true; };
-        "home.desktop.hyprland" = { requires = [ ]; platforms = [ "linux" ]; cascade = false; };
+        "home.a" = {
+          requires = [ "home.b" ];
+          platforms = [
+            "linux"
+            "darwin"
+          ];
+          cascade = true;
+        };
+        "home.b" = {
+          requires = [ "home.c" ];
+          platforms = [
+            "linux"
+            "darwin"
+          ];
+          cascade = true;
+        };
+        "home.c" = {
+          requires = [ ];
+          platforms = [
+            "linux"
+            "darwin"
+          ];
+          cascade = true;
+        };
+        "home.req" = {
+          requires = [ "home.utils.obsidian" ];
+          platforms = [
+            "linux"
+            "darwin"
+          ];
+          cascade = true;
+        };
+        "home.utils.obsidian" = {
+          requires = [ ];
+          platforms = [
+            "linux"
+            "darwin"
+          ];
+          cascade = true;
+        };
+        "home.desktop.hyprland" = {
+          requires = [ ];
+          platforms = [ "linux" ];
+          cascade = false;
+        };
       };
       syntheticCatalog = lib.mapAttrsToList (path: meta: meta // { inherit path; }) syntheticMap;
       syntheticCfg = {
@@ -128,7 +181,8 @@ if system == "x86_64-linux" then
   let
     goldHome = self.nixosConfigurations.nix-goldstar.config.home-manager.users.${user}.home;
   in
-  commonChecks // {
+  commonChecks
+  // {
     nix-goldstar-toplevel =
       assert builtins.isString self.nixosConfigurations.nix-goldstar.config.system.build.toplevel.drvPath;
       pkgs.runCommand "nix-goldstar-toplevel-check" { } "touch $out";
@@ -218,9 +272,11 @@ else if system == "aarch64-darwin" then
   let
     macHome = self.darwinConfigurations.mac-brightstar.config.home-manager.users.${user}.home;
   in
-  commonChecks // {
+  commonChecks
+  // {
     mac-brightstar-toplevel =
-      assert builtins.isString self.darwinConfigurations.mac-brightstar.config.system.build.toplevel.drvPath;
+      assert builtins.isString
+        self.darwinConfigurations.mac-brightstar.config.system.build.toplevel.drvPath;
       pkgs.runCommand "mac-brightstar-toplevel-check" { } "touch $out";
 
     learnharness-config-generation =
@@ -268,7 +324,9 @@ else if system == "aarch64-darwin" then
       # mkOutOfStoreSymlink wraps the live repo path in an hm_* symlink derivation
       assert lib.isDerivation ghosttySource;
       assert lib.hasPrefix "hm_" (ghosttySource.name or "");
-      assert lib.hasInfix "/Users/${user}/Workspaces/gdr/dot/modules/home/terminal/ghostty/dotfiles/config" (ghosttySource.buildCommand or "");
+      assert lib.hasInfix
+        "/Users/${user}/Workspaces/gdr/dot/modules/home/terminal/ghostty/dotfiles/config"
+        (ghosttySource.buildCommand or "");
       pkgs.runCommand "dotfiles-live-global-option-check" { } "touch $out";
 
     module-platform-merge =

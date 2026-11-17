@@ -3,7 +3,8 @@
 {
   default = pkgs.mkShell {
     buildInputs = [
-      pkgs.nixpkgs-fmt
+      pkgs.nixfmt
+      pkgs.nixfmt-tree
       pkgs.deadnix
       pkgs.statix
       pkgs.gitleaks

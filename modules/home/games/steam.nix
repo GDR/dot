@@ -31,7 +31,13 @@ lib.my.mkFeature {
     };
   };
 
-  nixosModule = { pkgs, lib, featureCfg, ... }:
+  nixosModule =
+    {
+      pkgs,
+      lib,
+      featureCfg,
+      ...
+    }:
     let
       enableGamescope = featureCfg.enableGamescope or true;
       remotePlayOpenFirewall = featureCfg.remotePlayOpenFirewall or true;
@@ -44,25 +50,28 @@ lib.my.mkFeature {
         remotePlay.openFirewall = remotePlayOpenFirewall;
         dedicatedServer.openFirewall = dedicatedServerOpenFirewall;
         gamescopeSession.enable = enableGamescope;
-        extraPackages = with pkgs; (lib.optionals enableGamescope [
-          gamescope
-          libxcursor
-          libxi
-          libxinerama
-          libxscrnsaver
-          libpng
-          libpulseaudio
-          libvorbis
-          libkrb5
-          keyutils
-        ]) ++ (lib.optionals extraCodecs [
-          gst_all_1.gst-plugins-bad
-          gst_all_1.gst-plugins-ugly
-          gst_all_1.gst-libav
-          gst_all_1.gstreamer
-          gst_all_1.gst-plugins-base
-          gst_all_1.gst-plugins-good
-        ]);
+        extraPackages =
+          with pkgs;
+          (lib.optionals enableGamescope [
+            gamescope
+            libxcursor
+            libxi
+            libxinerama
+            libxscrnsaver
+            libpng
+            libpulseaudio
+            libvorbis
+            libkrb5
+            keyutils
+          ])
+          ++ (lib.optionals extraCodecs [
+            gst_all_1.gst-plugins-bad
+            gst_all_1.gst-plugins-ugly
+            gst_all_1.gst-libav
+            gst_all_1.gstreamer
+            gst_all_1.gst-plugins-base
+            gst_all_1.gst-plugins-good
+          ]);
         extraCompatPackages = with pkgs; [
           proton-ge-bin
         ];
@@ -75,7 +84,8 @@ lib.my.mkFeature {
 
       hardware.steam-hardware.enable = true;
 
-      nixpkgs.config.allowUnfreePredicate = pkg:
+      nixpkgs.config.allowUnfreePredicate =
+        pkg:
         builtins.elem (lib.getName pkg) [
           "steam"
           "steam-original"

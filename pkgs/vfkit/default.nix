@@ -1,4 +1,9 @@
-{ lib, fetchurl, stdenvNoCC, testers }:
+{
+  lib,
+  fetchurl,
+  stdenvNoCC,
+  testers,
+}:
 
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "vfkit";

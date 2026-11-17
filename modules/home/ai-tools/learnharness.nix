@@ -2,25 +2,38 @@
 { lib, ... }:
 
 let
-  modelSlotOption = description:
+  modelSlotOption =
+    description:
     lib.mkOption {
-      type = lib.types.nullOr (lib.types.submodule {
-        options = {
-          provider = lib.mkOption {
-            type = lib.types.str;
-            description = "Provider ID (e.g. 'antigravity', 'anthropic', 'openai', 'openrouter').";
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options = {
+            provider = lib.mkOption {
+              type = lib.types.str;
+              description = "Provider ID (e.g. 'antigravity', 'anthropic', 'openai', 'openrouter').";
+            };
+            id = lib.mkOption {
+              type = lib.types.str;
+              description = "Model ID within the provider.";
+            };
+            thinkingLevel = lib.mkOption {
+              type = lib.types.nullOr (
+                lib.types.enum [
+                  "off"
+                  "minimal"
+                  "low"
+                  "medium"
+                  "high"
+                  "xhigh"
+                  "max"
+                ]
+              );
+              default = null;
+              description = "Optional thinking budget level.";
+            };
           };
-          id = lib.mkOption {
-            type = lib.types.str;
-            description = "Model ID within the provider.";
-          };
-          thinkingLevel = lib.mkOption {
-            type = lib.types.nullOr (lib.types.enum [ "off" "minimal" "low" "medium" "high" "xhigh" "max" ]);
-            default = null;
-            description = "Optional thinking budget level.";
-          };
-        };
-      });
+        }
+      );
       default = null;
       inherit description;
     };
@@ -65,7 +78,15 @@ lib.my.mkFeature {
     };
 
     searchEngine = lib.mkOption {
-      type = lib.types.nullOr (lib.types.enum [ "brave" "exa" "perplexity" "serper" "tavily" ]);
+      type = lib.types.nullOr (
+        lib.types.enum [
+          "brave"
+          "exa"
+          "perplexity"
+          "serper"
+          "tavily"
+        ]
+      );
       default = null;
       description = "Preferred web search engine when multiple search API keys are configured.";
     };

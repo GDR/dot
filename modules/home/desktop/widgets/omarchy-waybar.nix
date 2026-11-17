@@ -5,7 +5,8 @@ lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Omarchy scripts & waybar indicators (NixOS port)";
 
-  homeModuleLinux = { pkgs, ... }:
+  homeModuleLinux =
+    { pkgs, ... }:
     let
       omarchy = pkgs.fetchFromGitHub {
         owner = "basecamp";
@@ -16,17 +17,18 @@ lib.my.mkFeature {
         hash = "sha256-vPdvurq/4zRkpnnVLhvDCgVb7A8DNbLBKmd1nEqNr5A=";
       };
 
-      omarchyBins = pkgs.runCommand "omarchy-bins"
-        {
-          nativeBuildInputs = [ pkgs.makeWrapper ];
-        }
-        ''
-          mkdir -p $out/bin
+      omarchyBins =
+        pkgs.runCommand "omarchy-bins"
+          {
+            nativeBuildInputs = [ pkgs.makeWrapper ];
+          }
+          ''
+            mkdir -p $out/bin
 
-          for f in ${omarchy}/bin/omarchy-*; do
-            install -m 755 "$f" $out/bin/
-          done
-        '';
+            for f in ${omarchy}/bin/omarchy-*; do
+              install -m 755 "$f" $out/bin/
+            done
+          '';
     in
     {
       home.packages = with pkgs; [

@@ -4,7 +4,13 @@
 lib.my.mkFeature {
   description = "Tmux terminal multiplexer";
 
-  homeModule = { pkgs, osConfig, lib, ... }:
+  homeModule =
+    {
+      pkgs,
+      osConfig,
+      lib,
+      ...
+    }:
     let
       t = (lib.my.getTheme osConfig).roles;
     in

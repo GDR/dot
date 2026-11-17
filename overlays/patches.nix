@@ -1,6 +1,5 @@
 # Upstream package patches and overrides
-_: prev:
-{
+_: prev: {
   # direnv's checkPhase runs `zsh ./test/direnv-test.zsh` which hangs inside
   # the Nix sandbox (no /dev/tty, restricted shell env). Skip it — the package
   # is upstream-tested and this has no functional impact.
@@ -36,14 +35,13 @@ _: prev:
   # Pin IINA to 1.3.5 on Darwin (rollback from 1.5.0)
   iina =
     if prev.stdenv.hostPlatform.isDarwin then
-      prev.iina.overrideAttrs
-        (_: rec {
-          version = "1.3.5";
-          src = prev.fetchurl {
-            url = "https://github.com/iina/iina/releases/download/v${version}/IINA.v${version}.dmg";
-            hash = "sha256-O4uRmfQaGMKqizDlgk0MnazMHVkXaDLqZQ9TP8vcajg=";
-          };
-        })
+      prev.iina.overrideAttrs (_: rec {
+        version = "1.3.5";
+        src = prev.fetchurl {
+          url = "https://github.com/iina/iina/releases/download/v${version}/IINA.v${version}.dmg";
+          hash = "sha256-O4uRmfQaGMKqizDlgk0MnazMHVkXaDLqZQ9TP8vcajg=";
+        };
+      })
     else
       prev.iina;
 }

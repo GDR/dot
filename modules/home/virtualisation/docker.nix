@@ -2,7 +2,10 @@
 { lib, ... }:
 
 lib.my.mkFeature {
-  platforms = [ "linux" "darwin" ];
+  platforms = [
+    "linux"
+    "darwin"
+  ];
   description = "Docker container runtime";
 
   nixosModule = { selectedUsers, lib, ... }: {

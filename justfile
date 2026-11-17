@@ -2,7 +2,7 @@
 # dot — host management
 #
 #   just update          Update all flake inputs (lock file)
-#   just fmt             Format all Nix files
+#   just fmt             Format all Nix files (nixfmt)
 #   just check           nix flake check
 #
 #   just all             Switch all reachable hosts
@@ -26,7 +26,7 @@ help:
 	@printf "  \033[36mjust nix-goldstar\033[0m   nixos-rebuild switch for nix-goldstar (remote)\n"
 	@printf "\n"
 	@printf "  \033[36mjust update\033[0m         nix flake update (refresh lock file)\n"
-	@printf "  \033[36mjust fmt\033[0m            nixpkgs-fmt on all *.nix files\n"
+	@printf "  \033[36mjust fmt\033[0m            Format all *.nix files with nixfmt\n"
 	@printf "  \033[36mjust fmt-check\033[0m      Check formatting without modifying files\n"
 	@printf "  \033[36mjust lint\033[0m           Run deadnix and statix checks\n"
 	@printf "  \033[36mjust check-hosts\033[0m    Dry-run build/eval host configurations\n"
@@ -68,15 +68,15 @@ update:
 	@printf "\033[1m\033[32m▶ Updating flake inputs…\033[0m\n"
 	nix flake update
 
-[doc('nixpkgs-fmt on all *.nix files')]
+[doc('Format all *.nix files via nix fmt (nixfmt-tree)')]
 fmt:
 	@printf "\033[1m\033[32m▶ Formatting Nix files…\033[0m\n"
-	nix develop -c nixpkgs-fmt .
+	nix fmt
 
 [doc('Check formatting without modifying files')]
 fmt-check:
 	@printf "\033[1m\033[32m▶ Checking Nix formatting…\033[0m\n"
-	nix develop -c nixpkgs-fmt --check .
+	nix develop -c treefmt --fail-on-change --no-cache
 
 [doc('Run deadnix and statix checks')]
 lint:

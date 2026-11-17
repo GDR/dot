@@ -16,9 +16,10 @@ let
   };
 
   # Load a theme by name — throws a clear error if name is unknown
-  getTheme = name:
-    if themeFiles ? ${name}
-    then import themeFiles.${name}
+  getTheme =
+    name:
+    if themeFiles ? ${name} then
+      import themeFiles.${name}
     else
       throw ''
         Unknown theme: "${name}"

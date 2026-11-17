@@ -7,65 +7,80 @@ lib.my.mkFeature {
   cascade = false;
 
   # System-level configuration (requires root)
-  nixosModule = { config, pkgs, lib, ... }: {
-    assertions = [{
-      assertion = !(config.services.xserver.windowManager.awesome.enable or false);
-      message = "home.desktop.hyprland and home.desktop.awesomewm are mutually exclusive; enable only one WM per host.";
-    }];
+  nixosModule =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    {
+      assertions = [
+        {
+          assertion = !(config.services.xserver.windowManager.awesome.enable or false);
+          message = "home.desktop.hyprland and home.desktop.awesomewm are mutually exclusive; enable only one WM per host.";
+        }
+      ];
 
-    # Enable Wayland and Hyprland
-    programs.hyprland = {
-      enable = true;
-      withUWSM = true;
-      xwayland.enable = true;
-    };
+      # Enable Wayland and Hyprland
+      programs.hyprland = {
+        enable = true;
+        withUWSM = true;
+        xwayland.enable = true;
+      };
 
-    # Display Manager for Wayland
-    services.greetd = {
-      enable = true;
-      settings = {
-        default_session = {
-          command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd 'uwsm start hyprland-uwsm.desktop'";
-          user = "greeter";
+      # Display Manager for Wayland
+      services.greetd = {
+        enable = true;
+        settings = {
+          default_session = {
+            command = "${pkgs.tuigreet}/bin/tuigreet --time --cmd 'uwsm start hyprland-uwsm.desktop'";
+            user = "greeter";
+          };
         };
       };
-    };
 
-    # Unlock gnome-keyring at login via PAM so tuigreet auto-unlocks it
-    # using the user's login password — no separate keyring password prompt.
-    security.pam.services.greetd.enableGnomeKeyring = true;
+      # Unlock gnome-keyring at login via PAM so tuigreet auto-unlocks it
+      # using the user's login password — no separate keyring password prompt.
+      security.pam.services.greetd.enableGnomeKeyring = true;
 
-    # XDG portal for screen sharing and file dialogs
-    xdg.portal = {
-      enable = true;
-      extraPortals = with pkgs; [
-        xdg-desktop-portal-hyprland
-        xdg-desktop-portal-gtk
+      # XDG portal for screen sharing and file dialogs
+      xdg.portal = {
+        enable = true;
+        extraPortals = with pkgs; [
+          xdg-desktop-portal-hyprland
+          xdg-desktop-portal-gtk
+        ];
+      };
+
+      # Keyboard layout (for Wayland)
+      services.xserver = {
+        enable = lib.mkDefault false;
+        xkb = {
+          layout = "us,ru";
+          variant = ",mac";
+          options = "grp:alt_space_toggle";
+        };
+      };
+
+      # Console keyboard layout
+      console.keyMap = "us";
+
+      # Fonts for Waybar and other UI elements
+      fonts.packages = with pkgs; [
+        font-awesome
+        nerd-fonts.jetbrains-mono
+        nerd-fonts.fira-code
       ];
     };
 
-    # Keyboard layout (for Wayland)
-    services.xserver = {
-      enable = lib.mkDefault false;
-      xkb = {
-        layout = "us,ru";
-        variant = ",mac";
-        options = "grp:alt_space_toggle";
-      };
-    };
-
-    # Console keyboard layout
-    console.keyMap = "us";
-
-    # Fonts for Waybar and other UI elements
-    fonts.packages = with pkgs; [
-      font-awesome
-      nerd-fonts.jetbrains-mono
-      nerd-fonts.fira-code
-    ];
-  };
-
-  homeModuleLinux = { pkgs, osConfig, lib, ... }:
+  homeModuleLinux =
+    {
+      pkgs,
+      osConfig,
+      lib,
+      ...
+    }:
     let
       hex = c: lib.removePrefix "#" c;
       rgba = color: alpha: "rgba(${hex color}${alpha})";
@@ -91,7 +106,11 @@ lib.my.mkFeature {
         components = [ "secrets" ];
       };
 
-      home.packages = [ pkgs.gcr_4 pkgs.grim pkgs.slurp ];
+      home.packages = [
+        pkgs.gcr_4
+        pkgs.grim
+        pkgs.slurp
+      ];
 
       xdg.configFile."hypr-theme.lua".text = hyprTheme;
     };

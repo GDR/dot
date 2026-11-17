@@ -1,5 +1,10 @@
 # NVIDIA GPU drivers and settings - Linux system module
-{ lib, config, pkgs, ... }@args:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}@args:
 
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
@@ -37,30 +42,32 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 
-  module = cfg: lib.mkMerge [
-    {
-      # Graphics (always needed for CUDA / Vulkan interop)
-      hardware.graphics.enable = true;
+  module =
+    cfg:
+    lib.mkMerge [
+      {
+        # Graphics (always needed for CUDA / Vulkan interop)
+        hardware.graphics.enable = true;
 
-      # NVIDIA driver settings
-      hardware.nvidia = {
-        modesetting.enable = true;
-        powerManagement.enable = cfg.powerManagement;
-        powerManagement.finegrained = false;
-        open = cfg.open;
-        nvidiaSettings = !cfg.headless;
-        # Try Vulkan-focused beta branch for DXVK/VKD3D stability.
-        package = config.boot.kernelPackages.nvidiaPackages.vulkan_beta;
-        forceFullCompositionPipeline = cfg.forceCompositionPipeline;
-      };
+        # NVIDIA driver settings
+        hardware.nvidia = {
+          modesetting.enable = true;
+          powerManagement.enable = cfg.powerManagement;
+          powerManagement.finegrained = false;
+          open = cfg.open;
+          nvidiaSettings = !cfg.headless;
+          # Try Vulkan-focused beta branch for DXVK/VKD3D stability.
+          package = config.boot.kernelPackages.nvidiaPackages.vulkan_beta;
+          forceFullCompositionPipeline = cfg.forceCompositionPipeline;
+        };
 
-      environment.systemPackages = [ pkgs.vulkan-tools ];
-    }
+        environment.systemPackages = [ pkgs.vulkan-tools ];
+      }
 
-    # Only register as display driver when NOT headless
-    (lib.mkIf (!cfg.headless) {
-      services.xserver.enable = true;
-      services.xserver.videoDrivers = [ "nvidia" ];
-    })
-  ];
+      # Only register as display driver when NOT headless
+      (lib.mkIf (!cfg.headless) {
+        services.xserver.enable = true;
+        services.xserver.videoDrivers = [ "nvidia" ];
+      })
+    ];
 }

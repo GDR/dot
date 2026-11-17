@@ -27,5 +27,3 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 }
-
-

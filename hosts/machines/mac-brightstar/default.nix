@@ -35,9 +35,21 @@
         autoUpdate = false;
         obsidianFolders = [ "/Users/dgarifullin/obsidian-vault" ];
         models = {
-          strong = { provider = "antigravity"; id = "gemini-4-argon"; thinkingLevel = "high"; };
-          cheap = { provider = "antigravity"; id = "gemini-3.8-flash"; thinkingLevel = "high"; };
-          vision = { provider = "antigravity"; id = "gemini-4-argon"; thinkingLevel = "medium"; };
+          strong = {
+            provider = "antigravity";
+            id = "gemini-4-argon";
+            thinkingLevel = "high";
+          };
+          cheap = {
+            provider = "antigravity";
+            id = "gemini-3.8-flash";
+            thinkingLevel = "high";
+          };
+          vision = {
+            provider = "antigravity";
+            id = "gemini-4-argon";
+            thinkingLevel = "medium";
+          };
         };
       };
     };
@@ -57,7 +69,12 @@
       protocol = "ssh-ng";
       maxJobs = 16;
       speedFactor = 10;
-      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+      supportedFeatures = [
+        "nixos-test"
+        "benchmark"
+        "big-parallel"
+        "kvm"
+      ];
     }
     {
       hostName = "nix-oldstar";
@@ -67,7 +84,12 @@
       protocol = "ssh-ng";
       maxJobs = 8;
       speedFactor = 2;
-      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+      supportedFeatures = [
+        "nixos-test"
+        "benchmark"
+        "big-parallel"
+        "kvm"
+      ];
     }
   ];
 
@@ -80,10 +102,11 @@
     };
     openssh = {
       enable = true;
-      userMap = { "dgarifullin" = "gdr"; };
+      userMap = {
+        "dgarifullin" = "gdr";
+      };
     };
   };
-
 
   time.timeZone = "Europe/Moscow";
   theme.name = "rose-pine-moon";

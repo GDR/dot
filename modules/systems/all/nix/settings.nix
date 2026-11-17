@@ -6,6 +6,9 @@ lib.my.mkSystemModuleV2 args {
   description = "Common Nix settings (flakes, nix-command)";
 
   module = _: {
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
   };
 }

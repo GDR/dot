@@ -25,8 +25,8 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: Gitleaks Secret Check
         run: nix develop -c gitleaks git --redact --no-banner .
-      - name: Nixpkgs Format Check
-        run: nix develop -c nixpkgs-fmt --check .
+      - name: Nixfmt Format Check
+        run: nix develop -c treefmt --fail-on-change --no-cache
       - name: Deadnix Check
         run: nix develop -c deadnix --fail --no-lambda-pattern-names --no-lambda-arg .
       - name: Statix Check

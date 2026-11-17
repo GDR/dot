@@ -61,13 +61,25 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, charon-key, learnharness, ... }:
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      charon-key,
+      learnharness,
+      ...
+    }:
     let
-      lib = nixpkgs.lib.extend (lib: _:
-        let hm = inputs.home-manager.lib.hm; in {
+      lib = nixpkgs.lib.extend (
+        lib: _:
+        let
+          hm = inputs.home-manager.lib.hm;
+        in
+        {
           inherit hm;
           my = import ./lib { inherit inputs lib; };
-        });
+        }
+      );
 
       forAllSystems = nixpkgs.lib.genAttrs [
         "aarch64-darwin"
@@ -79,35 +91,48 @@
       # Get flake helpers (mkDarwinConfiguration, mkNixosConfiguration, etc.)
       flakeHelpers = lib.my.mkFlakeHelpers { inherit self overlays; };
 
-      pkgsFor = system: import nixpkgs {
-        inherit system;
-        overlays = overlays.${system}.list;
-        config = flakeHelpers.nixpkgsConfig;
-      };
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = overlays.${system}.list;
+          config = flakeHelpers.nixpkgsConfig;
+        };
     in
     {
       inherit lib;
 
-      formatter = forAllSystems (system:
-        (pkgsFor system).nixpkgs-fmt
-      );
+      formatter = forAllSystems (system: (pkgsFor system).nixfmt-tree);
 
-      packages = forAllSystems (system:
+      packages = forAllSystems (
+        system:
         import ./packages.nix {
           pkgs = pkgsFor system;
-          inherit lib system charon-key learnharness;
+          inherit
+            lib
+            system
+            charon-key
+            learnharness
+            ;
         }
       );
 
-      devShells = forAllSystems (system:
+      devShells = forAllSystems (
+        system:
         import ./devShells.nix {
           pkgs = pkgsFor system;
         }
       );
 
-      checks = forAllSystems (system:
+      checks = forAllSystems (
+        system:
         import ./checks.nix {
-          inherit self inputs lib system;
+          inherit
+            self
+            inputs
+            lib
+            system
+            ;
           pkgs = pkgsFor system;
         }
       );

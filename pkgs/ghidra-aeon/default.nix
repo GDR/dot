@@ -3,11 +3,11 @@
 # directly to compile .slaspec → .sla, then installs into the path layout
 # that buildGhidraExtension and ghidra.withExtensions expect:
 #   $out/lib/ghidra/Ghidra/Extensions/<pname>/
-{ lib
-, fetchFromGitHub
-, buildGhidraExtension
-, ghidra
-,
+{
+  lib,
+  fetchFromGitHub,
+  buildGhidraExtension,
+  ghidra,
 }:
 buildGhidraExtension (finalAttrs: {
   pname = "ghidra-aeon";

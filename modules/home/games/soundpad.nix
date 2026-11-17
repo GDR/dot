@@ -7,14 +7,22 @@ lib.my.mkFeature {
   requires = [ "home.desktop.services.audio" ];
 
   # System-level hardened ydotoold daemon + group access for selected users
-  nixosModule = { config, lib, selectedUsers, ... }: {
-    programs.ydotool.enable = true;
-    users.users = lib.genAttrs selectedUsers (_: {
-      extraGroups = [ config.programs.ydotool.group ];
-    });
-  };
+  nixosModule =
+    {
+      config,
+      lib,
+      selectedUsers,
+      ...
+    }:
+    {
+      programs.ydotool.enable = true;
+      users.users = lib.genAttrs selectedUsers (_: {
+        extraGroups = [ config.programs.ydotool.group ];
+      });
+    };
 
-  homeModuleLinux = { pkgs, ... }:
+  homeModuleLinux =
+    { pkgs, ... }:
     let
       soundpad = pkgs.writeShellScriptBin "soundpad" ''
         export YDOTOOL_SOCKET="''${YDOTOOL_SOCKET:-/run/ydotoold/socket}"

@@ -9,7 +9,11 @@
 #   nix-shell -p maven jdk21 --run "python3 -m tools.setup build"
 #   cp target/GhidraMCP-*.zip <dot>/pkgs/ghidra-mcp-extension/
 #   # update version + hash below
-{ lib, stdenvNoCC, unzip }:
+{
+  lib,
+  stdenvNoCC,
+  unzip,
+}:
 
 stdenvNoCC.mkDerivation {
   pname = "ghidra-mcp-extension";

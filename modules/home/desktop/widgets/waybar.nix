@@ -5,7 +5,13 @@ lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Waybar status bar for Wayland";
 
-  homeModuleLinux = { pkgs, osConfig, lib, ... }:
+  homeModuleLinux =
+    {
+      pkgs,
+      osConfig,
+      lib,
+      ...
+    }:
     let
       theme = lib.my.getTheme osConfig;
       r = theme.roles;

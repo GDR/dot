@@ -1,4 +1,8 @@
-{ lib, stdenv, fetchurl }:
+{
+  lib,
+  stdenv,
+  fetchurl,
+}:
 let
   pname = "apple-emoji-ttf";
   version = "v18.4";

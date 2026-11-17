@@ -19,7 +19,13 @@ lib.my.mkSystemModuleV2 args {
     };
 
     lidSwitch = lib.mkOption {
-      type = lib.types.enum [ "suspend" "hibernate" "hybrid-sleep" "lock" "ignore" ];
+      type = lib.types.enum [
+        "suspend"
+        "hibernate"
+        "hybrid-sleep"
+        "lock"
+        "ignore"
+      ];
       default = "suspend";
       description = "Action to take when laptop lid is closed";
     };

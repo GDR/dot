@@ -36,7 +36,13 @@ lib.my.mkFeature {
     };
   };
 
-  homeModule = { pkgs, lib, featureCfg, ... }:
+  homeModule =
+    {
+      pkgs,
+      lib,
+      featureCfg,
+      ...
+    }:
     let
       hasRules = (featureCfg.rules or "") != "";
       hasMcp = (featureCfg.mcpServers or { }) != { };
@@ -51,15 +57,14 @@ lib.my.mkFeature {
           ".gemini/config/AGENTS.md".text = featureCfg.rules;
         })
         (lib.mkIf hasMcp {
-          ".gemini/antigravity/mcp_config.json".text =
-            builtins.toJSON { inherit (featureCfg) mcpServers; };
-          ".gemini/config/mcp_config.json".text =
-            builtins.toJSON { inherit (featureCfg) mcpServers; };
+          ".gemini/antigravity/mcp_config.json".text = builtins.toJSON { inherit (featureCfg) mcpServers; };
+          ".gemini/config/mcp_config.json".text = builtins.toJSON { inherit (featureCfg) mcpServers; };
         })
       ];
     };
 
-  homeModuleLinux = { pkgs, ... }:
+  homeModuleLinux =
+    { pkgs, ... }:
     let
       ideLinux = pkgs.symlinkJoin {
         name = "google-antigravity-ide-with-basic-store";
@@ -91,7 +96,8 @@ lib.my.mkFeature {
       ];
     };
 
-  homeModuleDarwin = { pkgs, ... }:
+  homeModuleDarwin =
+    { pkgs, ... }:
     let
       antigravityWrapper = pkgs.writeShellScriptBin "antigravity" ''
         exec open -a "${pkgs.google-antigravity}/Applications/Antigravity.app" --args --password-store=basic "$@"

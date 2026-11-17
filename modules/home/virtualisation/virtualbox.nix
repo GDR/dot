@@ -2,7 +2,10 @@
 { lib, ... }:
 
 lib.my.mkFeature {
-  platforms = [ "linux" "darwin" ];
+  platforms = [
+    "linux"
+    "darwin"
+  ];
   description = "VirtualBox virtualization";
 
   nixosModule = { selectedUsers, lib, ... }: {

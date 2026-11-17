@@ -16,30 +16,32 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 
-  module = cfg: lib.mkMerge [
-    {
-      services.openssh = {
-        enable = true;
-        extraConfig = ''
-          PasswordAuthentication no
-          KbdInteractiveAuthentication no
-          PermitRootLogin no
-        '';
-      };
-    }
-    (lib.mkIf (cfg.userMap != { }) {
-      services.charon-key = {
-        enable = true;
-        userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) cfg.userMap;
-      };
+  module =
+    cfg:
+    lib.mkMerge [
+      {
+        services.openssh = {
+          enable = true;
+          extraConfig = ''
+            PasswordAuthentication no
+            KbdInteractiveAuthentication no
+            PermitRootLogin no
+          '';
+        };
+      }
+      (lib.mkIf (cfg.userMap != { }) {
+        services.charon-key = {
+          enable = true;
+          userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) cfg.userMap;
+        };
 
-      # Remove nix-darwin's default AuthorizedKeysCommand (101-authorized-keys.conf)
-      # which sorts before charon-key's 50-charon-key.conf alphabetically (1 < 5).
-      # SSH uses the first AuthorizedKeysCommand it encounters, so nix-darwin's
-      # /bin/cat would shadow charon-key's wrapper.
-      environment.etc."ssh/sshd_config.d/101-authorized-keys.conf".text = lib.mkForce "";
-    })
-  ];
+        # Remove nix-darwin's default AuthorizedKeysCommand (101-authorized-keys.conf)
+        # which sorts before charon-key's 50-charon-key.conf alphabetically (1 < 5).
+        # SSH uses the first AuthorizedKeysCommand it encounters, so nix-darwin's
+        # /bin/cat would shadow charon-key's wrapper.
+        environment.etc."ssh/sshd_config.d/101-authorized-keys.conf".text = lib.mkForce "";
+      })
+    ];
 
   # charon-key darwinModule writes /etc/ssh drop-ins imperatively in postActivation;
   # remove them if darwin.openssh is disabled so key authorization is cleanly revoked.

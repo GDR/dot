@@ -13,12 +13,17 @@
     imports = [ ../../users/dgarifullin.nix ];
     enable = true;
     sudo.nopasswd = true;
-    keys = [{
-      name = "goldstar";
-      type = "rsa";
-      purpose = [ "git" "ssh" ];
-      isDefault = true;
-    }];
+    keys = [
+      {
+        name = "goldstar";
+        type = "rsa";
+        purpose = [
+          "git"
+          "ssh"
+        ];
+        isDefault = true;
+      }
+    ];
     ssh = [
       {
         host = "*";
@@ -68,7 +73,9 @@
     networking.firewall.allowedTCPPorts = [ 8080 ];
     networking.openssh = {
       enable = true;
-      userMap = { "dgarifullin" = "gdr"; };
+      userMap = {
+        "dgarifullin" = "gdr";
+      };
     };
     graphics.nvidia = {
       enable = true;

@@ -19,7 +19,6 @@ lib.my.mkSystemModuleV2 args {
   # macOS: set SOPS_AGE_KEY_FILE explicitly (not XDG-compliant by default).
   # Written into /etc/zshenv + launchctl setenv so every shell sees it.
   moduleDarwin = _: {
-    environment.variables.SOPS_AGE_KEY_FILE =
-      "$HOME/Library/Application Support/sops/age/keys.txt";
+    environment.variables.SOPS_AGE_KEY_FILE = "$HOME/Library/Application Support/sops/age/keys.txt";
   };
 }

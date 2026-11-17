@@ -18,12 +18,11 @@ repos:
     pass_filenames: false
     always_run: true
 
-  - id: nixpkgs-fmt
-    name: Nixpkgs Fmt
-    entry: nixpkgs-fmt . --check
+  - id: nixfmt
+    name: Nixfmt (RFC 166)
+    entry: nixfmt --check
     language: system
-    pass_filenames: false
-    always_run: true
+    files: \.nix$
 
   - id: deadnix
     name: Deadnix

@@ -3,7 +3,10 @@
 
 lib.my.mkFeature {
   description = "sing-box universal proxy platform (SFM GUI + CLI on macOS)";
-  platforms = [ "linux" "darwin" ];
+  platforms = [
+    "linux"
+    "darwin"
+  ];
 
   homeModule = { pkgs, ... }: {
     home.packages = [ pkgs.sing-box ];

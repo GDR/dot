@@ -53,7 +53,10 @@ let
   ];
 in
 lib.my.mkFeature {
-  platforms = [ "linux" "darwin" ];
+  platforms = [
+    "linux"
+    "darwin"
+  ];
   description = "Vivaldi web browser with extensions";
 
   # Shared across Darwin and Linux
@@ -113,7 +116,10 @@ lib.my.mkFeature {
       exec = "vivaldi %U";
       icon = "vivaldi";
       terminal = false;
-      categories = [ "Network" "WebBrowser" ];
+      categories = [
+        "Network"
+        "WebBrowser"
+      ];
       mimeType = [
         "text/html"
         "text/xml"

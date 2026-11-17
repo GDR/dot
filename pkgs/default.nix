@@ -1,7 +1,11 @@
 # Custom packages, that can be defined similarly to ones from nixpkgs
 # You can build them using 'nix build .#example' or (legacy) 'nix-build -A example'
 
-{ pkgs ? (import ../nixpkgs.nix) { }, system, ... }:
+{
+  pkgs ? (import ../nixpkgs.nix) { },
+  system,
+  ...
+}:
 let
   isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
   isLinux = system == "aarch64-linux" || system == "x86_64-linux";

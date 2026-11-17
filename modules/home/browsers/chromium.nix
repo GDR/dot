@@ -4,9 +4,11 @@
 
 lib.my.mkFeature {
   description = "Chromium web browser";
-  darwinModule = { config, lib, ... }: lib.mkIf (config.homebrew.enable or false) {
-    homebrew.casks = [ "chromium" ];
-  };
+  darwinModule =
+    { config, lib, ... }:
+    lib.mkIf (config.homebrew.enable or false) {
+      homebrew.casks = [ "chromium" ];
+    };
   homeModuleDarwin = _: {
     programs.chromium = {
       enable = true;
@@ -31,8 +33,17 @@ lib.my.mkFeature {
       exec = "chromium %U";
       icon = "chromium";
       terminal = false;
-      categories = [ "Network" "WebBrowser" ];
-      mimeType = [ "text/html" "text/xml" "application/xhtml+xml" "x-scheme-handler/http" "x-scheme-handler/https" ];
+      categories = [
+        "Network"
+        "WebBrowser"
+      ];
+      mimeType = [
+        "text/html"
+        "text/xml"
+        "application/xhtml+xml"
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+      ];
     };
   };
 }

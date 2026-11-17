@@ -11,13 +11,22 @@
   isPrimary = lib.mkDefault true;
   nixTrusted = lib.mkDefault true;
   inheritProfiles = lib.mkDefault true;
-  extraGroups = [ "wheel" "audio" ];
+  extraGroups = [
+    "wheel"
+    "audio"
+  ];
 
   # SSH topology — host-invariant entries merged into each machine's ssh list.
   # Keys and identity files are specified per host.
   ssh = [
-    { host = "nix-oldstar"; forwardAgent = false; }
-    { host = "nix-goldstar"; forwardAgent = false; }
+    {
+      host = "nix-oldstar";
+      forwardAgent = false;
+    }
+    {
+      host = "nix-goldstar";
+      forwardAgent = false;
+    }
   ];
 
   # Antigravity IDE rules — identical across all machines.

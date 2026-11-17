@@ -4,12 +4,20 @@
 lib.my.mkFeature {
   description = "Neovim editor with Lua-first configuration";
 
-  homeModule = { pkgs, ... }:
+  homeModule =
+    { pkgs, ... }:
     let
       wrappedNeovim = inputs.nvim-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
-      home.packages = [ wrappedNeovim ] ++ (with pkgs; [ ripgrep fzf fd ]);
+      home.packages = [
+        wrappedNeovim
+      ]
+      ++ (with pkgs; [
+        ripgrep
+        fzf
+        fd
+      ]);
       xdg.configFile."nvim".source = "${inputs.nvim-nix}/dotfiles/nvim";
     };
 

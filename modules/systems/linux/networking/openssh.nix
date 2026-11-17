@@ -16,22 +16,24 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 
-  module = cfg: lib.mkMerge [
-    {
-      services.openssh = {
-        enable = true;
-        settings = {
-          PasswordAuthentication = lib.mkDefault false;
-          KbdInteractiveAuthentication = lib.mkDefault false;
-          PermitRootLogin = lib.mkDefault "no";
+  module =
+    cfg:
+    lib.mkMerge [
+      {
+        services.openssh = {
+          enable = true;
+          settings = {
+            PasswordAuthentication = lib.mkDefault false;
+            KbdInteractiveAuthentication = lib.mkDefault false;
+            PermitRootLogin = lib.mkDefault "no";
+          };
         };
-      };
-    }
-    (lib.mkIf (cfg.userMap != { }) {
-      services.charon-key = {
-        enable = true;
-        userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) cfg.userMap;
-      };
-    })
-  ];
+      }
+      (lib.mkIf (cfg.userMap != { }) {
+        services.charon-key = {
+          enable = true;
+          userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) cfg.userMap;
+        };
+      })
+    ];
 }

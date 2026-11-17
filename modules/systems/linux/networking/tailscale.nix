@@ -7,7 +7,12 @@ lib.my.mkSystemModuleV2 args {
 
   extraOptions = {
     routingMode = lib.mkOption {
-      type = lib.types.enum [ "none" "client" "server" "both" ];
+      type = lib.types.enum [
+        "none"
+        "client"
+        "server"
+        "both"
+      ];
       default = "client";
       description = "Tailscale routing features mode.";
     };
@@ -15,10 +20,16 @@ lib.my.mkSystemModuleV2 args {
 
   module = cfg: {
     # Enable kernel IP forwarding only when acting as a subnet router / exit node
-    boot.kernel.sysctl = lib.mkIf (lib.elem cfg.routingMode [ "server" "both" ]) {
-      "net.ipv4.ip_forward" = 1;
-      "net.ipv6.conf.all.forwarding" = 1;
-    };
+    boot.kernel.sysctl =
+      lib.mkIf
+        (lib.elem cfg.routingMode [
+          "server"
+          "both"
+        ])
+        {
+          "net.ipv4.ip_forward" = 1;
+          "net.ipv6.conf.all.forwarding" = 1;
+        };
 
     # Tailscale service
     services.tailscale = {
@@ -37,7 +48,10 @@ lib.my.mkSystemModuleV2 args {
     # Auto-reconnect on boot only when persisted auth state exists, bounded by timeout
     systemd.services.tailscale-autoconnect = {
       description = "Tailscale auto-connect on boot";
-      after = [ "network-online.target" "tailscaled.service" ];
+      after = [
+        "network-online.target"
+        "tailscaled.service"
+      ];
       wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
       serviceConfig = {

@@ -10,8 +10,15 @@
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, poetry2nix }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      poetry2nix,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryEnv;
@@ -29,5 +36,6 @@
             echo "Python 3.12 environment loaded"
           '';
         };
-      });
+      }
+    );
 }

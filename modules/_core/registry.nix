@@ -1,6 +1,9 @@
 # Build module registry and catalog features from modules directory and private-extension
 # This is called during import time, not module evaluation time
-{ lib, inputs ? { } }:
+{
+  lib,
+  inputs ? { },
+}:
 let
   modulesDir = ../home;
 

@@ -16,7 +16,8 @@
     home.security.enable = lib.mkDefault true;
     home.utils.enable = lib.mkDefault true;
   };
-} // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
+}
+// lib.optionalAttrs (lib.hasSuffix "-linux" system) {
   modules.system.linux = {
     sound.enable = lib.mkDefault true;
     networking.networkmanager.enable = lib.mkDefault true;
