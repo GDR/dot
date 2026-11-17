@@ -73,7 +73,7 @@ in
     networking.firewall.allowedTCPPorts = [ 8080 ];
     networking.openssh = {
       enable = true;
-      userMap = { "*" = "gdr"; };
+      userMap = { "dgarifullin" = "gdr"; };
     };
     graphics.nvidia = {
       enable = true;

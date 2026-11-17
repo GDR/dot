@@ -50,8 +50,13 @@ lib.my.mkFeature {
         inherit userName;
         modulePath = "home.security.clavis";
       };
-      clavisEnabled = isDarwin && ((userCfg.clavisAgent.enable or false) || clavisModuleEnabled);
-      bwEnabled = userCfg.bitwardenSshAgent.enable or false;
+      clavisEnabled = isDarwin && clavisModuleEnabled;
+      bwModuleEnabled = lib.my.isFeatureEnabledForUser {
+        config = osConfig;
+        inherit userName;
+        modulePath = "home.security.bitwarden";
+      };
+      bwEnabled = bwModuleEnabled && (userCfg.modules.home.security.bitwarden.sshAgent.enable or false);
       hasAgent = clavisEnabled || bwEnabled;
 
       # Dynamic signing via SSH agent when no static key is specified

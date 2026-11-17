@@ -53,19 +53,24 @@ lib.my.mkFeature {
         inherit userName;
         modulePath = "home.security.clavis";
       };
-      clavisCfg = userCfg.clavisAgent or { };
-      clavisEnabled = isDarwin && ((clavisCfg.enable or false) || clavisModuleEnabled);
+      clavisCfg = userCfg.modules.home.security.clavis or { };
+      clavisEnabled = isDarwin && clavisModuleEnabled;
       defaultClavisSocket = "${homePrefix}/${userName}/.ssh/clavis.sock";
-      clavisSocket = if (clavisCfg.socketPath or null != null) then clavisCfg.socketPath else defaultClavisSocket;
+      clavisSocket = if (clavisCfg.socketPath or null) != null then clavisCfg.socketPath else defaultClavisSocket;
 
       # Bitwarden SSH Agent integration
-      bwCfg = userCfg.bitwardenSshAgent or { };
-      bwEnabled = bwCfg.enable or false;
+      bwModuleEnabled = lib.my.isFeatureEnabledForUser {
+        config = osConfig;
+        inherit userName;
+        modulePath = "home.security.bitwarden";
+      };
+      bwAgentCfg = userCfg.modules.home.security.bitwarden.sshAgent or { };
+      bwEnabled = bwModuleEnabled && (bwAgentCfg.enable or false);
       defaultBwSocket =
         if isDarwin
         then "~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock"
         else "~/.bitwarden/ssh-agent.sock";
-      bwSocket = if (bwCfg.socketPath or null != null) then bwCfg.socketPath else defaultBwSocket;
+      bwSocket = if (bwAgentCfg.socketPath or null) != null then bwAgentCfg.socketPath else defaultBwSocket;
 
       agentSocket =
         if clavisEnabled then clavisSocket
@@ -149,9 +154,8 @@ lib.my.mkFeature {
         sshConfig="$HOME/.ssh/config"
         if [ -L "$sshConfig" ]; then
           target=$(readlink "$sshConfig")
-          rm "$sshConfig"
-          cp "$target" "$sshConfig"
-          chmod 600 "$sshConfig"
+          install -m 600 "$target" "$sshConfig.tmp"
+          mv -f "$sshConfig.tmp" "$sshConfig"
         fi
       '';
     };

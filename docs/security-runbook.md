@@ -33,7 +33,6 @@ flowchart LR
    ```nix
    hostUsers.dgarifullin = userDefaults.user // {
      enable = true;
-     clavisAgent.enable = true;
      modules.home.security.clavis.enable = true;
    };
    ```
@@ -108,7 +107,7 @@ Linux hosts declare per-machine SSH keys in `hostUsers.<user>.keys` and match bl
    ```
 
 > [!TIP]
-> To use the Bitwarden Desktop SSH Agent instead of local key files, set `hostUsers.<user>.bitwardenSshAgent.enable = true` (socket defaults to `~/.bitwarden/ssh-agent.sock` on Linux and `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` on macOS).
+> To use the Bitwarden Desktop SSH Agent instead of local key files, enable `home.security.bitwarden` and set `modules.home.security.bitwarden.sshAgent.enable = true` (socket defaults to `~/.bitwarden/ssh-agent.sock` on Linux and `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` on macOS).
 
 ---
 
@@ -153,7 +152,7 @@ Inbound SSH access is authorized dynamically from GitHub public keys via `charon
    # NixOS (hosts/machines/nix-oldstar/default.nix)
    modules.system.linux.networking.openssh = {
      enable = true;
-     userMap = { "dgarifullin" = "gdr"; }; # or { "*" = "gdr"; }
+     userMap = { "dgarifullin" = "gdr"; };
    };
 
    # macOS (hosts/machines/mac-brightstar/default.nix)
@@ -226,5 +225,5 @@ The Zsh `sops()` wrapper in [`modules/home/shell/zsh/dotfiles/common.zsh`](../mo
 | **Propagate `SSH_AUTH_SOCK` to macOS GUI apps** | `launchctl setenv SSH_AUTH_SOCK "$HOME/.ssh/clavis.sock"` |
 | **Debug outbound SSH key selection** | `ssh -v -T git@github.com` |
 | **Verify `sshd` `AuthorizedKeysCommand`** | `sudo sshd -T \| grep -i authorizedkeys` |
-| **Flush cached SOPS age key early** | `unset SOPS_AGE_KEY && rm -f "${XDG_RUNTIME_DIR:-${TMPDIR%/}}/.sops-age-key-$(hostname -s)-${UID}"` |
+| **Flush cached SOPS age key early** | `unset SOPS_AGE_KEY && rm -f "${XDG_RUNTIME_DIR:-${TMPDIR%/}}/sops-age-key-$(hostname -s)" "$HOME/.cache/sops/sops-age-key-$(hostname -s)"` |
 | **Check `SOPS_AGE_KEY_FILE` path** | `echo "${SOPS_AGE_KEY_FILE:-~/.config/sops/age/keys.txt}"` |

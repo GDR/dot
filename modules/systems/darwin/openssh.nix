@@ -1,16 +1,8 @@
 # OpenSSH server with charon-key AuthorizedKeysCommand (Darwin)
 # Uses github:GDR/charon-key darwinModules.default for the wrapper + sshd config.
-# This module passes userMap to services.charon-key on macOS.
-#
-# Note: config is accessed via direct attribute access (lazy) rather than
-# mkSystemModuleV2's cfg parameter (uses foldl' which is strict and causes
-# infinite recursion when the result shapes the module's config output).
-{ lib, config, ... }@args:
+# This module enables Remote Login and passes userMap to services.charon-key on macOS.
+{ lib, ... }@args:
 
-let
-  cfg = config.modules.system.darwin.openssh or { };
-  userMap = cfg.userMap or { };
-in
 lib.my.mkSystemModuleV2 args {
   namespace = "darwin";
   description = "OpenSSH server with charon-key for authorized keys (Darwin)";
@@ -24,11 +16,21 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 
-  module = _: lib.mkMerge [
-    (lib.mkIf (userMap != { }) {
+  module = cfg: lib.mkMerge [
+    {
+      services.openssh = {
+        enable = true;
+        extraConfig = ''
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitRootLogin no
+        '';
+      };
+    }
+    (lib.mkIf (cfg.userMap != { }) {
       services.charon-key = {
         enable = true;
-        userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) userMap;
+        userMap = lib.mapAttrs (_: ghUser: [ ghUser ]) cfg.userMap;
       };
 
       # Remove nix-darwin's default AuthorizedKeysCommand (101-authorized-keys.conf)
@@ -38,4 +40,15 @@ lib.my.mkSystemModuleV2 args {
       environment.etc."ssh/sshd_config.d/101-authorized-keys.conf".text = lib.mkForce "";
     })
   ];
+
+  # charon-key darwinModule writes /etc/ssh drop-ins imperatively in postActivation;
+  # remove them if darwin.openssh is disabled so key authorization is cleanly revoked.
+  moduleDisabled = _: {
+    system.activationScripts.postActivation.text = ''
+      if [ -f /etc/ssh/sshd_config.d/50-charon-key.conf ] || [ -f /etc/ssh/charon-key-wrapper ]; then
+        rm -f /etc/ssh/sshd_config.d/50-charon-key.conf /etc/ssh/charon-key-wrapper
+        launchctl kickstart -k system/com.openssh.sshd 2>/dev/null || true
+      fi
+    '';
+  };
 }

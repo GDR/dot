@@ -15,6 +15,11 @@ lib.my.mkFeature {
       default = null;
       description = "Clavis package to install (defaults to pkgs.clavis)";
     };
+    socketPath = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Custom Clavis SSH Agent socket path (defaults to ~/.ssh/clavis.sock)";
+    };
   };
 
   homeModuleDarwin = { pkgs, lib, featureCfg, ... }:

@@ -163,33 +163,8 @@ let
           description = "Additional SSH config files to include";
         };
 
-        # Clavis SSH Agent integration
-        clavisAgent = {
-          enable = mkOption {
-            type = types.bool;
-            default = false;
-            description = "Enable Clavis SSH Agent integration for this user";
-          };
-          socketPath = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Custom Clavis SSH Agent socket path. If null, uses ~/.ssh/clavis.sock";
-          };
-        };
-
-        # Bitwarden SSH Agent integration
-        bitwardenSshAgent = {
-          enable = mkOption {
-            type = types.bool;
-            default = false;
-            description = "Enable Bitwarden SSH Agent integration for this user";
-          };
-          socketPath = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Custom Bitwarden SSH Agent socket path. If null, uses platform default.";
-          };
-        };
+        nixTrusted = mkEnableOption "granting root-equivalent nix-daemon trusted-user access";
+        isPrimary = mkEnableOption "designating this user as system.primaryUser on Darwin";
 
         # Linux-specific
         uid = mkOption {
@@ -335,24 +310,42 @@ in
   };
 
   # Create system users from enabled hostUsers
-  config = mkIf (enabledUsers != { }) ({
-    # Create users.users entries for each enabled hostUser
-    # Note: Darwin users are managed differently - only set Linux-specific options on Linux
-    users.users =
-      let
-        # Generate UIDs starting from 1000, incrementing for each user
-        # This ensures unique UIDs for multiple users
-        userNames = attrNames enabledUsers;
-        # Helper to create UID mapping: first user gets 1000, second gets 1001, etc.
-        createUidMap = names: idx:
-          if names == [ ] then { }
-          else
-            (createUidMap (tail names) (idx + 1)) // {
-              ${head names} = 1000 + idx;
-            };
-        uidMap = createUidMap userNames 0;
-      in
-      mapAttrs
+  config = mkIf (enabledUsers != { }) (
+    let
+      userNames = attrNames enabledUsers;
+      explicitUids = mapAttrsToList (_: u: u.uid) (filterAttrs (_: u: u.uid != null) enabledUsers);
+      unassignedNames = attrNames (filterAttrs (_: u: u.uid == null) enabledUsers);
+      nextFreeUid = candidate: used:
+        if elem candidate used then nextFreeUid (candidate + 1) used else candidate;
+      assignUids = names: used: acc:
+        if names == [ ] then acc
+        else
+          let
+            chosen = nextFreeUid 1000 used;
+          in
+          assignUids (tail names) (used ++ [ chosen ]) (acc // { ${head names} = chosen; });
+      uidMap = assignUids unassignedNames explicitUids { };
+
+      primaryUsers = attrNames (filterAttrs (_: u: u.isPrimary) enabledUsers);
+      resolvedPrimaryUser =
+        if primaryUsers != [ ] then head primaryUsers
+        else head userNames;
+    in
+    {
+      assertions = [
+        {
+          assertion = length primaryUsers <= 1;
+          message = "At most one enabled hostUsers entry may set isPrimary = true (found: ${concatStringsSep ", " primaryUsers}).";
+        }
+        {
+          assertion = !isDarwin || length userNames <= 1 || length primaryUsers == 1;
+          message = "Darwin hosts with multiple enabled hostUsers must set isPrimary = true on exactly one user.";
+        }
+      ];
+
+      # Create users.users entries for each enabled hostUser
+      # Note: Darwin users are managed differently - only set Linux-specific options on Linux
+      users.users = mapAttrs
         (name: cfg:
           if isLinux then {
             name = name;
@@ -369,52 +362,53 @@ in
         )
         enabledUsers;
 
-    # Add users to nix trusted/allowed users
-    nix.settings = {
-      trusted-users = [ "root" ] ++ (attrNames enabledUsers);
-      allowed-users = [ "root" ] ++ (attrNames enabledUsers);
-    };
+      # Grant nix-daemon trusted-users only to explicitly opted-in users (NixOS/Darwin already include root)
+      nix.settings = {
+        trusted-users = attrNames (filterAttrs (_: u: u.nixTrusted) enabledUsers);
+        allowed-users = [ "root" ] ++ userNames;
+      };
 
-    # Configure home-manager for each enabled user
-    home-manager = {
-      useUserPackages = true;
-      useGlobalPkgs = true;
-      # Back up existing files instead of failing
-      backupFileExtension = "backup";
-      sharedModules = optional (inputs ? learnharness && inputs.learnharness ? homeManagerModules.default) inputs.learnharness.homeManagerModules.default;
+      # Configure home-manager for each enabled user
+      home-manager = {
+        useUserPackages = true;
+        useGlobalPkgs = true;
+        # Back up existing files instead of failing
+        backupFileExtension = "backup";
+        sharedModules = optional (inputs ? learnharness && inputs.learnharness ? homeManagerModules.default) inputs.learnharness.homeManagerModules.default;
 
-      users = mapAttrs
-        (userName: userCfg:
-          hmArgs: {
-            imports = lib.my.compileUserHomeModules {
-              osConfig = hmArgs.osConfig or config;
-              inherit pkgs userName userCfg featureCatalog modulesRegistry;
-              self = args.self or null;
-              inputs = args.inputs or { };
-            };
-            home = {
-              stateVersion = "26.05";
-              username = userName;
-              homeDirectory = if isDarwin then "/Users/${userName}" else "/home/${userName}";
-            };
-          }
-        )
-        enabledUsers;
-    };
-  } // optionalAttrs isDarwin {
-    # Darwin requires primaryUser for certain options
-    system.primaryUser = head (attrNames enabledUsers);
-  } // optionalAttrs isLinux {
-    # Grant NOPASSWD sudo to any user that opted in
-    security.sudo.extraRules =
-      let
-        nopasswdUsers = filterAttrs (_: cfg: cfg.enable && cfg.sudo.nopasswd) config.hostUsers;
-      in
-      mapAttrsToList
-        (name: _: {
-          users = [ name ];
-          commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
-        })
-        nopasswdUsers;
-  });
+        users = mapAttrs
+          (userName: userCfg:
+            hmArgs: {
+              imports = lib.my.compileUserHomeModules {
+                osConfig = hmArgs.osConfig or config;
+                inherit pkgs userName userCfg featureCatalog modulesRegistry;
+                self = args.self or null;
+                inputs = args.inputs or { };
+              };
+              home = {
+                stateVersion = "26.05";
+                username = userName;
+                homeDirectory = if isDarwin then "/Users/${userName}" else "/home/${userName}";
+              };
+            }
+          )
+          enabledUsers;
+      };
+    } // optionalAttrs isDarwin {
+      # Darwin requires primaryUser for certain options
+      system.primaryUser = resolvedPrimaryUser;
+    } // optionalAttrs isLinux {
+      # Grant NOPASSWD sudo to any user that opted in
+      security.sudo.extraRules =
+        let
+          nopasswdUsers = filterAttrs (_: cfg: cfg.enable && cfg.sudo.nopasswd) config.hostUsers;
+        in
+        mapAttrsToList
+          (name: _: {
+            users = [ name ];
+            commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
+          })
+          nopasswdUsers;
+    }
+  );
 }

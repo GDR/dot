@@ -36,25 +36,30 @@ sops() {
     age=$(( now - mtime ))
     if (( age > ttl )); then
       rm -f "$cache_file"
-      unset SOPS_AGE_KEY
     fi
   fi
 
   # 2. Load from per-user cache or query Bitwarden for per-machine key
-  if [[ -z "$SOPS_AGE_KEY" ]]; then
+  # Never export SOPS_AGE_KEY into the parent interactive shell; pass only to child sops.
+  local age_key="${SOPS_AGE_KEY-}"
+  if [[ -z "$age_key" ]]; then
     if [[ -f "$cache_file" && ! -L "$cache_file" ]]; then
-      export SOPS_AGE_KEY="$(<"$cache_file")"
+      age_key="$(<"$cache_file")"
       touch -h "$cache_file"
     elif command -v bw >/dev/null 2>&1; then
       echo "==> Fetching SOPS key for '${host_name}' from Bitwarden..."
       local key
       key="$(bw get notes "SOPS Age Key ${host_name}" 2>/dev/null)"
       if [[ -n "$key" ]]; then
-        export SOPS_AGE_KEY="$key"
+        age_key="$key"
         (set -C; umask 077; rm -f "$cache_file" && printf '%s\n' "$key" > "$cache_file")
       fi
     fi
   fi
 
-  command sops "$@"
+  if [[ -n "$age_key" ]]; then
+    SOPS_AGE_KEY="$age_key" command sops "$@"
+  else
+    command sops "$@"
+  fi
 }

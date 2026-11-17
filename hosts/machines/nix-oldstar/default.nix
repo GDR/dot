@@ -17,7 +17,7 @@ in
 
   # Enable nix-oldstar to act as a Nix remote builder for mac-brightstar
   nix.settings = {
-    trusted-users = [ "root" "@wheel" ];
+    trusted-users = [ "@wheel" ];
     max-jobs = "auto";
     system-features = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
   };
@@ -71,8 +71,7 @@ in
       lidSwitch = "ignore";
     };
     networking.firewall = {
-      # 8089: GhidraMCP HTTP server (goldstar bridge → oldstar Ghidra)
-      allowedTCPPorts = [ 22 80 443 8080 8089 ];
+      allowedTCPPorts = [ 22 80 443 8080 ];
       allowedUDPPorts = [ 80 443 8080 ];
     };
     sound.enable = true;

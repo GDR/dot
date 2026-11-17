@@ -14,7 +14,6 @@ in
 
   hostUsers.dgarifullin = userDefaults.user // {
     enable = true;
-    clavisAgent.enable = true;
     ssh = [
       {
         host = "github.com";

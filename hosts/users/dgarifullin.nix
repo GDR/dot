@@ -12,13 +12,15 @@
     github = "gdr";
     extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
     uid = 1000;
+    nixTrusted = true;
+    isPrimary = true;
   };
 
   # SSH topology — host-invariant entries appended to each machine's ssh list.
   # Keys and identity files are still specified per-host.
   ssh.knownHosts = [
-    { host = "nix-oldstar"; forwardAgent = true; }
-    { host = "nix-goldstar"; forwardAgent = true; }
+    { host = "nix-oldstar"; forwardAgent = false; }
+    { host = "nix-goldstar"; forwardAgent = false; }
   ];
 
   # Antigravity IDE rules — identical across all machines.

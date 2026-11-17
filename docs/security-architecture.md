@@ -60,15 +60,15 @@ flowchart TD
 | :--- | :--- | :--- | :--- |
 | **macOS (Primary)** | [`modules/home/security/clavis.nix`](../modules/home/security/clavis.nix) | `clavis-agent --daemon` via `launchd` (`com.clavis.agent`), macOS Keychain + Touch ID | `~/.ssh/clavis.sock` |
 | **Linux (Default)** | [`modules/systems/all/shell/ssh.nix`](../modules/systems/all/shell/ssh.nix) | System `ssh-agent` (`programs.ssh.startAgent = true`) + per-host `IdentityFile` | `$SSH_AUTH_SOCK` (system default) |
-| **Bitwarden (Optional)** | [`modules/home/shell/ssh/ssh.nix`](../modules/home/shell/ssh/ssh.nix) | Bitwarden Desktop SSH Agent (`hostUsers.<user>.bitwardenSshAgent.enable = true`) | macOS: `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` / Linux: `~/.bitwarden/ssh-agent.sock` |
+| **Bitwarden (Optional)** | [`modules/home/shell/ssh/ssh.nix`](../modules/home/shell/ssh/ssh.nix) | Bitwarden Desktop SSH Agent (`hostUsers.<user>.modules.home.security.bitwarden.sshAgent.enable = true`) | macOS: `~/Library/Containers/com.bitwarden.desktop/Data/.bitwarden-ssh-agent.sock` / Linux: `~/.bitwarden/ssh-agent.sock` |
 
 ### Per-User SSH Client Wiring (`modules/home/shell/ssh/ssh.nix`)
 
 User SSH client settings are compiled per user from `osConfig.hostUsers.<user>`:
 
 - **Agent Precedence**:
-  1. **Clavis** (macOS only — guarded by `isDarwin` so `home.security.enable = true` on Linux never activates it): active when `hostUsers.<user>.clavisAgent.enable = true` or `home.security.clavis` is enabled for the user.
-  2. **Bitwarden SSH Agent**: active when `hostUsers.<user>.bitwardenSshAgent.enable = true`.
+  1. **Clavis** (macOS only — guarded by `isDarwin` so `home.security.enable = true` on Linux never activates it): active when `home.security.clavis` is enabled for the user (optional custom socket via `modules.home.security.clavis.socketPath`).
+  2. **Bitwarden SSH Agent**: active when `home.security.bitwarden` is enabled and `modules.home.security.bitwarden.sshAgent.enable = true`.
   3. **Standard `ssh-agent` + Static Keys**: fallback when neither external agent is enabled.
 - **`~/.ssh/config` Generation**:
   - When an external agent (`clavis` or Bitwarden) is active: sets `IdentityAgent` to the resolved socket, `IdentitiesOnly = "no"`, and `AddKeysToAgent = "no"`.
@@ -114,7 +114,7 @@ sequenceDiagram
 | Mode | Condition | Git Configuration Produced | Active Hosts |
 | :--- | :--- | :--- | :--- |
 | **Static Signing Key** | `hostUsers.<user>.keys` has an entry with `"git"` in `purpose` (prefers `isDefault = true`, else first match) | `user.signingkey = ~/.ssh/<name>_id_<type>.pub`, `commit.gpgsign = true`, `gpg.format = "ssh"` | `nix-goldstar`, `nix-oldstar` |
-| **Dynamic Agent Key** | No static Git key in `hostUsers.<user>.keys`, and `clavis` or `bitwardenSshAgent` is active | `gpg.ssh.defaultKeyCommand = "sh -c 'echo key::$(ssh-add -L \| head -1)'"`, `commit.gpgsign = true`, `gpg.format = "ssh"` | `mac-brightstar` |
+| **Dynamic Agent Key** | No static Git key in `hostUsers.<user>.keys`, and `clavis` or `bitwarden.sshAgent` is active | `gpg.ssh.defaultKeyCommand = "sh -c 'echo key::$(ssh-add -L \| head -1)'"`, `commit.gpgsign = true`, `gpg.format = "ssh"` | `mac-brightstar` |
 
 ---
 
@@ -123,9 +123,10 @@ sequenceDiagram
 Inbound `sshd` access on both NixOS and nix-darwin delegates public key lookup to [`GDR/charon-key`](https://github.com/GDR/charon-key), eliminating manual `~/.ssh/authorized_keys` synchronization across machines.
 
 - **NixOS ([`modules/systems/linux/networking/openssh.nix`](../modules/systems/linux/networking/openssh.nix))**:
-  - Enables `services.openssh.enable = true`.
-  - Maps `modules.system.linux.networking.openssh.userMap` (`{ "<localUser>" = "<githubUser>"; }` or wildcard `{ "*" = "gdr"; }`) into `services.charon-key.userMap`.
+  - Enables `services.openssh.enable = true` with key-only defaults (`PasswordAuthentication = false`, `KbdInteractiveAuthentication = false`, `PermitRootLogin = "no"`).
+  - Maps explicit users via `modules.system.linux.networking.openssh.userMap` (`{ "<localUser>" = "<githubUser>"; }`) into `services.charon-key.userMap`.
 - **macOS ([`modules/systems/darwin/openssh.nix`](../modules/systems/darwin/openssh.nix))**:
+  - Enables `services.openssh.enable = true` with key-only `extraConfig` (`PasswordAuthentication no`, `KbdInteractiveAuthentication no`, `PermitRootLogin no`), and cleans up `/etc/ssh/sshd_config.d/50-charon-key.conf` + `/etc/ssh/charon-key-wrapper` when disabled.
   - Maps `modules.system.darwin.openssh.userMap` into `services.charon-key.userMap` via `charon-key.darwinModules.default`.
   - **Darwin `101-authorized-keys.conf` Override**: `nix-darwin` writes `/etc/ssh/sshd_config.d/101-authorized-keys.conf` (`/bin/cat`), which sorts lexicographically before `charon-key`'s `50-charon-key.conf` (`'1' < '5'`). Because OpenSSH honors only the **first** `AuthorizedKeysCommand` it parses, nix-darwin's default file would shadow `charon-key`. The Darwin module forces `environment.etc."ssh/sshd_config.d/101-authorized-keys.conf".text = lib.mkForce ""` so `50-charon-key.conf` is authoritative.
 
@@ -159,5 +160,5 @@ For interactive secret editing without leaving plaintext `age` private keys on d
 
 1. **Per-Host Lookup Key**: Resolves short hostname via `hostname -s` (e.g., `mac-brightstar`, `nix-goldstar`, `nix-oldstar`).
 2. **15-Minute Runtime Cache**: Stores the retrieved `age` key with `0600` (`umask 077`) permissions in `${XDG_RUNTIME_DIR:-${TMPDIR%/}}` (per-user runtime directory) with a 900-second TTL.
-3. **Automatic Expiration**: Before each `sops` invocation, inspects file `mtime`; if older than 900 seconds, deletes the cache file and unsets `SOPS_AGE_KEY`.
-4. **Bitwarden CLI Fallback**: When `SOPS_AGE_KEY` is unset and no valid cache file exists, queries `bw get notes "SOPS Age Key <hostname>"` from an unlocked Bitwarden CLI session, exports `SOPS_AGE_KEY`, populates the `0600` cache file, and delegates to `command sops "$@"`.
+3. **Automatic Expiration**: Before each `sops` invocation, inspects file `mtime`; if older than 900 seconds, deletes the cache file.
+4. **Bitwarden CLI Fallback (Process-Scoped)**: When `SOPS_AGE_KEY` is unset and no valid cache file exists, queries `bw get notes "SOPS Age Key <hostname>"` from an unlocked Bitwarden CLI session, caches it (`0600`), and passes `SOPS_AGE_KEY` strictly to `command sops "$@"` without exporting it into the parent shell.
