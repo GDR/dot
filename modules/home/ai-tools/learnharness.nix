@@ -1,5 +1,5 @@
 # LearnHarness - An agent harness for learning
-{ lib, pkgs ? null, ... }:
+{ lib, ... }:
 
 let
   modelSlotOption = description:
@@ -35,8 +35,8 @@ lib.my.mkFeature {
   extraOptions = {
     package = lib.mkOption {
       type = lib.types.nullOr lib.types.package;
-      default = if pkgs != null && pkgs ? learnharness then pkgs.learnharness else null;
-      description = "LearnHarness package to install.";
+      default = null;
+      description = "LearnHarness package to install (defaults to pkgs.learnharness).";
     };
 
     autoUpdate = lib.mkOption {

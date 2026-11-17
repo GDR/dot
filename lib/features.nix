@@ -30,6 +30,7 @@ let
     { description ? null
     , platforms ? [ "linux" "darwin" ]
     , requires ? [ ]
+    , cascade ? true
     , extraOptions ? { }
     , dotfiles ? null
     , homeModule ? null
@@ -40,6 +41,7 @@ let
     }:
       assert lib.assertMsg (lib.isList platforms) "mkFeature: platforms must be a list of strings";
       assert lib.assertMsg (lib.isList requires) "mkFeature: requires must be a list of strings";
+      assert lib.assertMsg (lib.isBool cascade) "mkFeature: cascade must be a bool";
       assert lib.assertMsg (lib.isAttrs extraOptions) "mkFeature: extraOptions must be an attribute set";
       assert lib.assertMsg (dotfiles == null || lib.isAttrs dotfiles) "mkFeature: dotfiles must be null or an attribute set";
       assert lib.assertMsg (homeModule == null || lib.isFunction homeModule || lib.isAttrs homeModule) "mkFeature: homeModule must be null, a function, or an attribute set";
@@ -49,10 +51,10 @@ let
       assert lib.assertMsg (darwinModule == null || lib.isFunction darwinModule || lib.isAttrs darwinModule) "mkFeature: darwinModule must be null, a function, or an attribute set";
       {
         _type = "feature";
-        inherit description platforms requires extraOptions dotfiles
+        inherit description platforms requires cascade extraOptions dotfiles
           homeModule homeModuleLinux homeModuleDarwin nixosModule darwinModule;
         meta = {
-          inherit description platforms requires;
+          inherit description platforms requires cascade;
         };
       };
 
@@ -119,36 +121,38 @@ let
       home = buildSubtree [ "home" ];
     };
 
-  # Walk from leaf to root (e.g. home.utils.raycast -> home.utils -> home)
+  # Walk from leaf to root when cascade = true (e.g. home.utils.raycast -> home.utils -> home)
   # and return the most specific non-null .enable setting, or null if unset.
-  findPathSetting = modules: path:
+  # When cascade = false, inspect only the leaf feature's own .enable setting.
+  findPathSetting = { cascade ? true }: modules: path:
     let
       pathParts = lib.splitString "." path;
-      prefixes = lib.genList (i: lib.take (i + 1) pathParts) (lib.length pathParts);
-      revPrefixes = lib.reverseList prefixes;
     in
-    lib.foldl'
-      (acc: prefix:
-        if acc != null then acc
-        else
-          let
-            sub = lib.foldl' (a: p: a.${p} or { }) modules prefix;
-          in
-            sub.enable or null
-      )
-      null
-      revPrefixes;
+    if !cascade then
+      (lib.attrByPath pathParts { } modules).enable or null
+    else
+      let
+        prefixes = lib.genList (i: lib.take (i + 1) pathParts) (lib.length pathParts);
+        revPrefixes = lib.reverseList prefixes;
+      in
+      lib.foldl'
+        (acc: prefix:
+          if acc != null then acc
+          else (lib.attrByPath prefix { } modules).enable or null
+        )
+        null
+        revPrefixes;
 
   # Precompute the enabled feature path set ({ "<path>" = true; }) for (cfg, userName) in O(F):
   # 1. Build moduleMap once from registry modules + feature catalog.
-  # 2. Scan allKnownPaths once to collect directlyEnabledPaths and explicitlyDisabledByUserPaths.
-  # 3. Compute the full transitive requires closure once via resolveDeps (threading visited).
-  # 4. Subtract explicitlyDisabledByUserPaths so per-user opt-out wins over transitive requires.
+  # 2. Scan allKnownPaths once to collect directlyEnabledPaths and leaf explicitlyDisabledByUserPaths.
+  # 3. Compute the transitive requires closure via resolveDeps, stopping at leaf opt-outs and wrong platforms.
   computeEnabledFeatureSetForUser =
     { cfg
     , userName
     , catalog ? [ ]
     , modulesRegistry ? null
+    , hostPlatform ? null
     }:
     let
       resolvedCatalog =
@@ -173,8 +177,10 @@ let
       pathStates = map
         (p:
           let
-            userSetting = findPathSetting userModules p;
-            globalSetting = findPathSetting globalModules p;
+            cascade = moduleMap.${p}.cascade or true;
+            userSetting = findPathSetting { inherit cascade; } userModules p;
+            globalSetting = findPathSetting { inherit cascade; } globalModules p;
+            leafUserEnable = (lib.attrByPath (lib.splitString "." p) { } userModules).enable or null;
             directlyEnabled =
               if userSetting != null then userSetting
               else if globalSetting != null then globalSetting
@@ -183,7 +189,9 @@ let
           {
             path = p;
             inherit directlyEnabled;
-            explicitlyDisabledByUser = userSetting == false;
+            # Leaf-only opt-out: disabling a parent category does not block transitive
+            # requires from activating unset child modules.
+            explicitlyDisabledByUser = leafUserEnable == false;
           }
         )
         allKnownPaths;
@@ -194,7 +202,15 @@ let
         (lib.filter (s: s.explicitlyDisabledByUser) pathStates));
 
       closurePaths = lib.foldl'
-        (visited: p: moduleRegistryHelper.resolveDeps moduleMap p visited)
+        (visited: p:
+          moduleRegistryHelper.resolveDeps
+            {
+              inherit moduleMap hostPlatform;
+              blockedSet = explicitlyDisabledByUserPaths;
+            }
+            p
+            visited
+        )
         [ ]
         directlyEnabledPaths;
     in
@@ -203,10 +219,10 @@ let
       (lib.filter (p: !(explicitlyDisabledByUserPaths ? ${p})) closurePaths));
 
   # Check if a feature is enabled for a specific user:
-  # 1. Walks from leaf to root in userModules: most specific non-null setting wins.
+  # 1. Walks from leaf to root in userModules (if cascade = true): most specific non-null setting wins.
   # 2. If user setting is null, falls back to global config.modules hierarchy.
   # 3. If directly enabled, returns true.
-  # 4. If user explicitly set enable = false, returns false (transitive requires cannot override user opt-out).
+  # 4. If user explicitly set leaf enable = false, returns false (transitive requires cannot override leaf opt-out).
   # 5. Otherwise, checks per-user transitive requires via computeEnabledFeatureSetForUser.
   isFeatureEnabledForUser =
     { config ? null
@@ -216,6 +232,7 @@ let
     , modulePath ? null
     , featureCatalog ? null
     , modulesRegistry ? null
+    , hostPlatform ? null
     , ...
     }:
     let
@@ -225,21 +242,30 @@ let
       userModules = cfg.hostUsers.${userName}.modules or { };
       globalModules = cfg.modules or { };
 
-      userSetting = findPathSetting userModules path;
-      globalSetting = findPathSetting globalModules path;
+      catalog = if featureCatalog != null then featureCatalog else [ ];
+      resolvedCatalog =
+        if catalog != [ ] then catalog
+        else if modulesRegistry != null then (modulesRegistry.features or modulesRegistry.featureCatalog or [ ])
+        else if cfg ? _modulesRegistry && cfg._modulesRegistry != null then (cfg._modulesRegistry.features or cfg._modulesRegistry.featureCatalog or [ ])
+        else [ ];
+      matchingMeta = lib.findFirst (f: f.path == path) null resolvedCatalog;
+      cascade = if matchingMeta != null then (matchingMeta.cascade or true) else true;
+
+      userSetting = findPathSetting { inherit cascade; } userModules path;
+      globalSetting = findPathSetting { inherit cascade; } globalModules path;
+      leafUserEnable = (lib.attrByPath (lib.splitString "." path) { } userModules).enable or null;
 
       directlyEnabled =
         if userSetting != null then userSetting
         else if globalSetting != null then globalSetting
         else false;
 
-      catalog = if featureCatalog != null then featureCatalog else [ ];
       enabledSet = computeEnabledFeatureSetForUser {
-        inherit cfg userName catalog modulesRegistry;
+        inherit cfg userName catalog modulesRegistry hostPlatform;
       };
     in
     if directlyEnabled then true
-    else if userSetting == false then false # User explicit opt-out wins over transitive requires
+    else if leafUserEnable == false then false # Leaf explicit opt-out wins over transitive requires
     else enabledSet ? ${path};
 
   # Resolve all active features for a user
@@ -266,7 +292,7 @@ let
 
       enabledSet = computeEnabledFeatureSetForUser {
         cfg = osConfig;
-        inherit userName catalog modulesRegistry;
+        inherit userName catalog modulesRegistry hostPlatform;
       };
     in
     lib.filter
@@ -315,9 +341,11 @@ let
           if isDarwin then "/Users/${userName}/dot"
           else "/home/${userName}/dot";
         envDotfilesDir = osConfig.environment.variables.DOTFILES_DIR or null;
+        isOtherUserHome = dir:
+          (lib.hasPrefix "/home/" dir && !(lib.hasPrefix "/home/${userName}/" dir))
+          || (lib.hasPrefix "/Users/" dir && !(lib.hasPrefix "/Users/${userName}/" dir));
         repoPath =
-          if envDotfilesDir != null
-            && (lib.hasPrefix "/home/${userName}/" envDotfilesDir || lib.hasPrefix "/Users/${userName}/" envDotfilesDir)
+          if envDotfilesDir != null && !(isOtherUserHome envDotfilesDir)
           then envDotfilesDir
           else defaultRepoPath;
 
@@ -360,9 +388,7 @@ let
       compileSingleFeature = feature:
         let
           pathParts = lib.splitString "." feature.path;
-          globalCfg = lib.foldl' (acc: p: acc.${p} or { }) (osConfig.modules or { }) pathParts;
-          userRawCfg = lib.foldl' (acc: p: acc.${p} or { }) (userCfg.modules or { }) pathParts;
-          featureCfg = lib.recursiveUpdate globalCfg userRawCfg;
+          featureCfg = lib.attrByPath pathParts { } (userCfg.modules or { });
 
           dotfilesConfig = compileUserDotfiles {
             inherit osConfig feature featureCfg userName self;
@@ -374,27 +400,28 @@ let
             inherit featureCfg userName osConfig;
           };
         in
-        lib.mkMerge [
-          (if feature.homeModule != null then
-            (if lib.isFunction feature.homeModule then feature.homeModule featureArgs else feature.homeModule)
-          else { })
-          (if isLinuxHost && feature.homeModuleLinux != null then
-            (if lib.isFunction feature.homeModuleLinux then feature.homeModuleLinux featureArgs else feature.homeModuleLinux)
-          else { })
-          (if isDarwinHost && feature.homeModuleDarwin != null then
-            (if lib.isFunction feature.homeModuleDarwin then feature.homeModuleDarwin featureArgs else feature.homeModuleDarwin)
-          else { })
-          (if lib.isFunction dotfilesConfig then dotfilesConfig hmArgs else dotfilesConfig)
-        ];
+        {
+          _file = toString (feature.file or "<feature:${feature.path}>");
+          config = lib.mkMerge [
+            (if feature.homeModule != null then
+              (if lib.isFunction feature.homeModule then feature.homeModule featureArgs else feature.homeModule)
+            else { })
+            (if isLinuxHost && feature.homeModuleLinux != null then
+              (if lib.isFunction feature.homeModuleLinux then feature.homeModuleLinux featureArgs else feature.homeModuleLinux)
+            else { })
+            (if isDarwinHost && feature.homeModuleDarwin != null then
+              (if lib.isFunction feature.homeModuleDarwin then feature.homeModuleDarwin featureArgs else feature.homeModuleDarwin)
+            else { })
+            (if lib.isFunction dotfilesConfig then dotfilesConfig hmArgs else dotfilesConfig)
+          ];
+        };
     in
     map compileSingleFeature enabledFeatures;
 
   # Two-stage system activation
-  # Evaluates nixosModule / darwinModule once at machine level when selectedUsers != [] or globally enabled
+  # Emits per-feature system modules (preserving _file locations) evaluated once at machine level
   compileSystemFeatureModules =
-    { config
-    , pkgs
-    , lib
+    { lib
     , system
     , featureCatalog ? [ ]
     , modulesRegistry ? null
@@ -403,56 +430,67 @@ let
       isLinux = system == "x86_64-linux" || system == "aarch64-linux";
       isDarwin = system == "aarch64-darwin" || system == "x86_64-darwin";
       hostPlatform = if isDarwin then "darwin" else "linux";
-      allUserNames = lib.attrNames (lib.filterAttrs (_: u: u.enable) (config.hostUsers or { }));
 
       catalog =
         if featureCatalog != [ ] then featureCatalog
         else if modulesRegistry != null then (modulesRegistry.features or modulesRegistry.featureCatalog or [ ])
-        else if config ? _modulesRegistry && config._modulesRegistry != null then (config._modulesRegistry.features or config._modulesRegistry.featureCatalog or [ ])
         else [ ];
 
-      # Precompute per-user enabled feature closures once rather than per (feature, user)
-      enabledSetsByUser = lib.genAttrs allUserNames (u:
-        computeEnabledFeatureSetForUser {
-          cfg = config;
-          userName = u;
-          inherit catalog modulesRegistry;
-        }
-      );
+      activePlatformFeatures = lib.filter
+        (feature:
+          (lib.elem hostPlatform feature.platforms)
+          && ((isLinux && feature.nixosModule != null) || (isDarwin && feature.darwinModule != null))
+        )
+        catalog;
     in
-    lib.mkMerge (map
+    map
       (feature:
+      { config, pkgs, ... }:
       let
+        allUserNames = lib.attrNames (lib.filterAttrs (_: u: u.enable) (config.hostUsers or { }));
+        enabledSetsByUser = config._enabledFeatureSets or (lib.genAttrs allUserNames (u:
+          computeEnabledFeatureSetForUser {
+            cfg = config;
+            userName = u;
+            inherit catalog modulesRegistry hostPlatform;
+          }
+        ));
+
         pathParts = lib.splitString "." feature.path;
-        globalCfg = lib.foldl' (acc: p: acc.${p} or { }) (config.modules or { }) pathParts;
-        platformSupported = lib.elem hostPlatform feature.platforms;
+        globalCfg = lib.attrByPath pathParts { } (config.modules or { });
+        selectedUsers = lib.filter (u: (enabledSetsByUser.${u} or { }) ? ${feature.path}) allUserNames;
 
-        selectedUsers =
-          if platformSupported then
-            lib.filter (u: (enabledSetsByUser.${u} or { }) ? ${feature.path}) allUserNames
+        isGloballyEnabled = (globalCfg.enable or null) == true;
+        shouldActivate = if allUserNames != [ ] then (selectedUsers != [ ]) else isGloballyEnabled;
+
+        effectiveFeatureCfg =
+          if selectedUsers == [ ] then globalCfg
           else
-            [ ];
-
-        isGloballyEnabled = platformSupported && ((globalCfg.enable or null) == true);
-        shouldActivate = (selectedUsers != [ ]) || isGloballyEnabled;
+            lib.mapAttrs
+              (k: gVal:
+                let
+                  overrides = lib.filter (v: v != gVal) (
+                    map (u: (lib.attrByPath pathParts { } (config.hostUsers.${u}.modules or { })).${k} or gVal) selectedUsers
+                  );
+                in
+                if overrides != [ ] then lib.last overrides else gVal
+              )
+              globalCfg;
 
         systemArgs = {
           inherit config pkgs lib system selectedUsers;
-          featureCfg = globalCfg;
+          featureCfg = effectiveFeatureCfg;
         };
+        rawMod = if isLinux then feature.nixosModule else feature.darwinModule;
       in
-      lib.mkIf shouldActivate (
-        lib.mkMerge [
-          (if isLinux && feature.nixosModule != null then
-            (if lib.isFunction feature.nixosModule then feature.nixosModule systemArgs else feature.nixosModule)
-          else { })
-          (if isDarwin && feature.darwinModule != null then
-            (if lib.isFunction feature.darwinModule then feature.darwinModule systemArgs else feature.darwinModule)
-          else { })
-        ]
+      {
+        _file = toString (feature.file or "<feature:${feature.path}>");
+        config = lib.mkIf shouldActivate (
+          if lib.isFunction rawMod then rawMod systemArgs else rawMod
+        );
+      }
       )
-      )
-      catalog);
+      activePlatformFeatures;
 
 in
 {
@@ -460,6 +498,7 @@ in
     computeModulePath
     mkFeature
     buildFeatureOptionTree
+    computeEnabledFeatureSetForUser
     isFeatureEnabledForUser
     resolveUserFeatures
     compileUserDotfiles

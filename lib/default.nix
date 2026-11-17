@@ -8,6 +8,7 @@
     computeModulePath
     mkFeature
     buildFeatureOptionTree
+    computeEnabledFeatureSetForUser
     isFeatureEnabledForUser
     resolveUserFeatures
     compileUserDotfiles
@@ -60,25 +61,16 @@
       { }
       profiles;
 
-  # Dummy specialArgs for metadata extraction — used by both tryImportMeta and
-  # wrapModuleFile (see flakeHelpers.nix). Add new specialArgs here so both
-  # sites stay in sync automatically.
+  # Minimal specialArgs for import-time feature descriptor extraction.
+  # Features are pure descriptors and must not depend on pkgs, config, or system.
   dummySpecialArgs = {
-    config = { };
-    options = { };
-    pkgs = { };
-    system = "x86_64-linux";
     inherit inputs;
-    self = null;
-    hardware = null;
-    overlays = { };
-    modulesRegistry = null;
     _modulePath = "";
   };
 
   # Build module registry from a directory
   # This scans modules and extracts metadata, returning a registry structure
-  buildModuleRegistry = modulesDir: prefix:
+  buildModuleRegistry = modulesDir: _prefix:
     let
       makeRegistry = extFeaturesArg:
         let
@@ -95,30 +87,24 @@
 
           libWithMy = lib // { inherit (lib) my; };
 
-          tryImportFile = path:
+          importFeatureFile = path:
             let
               fullPath = computeModulePath path;
               imported = import path;
-              evalResult = builtins.tryEval (
-                if isFunction imported
-                then imported (dummySpecialArgs // { lib = libWithMy; _modulePath = fullPath; })
-                else imported
-              );
             in
-            if evalResult.success then
-              evalResult.value
-            else
-              builtins.trace "Warning: Failed to import ${toString path}: ${toString evalResult.value}" null;
+            if isFunction imported
+            then imported (dummySpecialArgs // { lib = libWithMy; _modulePath = fullPath; })
+            else imported;
 
           modulesWithMeta = map
             (path:
               let
                 fullPath = computeModulePath path;
-                modVal = tryImportFile path;
+                modVal = importFeatureFile path;
                 isFeature = (modVal._type or "") == "feature";
                 meta =
                   if isFeature then
-                    (modVal.meta or { inherit (modVal) requires platforms description; })
+                    (modVal.meta or { inherit (modVal) requires platforms description cascade; })
                   else
                     (modVal._meta or modVal.meta or null);
               in
@@ -151,7 +137,18 @@
           _assert = assert assertMsg (collisions == [ ])
             "Colliding feature paths between repository and private-extension: ${toString collisions}"; true;
 
-          allFeatures = assert _assert; discoveredFeatures ++ extFeaturesWithPaths;
+          discoveredAndExtFeatures = discoveredFeatures ++ extFeaturesWithPaths;
+          allFeaturePathSet = listToAttrs (map (f: { name = f.path; value = true; }) discoveredAndExtFeatures);
+          missingDeps = concatMap
+            (f:
+              map (dep: "${f.path} -> ${dep}")
+                (filter (dep: !(allFeaturePathSet ? ${dep})) (f.requires or [ ]))
+            )
+            discoveredAndExtFeatures;
+          _assertDeps = assert assertMsg (missingDeps == [ ])
+            "Unknown feature paths in requires: ${concatStringsSep ", " missingDeps}"; true;
+
+          allFeatures = assert _assert; assert _assertDeps; discoveredAndExtFeatures;
         in
         {
           modules = modulesWithMetaList;
@@ -216,6 +213,8 @@
     , module ? (_: { })
     , moduleLinux ? null  # Linux-specific additions (for namespace = "all")
     , moduleDarwin ? null  # Darwin-specific additions (for namespace = "all")
+    , moduleDisabled ? null  # Optional config applied when platformActive && !enabled
+    , cascade ? true  # Whether tier-level modules.system.<namespace>.enable activates unset module
     , extraOptions ? { }
     , imports ? [ ]
     }:
@@ -251,8 +250,8 @@
 
       pathParts = splitString "." transformedPath;
 
-      # Get module config
-      cfg = foldl' (acc: part: acc.${part} or { }) config pathParts;
+      # Get module config lazily so modules can inspect cfg without strict foldl' cycles
+      cfg = attrByPath pathParts { } config;
 
     in
     {
@@ -269,31 +268,43 @@
 
       config =
         let
-          # Tier-level cascade: modules.system.<namespace>.enable = true activates unset child modules,
-          # while an explicit child enable = false opts out of the cascade.
+          # Tier-level cascade: modules.system.<namespace>.enable = true activates unset child modules
+          # when cascade = true, while an explicit child enable = false opts out of the cascade.
           tierEnable = config.modules.system.${namespace}.enable or false;
-          enabled = if (cfg.enable or null) != null then cfg.enable else tierEnable;
+          enabled =
+            if (cfg.enable or null) != null then cfg.enable
+            else if cascade then tierEnable
+            else false;
         in
-        mkIf (platformActive && enabled) (
-          let
-            # module can be attrset or function (cfg -> attrset)
-            resolvedModule = if isFunction module then module cfg else module;
+        mkMerge (
+          [
+            (mkIf (platformActive && enabled) (
+              let
+                # module can be attrset or function (cfg -> attrset)
+                resolvedModule = if isFunction module then module cfg else module;
 
-            # Platform-specific additions
-            resolvedLinux =
-              if moduleLinux != null && isLinux then
-                (if isFunction moduleLinux then moduleLinux cfg else moduleLinux)
-              else { };
-            resolvedDarwin =
-              if moduleDarwin != null && isDarwin then
-                (if isFunction moduleDarwin then moduleDarwin cfg else moduleDarwin)
-              else { };
-          in
-          mkMerge [
-            resolvedModule
-            resolvedLinux
-            resolvedDarwin
+                # Platform-specific additions
+                resolvedLinux =
+                  if moduleLinux != null && isLinux then
+                    (if isFunction moduleLinux then moduleLinux cfg else moduleLinux)
+                  else { };
+                resolvedDarwin =
+                  if moduleDarwin != null && isDarwin then
+                    (if isFunction moduleDarwin then moduleDarwin cfg else moduleDarwin)
+                  else { };
+              in
+              mkMerge [
+                resolvedModule
+                resolvedLinux
+                resolvedDarwin
+              ]
+            ))
           ]
+          ++ optional (moduleDisabled != null) (
+            mkIf (platformActive && !enabled) (
+              if isFunction moduleDisabled then moduleDisabled cfg else moduleDisabled
+            )
+          )
         );
     };
 }

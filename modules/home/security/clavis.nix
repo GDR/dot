@@ -1,4 +1,4 @@
-{ lib, pkgs ? null, ... }:
+{ lib, ... }:
 
 lib.my.mkFeature {
   description = "Clavis — macOS Keychain SSH Agent & age plugin with Touch ID";
@@ -12,8 +12,8 @@ lib.my.mkFeature {
     };
     package = lib.mkOption {
       type = lib.types.nullOr lib.types.package;
-      default = if pkgs != null && pkgs ? clavis then pkgs.clavis else null;
-      description = "Clavis package to install";
+      default = null;
+      description = "Clavis package to install (defaults to pkgs.clavis)";
     };
   };
 

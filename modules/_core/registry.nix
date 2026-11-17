@@ -10,9 +10,6 @@ let
   registry = lib.my.buildModuleRegistry modulesDir "home" extFeatures;
 in
 {
-  # List of module files to import
-  modules = map (m: m.file) registry.allModules;
-
   # Registry metadata
   moduleRegistry = registry;
 

@@ -5,23 +5,34 @@
 let
   inherit (inputs) nixpkgs nix-darwin home-manager vscode-server hardware charon-key sops-nix;
 
-  # Helper to wrap a module file and pass computed _modulePath
-  # Features in modules/home are compiled centrally by the feature compiler in user.nix, returning { }
+  # Helper to wrap a system module file and pass computed _modulePath while preserving functionArgs and _file
   # System modules in modules/systems are passed through directly
-  wrapModuleFile = filePath: computedModulePath: { config ? null, options ? null, pkgs ? null, lib ? null, system ? null, inputs ? null, overlays ? null, home-manager ? null, hardware ? null, nixpkgs ? null, ... }@args:
+  wrapModuleFile = filePath: computedModulePath:
     let
-      # Import the actual module with all arguments plus computed path
       imported = import filePath;
-      originalModule =
-        if lib.isFunction imported
-        then imported (args // { _modulePath = computedModulePath; })
-        else imported;
+      attachFile = mod:
+        if lib.isAttrs mod && !(mod ? _file)
+        then mod // { _file = toString filePath; }
+        else mod;
+      defaultModuleArgs = {
+        config = true;
+        options = true;
+        pkgs = true;
+        lib = true;
+        system = true;
+        inputs = true;
+        overlays = true;
+        home-manager = true;
+        hardware = true;
+        nixpkgs = true;
+      };
     in
-    if (originalModule._type or "") == "feature" then
-    # Features are handled centrally by the feature compiler in user.nix
-      { }
+    if lib.isFunction imported then
+      lib.setFunctionArgs
+        (args: attachFile (imported (args // { _modulePath = computedModulePath; })))
+        (defaultModuleArgs // (builtins.removeAttrs (lib.functionArgs imported) [ "_modulePath" ]))
     else
-      originalModule;
+      attachFile imported;
 
   # Wrap system modules (systems/all, systems/darwin, systems/linux)
   # These get auto-discovered and wrapped to receive _modulePath

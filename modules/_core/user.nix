@@ -1,6 +1,6 @@
 # Core user module - defines hostUsers options
 # This is a foundational module, not a typical package module
-{ config, lib, system, pkgs, modulesRegistry ? null, self ? null, inputs ? { }, ... }@args:
+{ config, options, lib, system, pkgs, modulesRegistry ? null, self ? null, inputs ? { }, ... }@args:
 
 with lib;
 
@@ -24,6 +24,26 @@ let
     inherit featureCatalog;
     knownModulePaths = allKnownModulePaths;
   };
+
+  # Forward explicitly set option values from host-level `modules` or `profileModules`
+  # into `hostUsers.<user>.modules`. Options with defaults have isDefined = true at
+  # priority 1500 (`mkOptionDefault`); gating on `highestPrio < 1500` avoids promoting
+  # unset defaults so per-user `lib.mkDefault` (priority 1000) never collides.
+  forwardTree = cond: priority: skipEnable: optTree: schemaTree:
+    concatMapAttrs
+      (k: v:
+        if isOption v then
+          if skipEnable && k == "enable" then { }
+          else
+            let
+              gOpt = optTree.${k};
+              explicitlySet = gOpt.isDefined && gOpt.highestPrio < 1500;
+            in
+            { ${k} = mkIf (cond && explicitlySet) (mkOverride priority gOpt.value); }
+        else
+          { ${k} = forwardTree cond priority skipEnable optTree.${k} v; }
+      )
+      schemaTree;
 
   # SSH key submodule
   keyModule = types.submodule {
@@ -57,175 +77,187 @@ let
   };
 
   # User submodule - defines all options for a single user
-  userModule = types.submodule ({ name, ... }: {
-    options = {
-      enable = mkEnableOption "user ${name}";
+  userModule = types.submodule ({ name, config, ... }:
+    let
+      userSubCfg = config;
+    in
+    {
+      options = {
+        enable = mkEnableOption "user ${name}";
+        inheritProfiles = mkEnableOption "inheriting host-level profileModules defaults";
 
-      # Basic user info
-      fullName = mkOption {
-        type = types.str;
-        default = "";
-        description = "Full name for git commits";
-      };
+        # Basic user info
+        fullName = mkOption {
+          type = types.str;
+          default = "";
+          description = "Full name for git commits";
+        };
 
-      email = mkOption {
-        type = types.str;
-        default = "";
-        description = "Email for git commits";
-      };
+        email = mkOption {
+          type = types.str;
+          default = "";
+          description = "Email for git commits";
+        };
 
-      github = mkOption {
-        type = types.str;
-        default = "";
-        description = "GitHub username for SSH config";
-      };
+        github = mkOption {
+          type = types.str;
+          default = "";
+          description = "GitHub username for SSH config";
+        };
 
-      # SSH keys
-      keys = mkOption {
-        type = types.listOf keyModule;
-        default = [ ];
-        description = "SSH keys for this user";
-      };
+        # SSH keys
+        keys = mkOption {
+          type = types.listOf keyModule;
+          default = [ ];
+          description = "SSH keys for this user";
+        };
 
-      # SSH configuration
-      ssh = mkOption {
-        type = types.listOf (types.submodule {
-          options = {
-            host = mkOption {
-              type = types.str;
-              description = "SSH host/match pattern (e.g., '*', 'github.com', '*.example.com')";
+        # SSH configuration
+        ssh = mkOption {
+          type = types.listOf (types.submodule {
+            options = {
+              host = mkOption {
+                type = types.str;
+                description = "SSH host/match pattern (e.g., '*', 'github.com', '*.example.com')";
+              };
+              user = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                description = "SSH username";
+              };
+              identityFile = mkOption {
+                type = types.nullOr (types.either types.str (types.listOf types.str));
+                default = null;
+                description = "Path to SSH identity file(s)";
+              };
+              forwardAgent = mkOption {
+                type = types.nullOr types.bool;
+                default = null;
+                description = "Enable SSH agent forwarding";
+              };
+              port = mkOption {
+                type = types.nullOr types.int;
+                default = null;
+                description = "SSH port";
+              };
+              hostname = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                description = "Actual hostname/IP address";
+              };
+              extraOptions = mkOption {
+                type = types.attrsOf types.str;
+                default = { };
+                description = "Additional SSH options (e.g., AddKeysToAgent, Compression)";
+              };
             };
-            user = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = "SSH username";
-            };
-            identityFile = mkOption {
-              type = types.nullOr (types.either types.str (types.listOf types.str));
-              default = null;
-              description = "Path to SSH identity file(s)";
-            };
-            forwardAgent = mkOption {
-              type = types.nullOr types.bool;
-              default = null;
-              description = "Enable SSH agent forwarding";
-            };
-            port = mkOption {
-              type = types.nullOr types.int;
-              default = null;
-              description = "SSH port";
-            };
-            hostname = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = "Actual hostname/IP address";
-            };
-            extraOptions = mkOption {
-              type = types.attrsOf types.str;
-              default = { };
-              description = "Additional SSH options (e.g., AddKeysToAgent, Compression)";
-            };
+          });
+          default = [ ];
+          description = "SSH host configurations";
+        };
+
+        # SSH config includes
+        sshIncludes = mkOption {
+          type = types.listOf types.str;
+          default = [ "~/.ssh/config.d/*" ];
+          description = "Additional SSH config files to include";
+        };
+
+        # Clavis SSH Agent integration
+        clavisAgent = {
+          enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable Clavis SSH Agent integration for this user";
           };
-        });
-        default = [ ];
-        description = "SSH host configurations";
-      };
-
-      # SSH config includes
-      sshIncludes = mkOption {
-        type = types.listOf types.str;
-        default = [ "~/.ssh/config.d/*" ];
-        description = "Additional SSH config files to include";
-      };
-
-      # Clavis SSH Agent integration
-      clavisAgent = {
-        enable = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Enable Clavis SSH Agent integration for this user";
+          socketPath = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Custom Clavis SSH Agent socket path. If null, uses ~/.ssh/clavis.sock";
+          };
         };
-        socketPath = mkOption {
-          type = types.nullOr types.str;
+
+        # Bitwarden SSH Agent integration
+        bitwardenSshAgent = {
+          enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Enable Bitwarden SSH Agent integration for this user";
+          };
+          socketPath = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Custom Bitwarden SSH Agent socket path. If null, uses platform default.";
+          };
+        };
+
+        # Linux-specific
+        uid = mkOption {
+          type = types.nullOr types.int;
           default = null;
-          description = "Custom Clavis SSH Agent socket path. If null, uses ~/.ssh/clavis.sock";
-        };
-      };
-
-      # Bitwarden SSH Agent integration
-      bitwardenSshAgent = {
-        enable = mkOption {
-          type = types.bool;
-          default = false;
-          description = "Enable Bitwarden SSH Agent integration for this user";
-        };
-        socketPath = mkOption {
-          type = types.nullOr types.str;
-          default = null;
-          description = "Custom Bitwarden SSH Agent socket path. If null, uses platform default.";
-        };
-      };
-
-      # Linux-specific
-      uid = mkOption {
-        type = types.nullOr types.int;
-        default = null;
-        description = ''
-          Fixed UID for this user (Linux only). If null, assigned by
-          alphabetical order starting from 1000 — fragile if a second
-          user whose name sorts earlier is added. Prefer setting this
-          explicitly in hosts/users/<name>.nix.
-        '';
-      };
-
-      extraGroups = mkOption {
-        type = types.listOf types.str;
-        default = [ "wheel" ];
-        description = "Extra groups for the user (Linux only)";
-      };
-
-      # Per-user module configuration (hierarchical enables)
-      # Enable at any level: home.browsers.enable (all browsers) or home.browsers.vivaldi.enable (specific)
-      modules = mkOption {
-        type = types.submoduleWith {
-          modules = [
-            {
-              freeformType = types.attrsOf types.anything;
-              options = generatedFeatureOptions;
-            }
-          ];
-        };
-        default = { };
-        description = ''
-          Module configuration for this user.
-          Enable at any path level - parent enables cascade to children.
-          Example: modules.home.browsers.enable = true (enables all browsers)
-        '';
-        example = literalExpression ''
-          {
-            home.browsers.enable = true;        # all browsers
-            home.editors.neovim.enable = true;  # specific editor
-          }
-        '';
-      };
-
-      # Sudo configuration (Linux only)
-      sudo = {
-        nopasswd = mkOption {
-          type = types.bool;
-          default = false;
           description = ''
-            Grant this user NOPASSWD sudo on Linux.
-            Useful for deploy-rs or other unattended automation that
-            SSHes as the user and needs to switch to root.
+            Fixed UID for this user (Linux only). If null, assigned by
+            alphabetical order starting from 1000 — fragile if a second
+            user whose name sorts earlier is added. Prefer setting this
+            explicitly in hosts/users/<name>.nix.
           '';
         };
+
+        extraGroups = mkOption {
+          type = types.listOf types.str;
+          default = [ "wheel" ];
+          description = "Extra groups for the user (Linux only)";
+        };
+
+        # Per-user module configuration (hierarchical enables)
+        # Enable at any level: home.browsers.enable (all browsers) or home.browsers.vivaldi.enable (specific)
+        modules = mkOption {
+          type = types.submoduleWith {
+            modules = [
+              {
+                options = generatedFeatureOptions;
+                config = mkMerge [
+                  (forwardTree true 1100 true options.modules generatedFeatureOptions)
+                  (forwardTree userSubCfg.inheritProfiles 1050 false options.profileModules generatedFeatureOptions)
+                ];
+              }
+            ];
+          };
+          default = { };
+          description = ''
+            Module configuration for this user.
+            Enable at any path level - parent enables cascade to children.
+            Example: modules.home.browsers.enable = true (enables all browsers)
+          '';
+          example = literalExpression ''
+            {
+              home.browsers.enable = true;        # all browsers
+              home.editors.neovim.enable = true;  # specific editor
+            }
+          '';
+        };
+
+        # Sudo configuration (Linux only)
+        sudo = {
+          nopasswd = mkOption {
+            type = types.bool;
+            default = false;
+            description = ''
+              Grant this user NOPASSWD sudo on Linux.
+              Useful for deploy-rs or other unattended automation that
+              SSHes as the user and needs to switch to root.
+            '';
+          };
+        };
       };
-    };
-  });
+    });
 
 in
 {
+  imports = lib.my.compileSystemFeatureModules {
+    inherit lib system featureCatalog modulesRegistry;
+  };
+
   options.dotfiles.live = mkOption {
     type = types.bool;
     default = false;
@@ -237,11 +269,27 @@ in
   };
 
   options.modules = generatedFeatureOptions;
+  options.profileModules = generatedFeatureOptions;
 
   options._modulesRegistry = mkOption {
     internal = true;
     default = modulesRegistry;
     description = "Internal reference to modulesRegistry";
+  };
+
+  options._enabledFeatureSets = mkOption {
+    internal = true;
+    readOnly = true;
+    default = genAttrs (attrNames enabledUsers) (u:
+      lib.my.computeEnabledFeatureSetForUser {
+        cfg = config;
+        inherit modulesRegistry;
+        userName = u;
+        catalog = featureCatalog;
+        hostPlatform = if isDarwin then "darwin" else "linux";
+      }
+    );
+    description = "Internal cached per-user enabled feature sets";
   };
 
   options.hostUsers = mkOption {
@@ -286,93 +334,87 @@ in
     '';
   };
 
-  # Create system users from enabled hostUsers and compile features
-  config = mkMerge [
-    (mkIf (enabledUsers != { }) ({
-      # Create users.users entries for each enabled hostUser
-      # Note: Darwin users are managed differently - only set Linux-specific options on Linux
-      users.users =
-        let
-          # Generate UIDs starting from 1000, incrementing for each user
-          # This ensures unique UIDs for multiple users
-          userNames = attrNames enabledUsers;
-          # Helper to create UID mapping: first user gets 1000, second gets 1001, etc.
-          createUidMap = names: idx:
-            if names == [ ] then { }
-            else
-              (createUidMap (tail names) (idx + 1)) // {
-                ${head names} = 1000 + idx;
-              };
-          uidMap = createUidMap userNames 0;
-        in
-        mapAttrs
-          (name: cfg:
-            if isLinux then {
-              name = name;
-              isNormalUser = true;
-              home = "/home/${name}";
-              group = "users";
-              uid = if cfg.uid != null then cfg.uid else uidMap.${name};
-              extraGroups = cfg.extraGroups;
-            } else {
-              # Darwin: minimal user config, home-manager handles the rest
-              name = name;
-              home = "/Users/${name}";
-            }
-          )
-          enabledUsers;
+  # Create system users from enabled hostUsers
+  config = mkIf (enabledUsers != { }) ({
+    # Create users.users entries for each enabled hostUser
+    # Note: Darwin users are managed differently - only set Linux-specific options on Linux
+    users.users =
+      let
+        # Generate UIDs starting from 1000, incrementing for each user
+        # This ensures unique UIDs for multiple users
+        userNames = attrNames enabledUsers;
+        # Helper to create UID mapping: first user gets 1000, second gets 1001, etc.
+        createUidMap = names: idx:
+          if names == [ ] then { }
+          else
+            (createUidMap (tail names) (idx + 1)) // {
+              ${head names} = 1000 + idx;
+            };
+        uidMap = createUidMap userNames 0;
+      in
+      mapAttrs
+        (name: cfg:
+          if isLinux then {
+            name = name;
+            isNormalUser = true;
+            home = "/home/${name}";
+            group = "users";
+            uid = if cfg.uid != null then cfg.uid else uidMap.${name};
+            extraGroups = cfg.extraGroups;
+          } else {
+            # Darwin: minimal user config, home-manager handles the rest
+            name = name;
+            home = "/Users/${name}";
+          }
+        )
+        enabledUsers;
 
-      # Add users to nix trusted/allowed users
-      nix.settings = {
-        trusted-users = [ "root" ] ++ (attrNames enabledUsers);
-        allowed-users = [ "root" ] ++ (attrNames enabledUsers);
-      };
+    # Add users to nix trusted/allowed users
+    nix.settings = {
+      trusted-users = [ "root" ] ++ (attrNames enabledUsers);
+      allowed-users = [ "root" ] ++ (attrNames enabledUsers);
+    };
 
-      # Configure home-manager for each enabled user
-      home-manager = {
-        useUserPackages = true;
-        useGlobalPkgs = true;
-        # Back up existing files instead of failing
-        backupFileExtension = "backup";
-        sharedModules = optional (inputs ? learnharness && inputs.learnharness ? homeManagerModules.default) inputs.learnharness.homeManagerModules.default;
+    # Configure home-manager for each enabled user
+    home-manager = {
+      useUserPackages = true;
+      useGlobalPkgs = true;
+      # Back up existing files instead of failing
+      backupFileExtension = "backup";
+      sharedModules = optional (inputs ? learnharness && inputs.learnharness ? homeManagerModules.default) inputs.learnharness.homeManagerModules.default;
 
-        users = mapAttrs
-          (userName: userCfg:
-            hmArgs: {
-              imports = lib.my.compileUserHomeModules {
-                osConfig = hmArgs.osConfig or config;
-                inherit pkgs userName userCfg featureCatalog modulesRegistry;
-                self = args.self or null;
-                inputs = args.inputs or { };
-              };
-              home = {
-                stateVersion = "26.05";
-                username = userName;
-                homeDirectory = if isDarwin then "/Users/${userName}" else "/home/${userName}";
-              };
-            }
-          )
-          enabledUsers;
-      };
-    } // optionalAttrs isDarwin {
-      # Darwin requires primaryUser for certain options
-      system.primaryUser = head (attrNames enabledUsers);
-    } // optionalAttrs isLinux {
-      # Grant NOPASSWD sudo to any user that opted in
-      security.sudo.extraRules =
-        let
-          nopasswdUsers = filterAttrs (_: cfg: cfg.enable && cfg.sudo.nopasswd) config.hostUsers;
-        in
-        mapAttrsToList
-          (name: _: {
-            users = [ name ];
-            commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
-          })
-          nopasswdUsers;
-    }))
-
-    (lib.my.compileSystemFeatureModules {
-      inherit config pkgs lib system featureCatalog modulesRegistry;
-    })
-  ];
+      users = mapAttrs
+        (userName: userCfg:
+          hmArgs: {
+            imports = lib.my.compileUserHomeModules {
+              osConfig = hmArgs.osConfig or config;
+              inherit pkgs userName userCfg featureCatalog modulesRegistry;
+              self = args.self or null;
+              inputs = args.inputs or { };
+            };
+            home = {
+              stateVersion = "26.05";
+              username = userName;
+              homeDirectory = if isDarwin then "/Users/${userName}" else "/home/${userName}";
+            };
+          }
+        )
+        enabledUsers;
+    };
+  } // optionalAttrs isDarwin {
+    # Darwin requires primaryUser for certain options
+    system.primaryUser = head (attrNames enabledUsers);
+  } // optionalAttrs isLinux {
+    # Grant NOPASSWD sudo to any user that opted in
+    security.sudo.extraRules =
+      let
+        nopasswdUsers = filterAttrs (_: cfg: cfg.enable && cfg.sudo.nopasswd) config.hostUsers;
+      in
+      mapAttrsToList
+        (name: _: {
+          users = [ name ];
+          commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
+        })
+        nopasswdUsers;
+  });
 }
