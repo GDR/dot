@@ -4,6 +4,7 @@
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
   description = "NVIDIA GPU drivers and settings";
+  cascade = false;
 
   extraOptions = {
     open = lib.mkOption {

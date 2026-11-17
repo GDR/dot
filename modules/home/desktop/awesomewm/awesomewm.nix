@@ -4,9 +4,17 @@
 lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "AwesomeWM X11 window manager";
+  cascade = false;
 
   # System-level configuration (requires root)
   nixosModule = { pkgs, ... }: {
+    # XDG portal fallback for X11 apps (e.g. Lutris/Flatpak file & URI dialogs)
+    xdg.portal = {
+      enable = true;
+      extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+      config.common.default = [ "gtk" ];
+    };
+
     # X server with AwesomeWM
     services.xserver = {
       enable = true;

@@ -6,9 +6,18 @@ lib.my.mkFeature {
   description = "Virtual mic soundboard for Dota 2";
   requires = [ "home.desktop.services.audio" ];
 
+  # System-level hardened ydotoold daemon + group access for selected users
+  nixosModule = { config, lib, selectedUsers, ... }: {
+    programs.ydotool.enable = true;
+    users.users = lib.genAttrs selectedUsers (_: {
+      extraGroups = [ config.programs.ydotool.group ];
+    });
+  };
+
   homeModuleLinux = { pkgs, ... }:
     let
       soundpad = pkgs.writeShellScriptBin "soundpad" ''
+        export YDOTOOL_SOCKET="''${YDOTOOL_SOCKET:-/run/ydotoold/socket}"
         SOUNDS_DIR="''${XDG_CONFIG_HOME:-$HOME/.config}/soundpad/sounds"
         RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
         PID_FILE="$RUNTIME_DIR/soundpad-play.pid"
@@ -152,19 +161,7 @@ lib.my.mkFeature {
     {
       home.packages = [
         soundpad
-        pkgs.ydotool
       ];
-
-      # ydotoold daemon — creates a permanent virtual keyboard.
-      systemd.user.services.ydotoold = {
-        Unit.Description = "ydotool virtual input daemon";
-        Service = {
-          ExecStart = "${pkgs.ydotool}/bin/ydotoold";
-          Restart = "always";
-          RestartSec = 2;
-        };
-        Install.WantedBy = [ "default.target" ];
-      };
 
       # PipeWire virtual sink → source loopback
       xdg.configFile."pipewire/pipewire.conf.d/20-soundpad.conf".text = ''

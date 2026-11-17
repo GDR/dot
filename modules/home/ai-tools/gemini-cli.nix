@@ -3,9 +3,7 @@
 
 lib.my.mkFeature {
   description = "Gemini CLI - Google's AI coding assistant";
-  homeModule = _: {
-    programs.antigravity-cli = {
-      enable = true;
-    };
+  homeModule = { pkgs, ... }: {
+    home.packages = [ pkgs.gemini-cli ];
   };
 }

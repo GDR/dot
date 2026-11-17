@@ -1,6 +1,6 @@
 # Homebrew integration - Darwin-only system module
 # Enables nix-homebrew for managing Homebrew via Nix
-{ lib, inputs, ... }@args:
+{ config, lib, inputs, ... }@args:
 
 lib.my.mkSystemModuleV2 args {
   namespace = "darwin";
@@ -13,6 +13,7 @@ lib.my.mkSystemModuleV2 args {
   extraOptions = {
     user = lib.mkOption {
       type = lib.types.str;
+      default = config.system.primaryUser;
       description = "User account for Homebrew installation";
     };
   };
@@ -28,4 +29,3 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 }
-

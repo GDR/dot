@@ -5,9 +5,17 @@ lib.my.mkSystemModuleV2 args {
   namespace = "linux";
   description = "Tailscale VPN client and daemon";
 
-  module = _: {
-    # Kernel settings for forwarding
-    boot.kernel.sysctl = {
+  extraOptions = {
+    routingMode = lib.mkOption {
+      type = lib.types.enum [ "none" "client" "server" "both" ];
+      default = "client";
+      description = "Tailscale routing features mode.";
+    };
+  };
+
+  module = cfg: {
+    # Enable kernel IP forwarding only when acting as a subnet router / exit node
+    boot.kernel.sysctl = lib.mkIf (lib.elem cfg.routingMode [ "server" "both" ]) {
       "net.ipv4.ip_forward" = 1;
       "net.ipv6.conf.all.forwarding" = 1;
     };
@@ -15,7 +23,7 @@ lib.my.mkSystemModuleV2 args {
     # Tailscale service
     services.tailscale = {
       enable = true;
-      useRoutingFeatures = "client";
+      useRoutingFeatures = cfg.routingMode;
     };
 
     # after = ordering guarantee (tailscaled starts AFTER network is up)
@@ -26,7 +34,7 @@ lib.my.mkSystemModuleV2 args {
       wants = [ "network-online.target" ];
     };
 
-    # Auto-reconnect on boot using persisted auth state in /var/lib/tailscale
+    # Auto-reconnect on boot only when persisted auth state exists, bounded by timeout
     systemd.services.tailscale-autoconnect = {
       description = "Tailscale auto-connect on boot";
       after = [ "network-online.target" "tailscaled.service" ];
@@ -37,7 +45,9 @@ lib.my.mkSystemModuleV2 args {
         RemainAfterExit = true;
       };
       script = ''
-        ${pkgs.tailscale}/bin/tailscale up
+        if [ -s /var/lib/tailscale/tailscaled.state ]; then
+          ${pkgs.tailscale}/bin/tailscale up --timeout=10s || true
+        fi
       '';
     };
 

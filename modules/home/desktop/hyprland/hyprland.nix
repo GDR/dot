@@ -4,9 +4,15 @@
 lib.my.mkFeature {
   platforms = [ "linux" ];
   description = "Hyprland Wayland compositor";
+  cascade = false;
 
   # System-level configuration (requires root)
-  nixosModule = { pkgs, lib, ... }: {
+  nixosModule = { config, pkgs, lib, ... }: {
+    assertions = [{
+      assertion = !(config.services.xserver.windowManager.awesome.enable or false);
+      message = "home.desktop.hyprland and home.desktop.awesomewm are mutually exclusive; enable only one WM per host.";
+    }];
+
     # Enable Wayland and Hyprland
     programs.hyprland = {
       enable = true;
@@ -79,10 +85,10 @@ lib.my.mkFeature {
       '';
     in
     {
-      # Start gnome-keyring daemon as a user systemd service.
+      # Start gnome-keyring daemon as a user systemd service (secrets only; SSH uses programs.ssh.startAgent).
       services.gnome-keyring = {
         enable = true;
-        components = [ "secrets" "ssh" ];
+        components = [ "secrets" ];
       };
 
       home.packages = [ pkgs.gcr_4 pkgs.grim pkgs.slurp ];

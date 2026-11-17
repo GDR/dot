@@ -190,7 +190,7 @@ local mainMod = "SUPER"
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd("ghostty"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + M", hl.dsp.exit())
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("rofi -show drun"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
@@ -258,7 +258,7 @@ end
 hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("dunst")
-    hl.exec_cmd("swww-daemon")
+    hl.exec_cmd("awww-daemon")
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("blueman-applet")
 

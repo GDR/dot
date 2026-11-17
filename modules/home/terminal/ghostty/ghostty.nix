@@ -42,6 +42,8 @@ lib.my.mkFeature {
       theme = lib.my.getTheme osConfig;
     in
     {
+      home.packages = [ pkgs.nerd-fonts.jetbrains-mono ];
+
       programs.ghostty = {
         enable = true;
         package =

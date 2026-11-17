@@ -4,6 +4,7 @@
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
   description = "AMD GPU drivers and settings";
+  cascade = false;
 
   extraOptions = {
     extraPackages = lib.mkOption {

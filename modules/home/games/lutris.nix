@@ -11,13 +11,6 @@ lib.my.mkFeature {
       gamemode
     ];
 
-    # XDG portal for file dialogs, OpenURI (OAuth callbacks), etc.
-    xdg.portal = {
-      enable = true;
-      extraPortals = with pkgs; [ xdg-desktop-portal-gtk ];
-      config.common.default = "gtk";
-    };
-
     home.packages = with pkgs; [
       wine
     ];

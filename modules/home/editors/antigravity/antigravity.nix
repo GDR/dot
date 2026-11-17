@@ -87,7 +87,6 @@ lib.my.mkFeature {
       home.packages = [
         ideLinux
         antigravityLinux
-        pkgs.google-antigravity-cli
         pkgs.mcp-nixos
       ];
     };
@@ -108,7 +107,6 @@ lib.my.mkFeature {
         antigravityIdeWrapper
         pkgs.google-antigravity-ide
         pkgs.google-antigravity
-        pkgs.google-antigravity-cli
         pkgs.mcp-nixos
       ];
     };

@@ -1,17 +1,12 @@
 # Intel GPU drivers and settings - Linux system module
-{ lib, pkgs, config, ... }@args:
+{ lib, pkgs, ... }@args:
 
 lib.my.mkSystemModuleV2 args {
   namespace = "linux";
   description = "Intel GPU drivers and settings";
+  cascade = false;
 
   extraOptions = {
-    enableHybridCodec = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Enable hybrid codec support for vaapiIntel";
-    };
-
     tearFree = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -38,13 +33,6 @@ lib.my.mkSystemModuleV2 args {
       Option "TearFree" "true"
     '';
 
-    # Package override for vaapiIntel with hybrid codec
-    nixpkgs.config.packageOverrides = lib.mkIf cfg.enableHybridCodec (
-      pkgs: {
-        vaapiIntel = pkgs.vaapiIntel.override { enableHybridCodec = true; };
-      }
-    );
-
     # Hardware graphics with extra packages
     hardware.graphics = {
       enable = true;
@@ -52,4 +40,3 @@ lib.my.mkSystemModuleV2 args {
     };
   };
 }
-

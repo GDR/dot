@@ -1,9 +1,9 @@
-# Zsh shell configuration with oh-my-zsh and zplug
+# Zsh shell configuration with oh-my-zsh and declarative Nixpkgs plugins
 { lib, ... }:
 
 lib.my.mkFeature {
   platforms = [ "linux" "darwin" ];
-  description = "Zsh shell configuration with oh-my-zsh and zplug";
+  description = "Zsh shell configuration with oh-my-zsh and Nixpkgs plugins";
 
   extraOptions = {
     showHostname = lib.mkOption {
@@ -33,7 +33,10 @@ lib.my.mkFeature {
       showHostname = featureCfg.showHostname or true;
     in
     {
-      home.packages = with pkgs; [ eza ];
+      home.packages = with pkgs; [
+        eza
+        zsh-completions
+      ];
 
       programs.atuin = {
         enable = true;
@@ -53,6 +56,8 @@ lib.my.mkFeature {
         enable = true;
         enableCompletion = true;
         autosuggestion.enable = true;
+        syntaxHighlighting.enable = true;
+        historySubstringSearch.enable = true;
 
         oh-my-zsh.enable = true;
 
@@ -60,16 +65,13 @@ lib.my.mkFeature {
           typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
         '';
 
-        zplug = {
-          enable = true;
-          plugins = [
-            { name = "romkatv/powerlevel10k"; tags = [ "as:theme" "depth:1" ]; }
-            { name = "zsh-users/zsh-autosuggestions"; }
-            { name = "zsh-users/zsh-syntax-highlighting"; }
-            { name = "zsh-users/zsh-history-substring-search"; }
-            { name = "zsh-users/zsh-completions"; }
-          ];
-        };
+        plugins = [
+          {
+            name = "powerlevel10k";
+            src = pkgs.zsh-powerlevel10k;
+            file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
+          }
+        ];
 
         initContent = ''
           # Source p10k config if it exists

@@ -61,7 +61,6 @@ in
     networking.openssh.userMap = { "dgarifullin" = "gdr"; };
     graphics.intel = {
       enable = true;
-      enableHybridCodec = true;
       tearFree = true;
     };
     power-management = {

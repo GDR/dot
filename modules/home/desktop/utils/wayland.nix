@@ -13,7 +13,7 @@ lib.my.mkFeature {
       wl-clipboard
 
       # Wallpaper daemon
-      swww
+      awww
 
       # Status bar
       waybar

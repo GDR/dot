@@ -10,7 +10,7 @@ lib.my.mkFeature {
     in
     {
       programs.tmux = {
-        enable = false;
+        enable = true;
         shell = "${pkgs.zsh}/bin/zsh";
         terminal = "tmux-256color";
         historyLimit = 10000;

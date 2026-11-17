@@ -4,6 +4,9 @@
 
 lib.my.mkFeature {
   description = "Chromium web browser";
+  darwinModule = { config, lib, ... }: lib.mkIf (config.homebrew.enable or false) {
+    homebrew.casks = [ "chromium" ];
+  };
   homeModuleDarwin = _: {
     programs.chromium = {
       enable = true;
