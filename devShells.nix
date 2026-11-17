@@ -1,5 +1,5 @@
 # Development shells for the flake
-{ pkgs, customPkgs }:
+{ pkgs }:
 {
   default = pkgs.mkShell {
     buildInputs = [
@@ -7,7 +7,7 @@
       pkgs.deadnix
       pkgs.statix
       pkgs.gitleaks
-      customPkgs.pre-commit # Our custom package without Swift dependency
+      pkgs.pre-commit # Custom package from overlays/additions.nix without Swift dependency
       pkgs.just
     ];
     shellHook = ''

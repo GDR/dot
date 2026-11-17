@@ -1,19 +1,16 @@
-{ inputs, lib, config, pkgs, home-manager, hardware, ... }:
-let
-  importUser = name: import ../../users/${name}.nix { inherit lib; };
-  userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/gaming.nix)
-  ];
-in
+{ ... }:
 {
   imports = [
     ./hardware-configuration.nix
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+    ../../../profiles/gaming.nix
   ];
 
-  hostUsers.dgarifullin = userDefaults.user // {
+  system.stateVersion = "26.05";
+
+  hostUsers.dgarifullin = {
+    imports = [ ../../users/dgarifullin.nix ];
     enable = true;
     sudo.nopasswd = true;
     keys = [{
@@ -33,12 +30,12 @@ in
         user = "git";
         identityFile = "~/.ssh/goldstar_id_rsa";
       }
-    ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    ];
+    modules = {
       home.browsers.vivaldi.enable = true;
       home.desktop.hyprland.enable = true;
       home.editors.ghidra.enable = true;
-      home.editors.antigravity = userDefaults.antigravity // {
+      home.editors.antigravity = {
         enable = true;
         # Global MCP servers — written to ~/.gemini/antigravity/mcp_config.json
         # Applies to ALL workspaces opened in Antigravity IDE
@@ -65,11 +62,9 @@ in
   networking.hostName = "nix-goldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
-    fonts.enable = true;
-  };
+  modules.system.all.fonts.enable = true;
 
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+  modules.system.linux = {
     networking.firewall.allowedTCPPorts = [ 8080 ];
     networking.openssh = {
       enable = true;

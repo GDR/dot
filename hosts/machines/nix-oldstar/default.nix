@@ -1,16 +1,12 @@
-{ lib, hardware, ... }:
-let
-  importUser = name: import ../../users/${name}.nix { inherit lib; };
-  userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/server.nix)
-  ];
-in
+{ hardware, ... }:
 {
   imports = [
     hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
+    ../../../profiles/server.nix
   ];
+
+  system.stateVersion = "26.05";
 
   networking.hostName = "nix-oldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
@@ -22,7 +18,8 @@ in
     system-features = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
   };
 
-  hostUsers.dgarifullin = userDefaults.user // {
+  hostUsers.dgarifullin = {
+    imports = [ ../../users/dgarifullin.nix ];
     enable = true;
     keys = [{
       name = "oldstar";
@@ -41,8 +38,8 @@ in
         user = "git";
         identityFile = "~/.ssh/oldstar_id_ed25519";
       }
-    ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    ];
+    modules = {
       home.editors.ghidra.enable = true;
     };
     sudo.nopasswd = true;
@@ -50,11 +47,9 @@ in
 
   time.timeZone = "Europe/Moscow";
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
-    sops.enable = true;
-  };
+  modules.system.all.sops.enable = true;
 
-  modules.system.linux = lib.recursiveUpdate profiles.system.linux {
+  modules.system.linux = {
     networking.networkmanager.enable = true;
     # server profile enables tailscale by default; oldstar runs on LAN only
     networking.tailscale.enable = false;

@@ -78,40 +78,38 @@
 
       # Get flake helpers (mkDarwinConfiguration, mkNixosConfiguration, etc.)
       flakeHelpers = lib.my.mkFlakeHelpers { inherit self overlays; };
+
+      pkgsFor = system: import nixpkgs {
+        inherit system;
+        overlays = overlays.${system}.list;
+        config = flakeHelpers.nixpkgsConfig;
+      };
     in
     {
       inherit lib;
 
       formatter = forAllSystems (system:
-        nixpkgs.legacyPackages.${system}.nixpkgs-fmt
+        (pkgsFor system).nixpkgs-fmt
       );
 
       packages = forAllSystems (system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            config = {
-              allowUnfree = true;
-              nvidia.acceptLicense = true;
-            };
-          };
-        in
-        import ./packages.nix { inherit pkgs lib system charon-key learnharness; }
+        import ./packages.nix {
+          pkgs = pkgsFor system;
+          inherit lib system charon-key learnharness;
+        }
       );
 
       devShells = forAllSystems (system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          customPkgs = import ./pkgs { inherit pkgs lib system; };
-        in
-        import ./devShells.nix { inherit pkgs customPkgs; }
+        import ./devShells.nix {
+          pkgs = pkgsFor system;
+        }
       );
 
       checks = forAllSystems (system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        import ./checks.nix { inherit self inputs pkgs lib system; }
+        import ./checks.nix {
+          inherit self inputs lib system;
+          pkgs = pkgsFor system;
+        }
       );
 
       # Host configurations

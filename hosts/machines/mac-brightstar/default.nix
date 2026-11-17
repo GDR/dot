@@ -1,28 +1,27 @@
-{ lib, ... }:
-let
-  importUser = name: import ../../users/${name}.nix { inherit lib; };
-  userDefaults = importUser "dgarifullin";
-  profiles = lib.my.mergeProfiles [
-    (import ../../../profiles/developer.nix)
-    (import ../../../profiles/desktop.nix)
-    (import ../../../profiles/macos.nix)
-  ];
-in
+{ ... }:
 {
+  imports = [
+    ../../../profiles/developer.nix
+    ../../../profiles/desktop.nix
+    ../../../profiles/macos.nix
+  ];
+
+  system.stateVersion = 5;
   nix.enable = true;
   ids.gids.nixbld = 30000;
 
-  hostUsers.dgarifullin = userDefaults.user // {
+  hostUsers.dgarifullin = {
+    imports = [ ../../users/dgarifullin.nix ];
     enable = true;
     ssh = [
       {
         host = "github.com";
         user = "git";
       }
-    ] ++ userDefaults.ssh.knownHosts;
-    modules = lib.recursiveUpdate profiles.userModules {
+    ];
+    modules = {
       home.editors.cursor.enable = true;
-      home.editors.antigravity = { enable = true; } // userDefaults.antigravity;
+      home.editors.antigravity.enable = true;
       home.networking.sing-box.enable = true;
       home.security.clavis.enable = true;
       # desktop profile enables home.utils broadly; select Darwin-supported utils explicitly
@@ -72,12 +71,9 @@ in
     }
   ];
 
-  modules.system.all = lib.recursiveUpdate profiles.system.all {
-    sops.enable = true;
-    # fonts.enable = true;  # disabled on Darwin
-  };
+  modules.system.all.sops.enable = true;
 
-  modules.system.darwin = lib.recursiveUpdate profiles.system.darwin {
+  modules.system.darwin = {
     homebrew = {
       enable = true;
       user = "dgarifullin";

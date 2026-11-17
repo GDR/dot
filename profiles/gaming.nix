@@ -1,7 +1,8 @@
 # Gaming profile — Steam, Lutris, Soundpad
 # Extend with desktop profile for a full gaming workstation.
+{ lib, ... }:
 {
-  userModules = {
-    home.games.enable = true;
+  profileModules = {
+    home.games.enable = lib.mkDefault true;
   };
 }

@@ -52,15 +52,37 @@ let
 
   privateExtension = inputs.private-extension.dotExtension or { };
 
+  nixpkgsConfig = {
+    allowUnfree = true;
+    nvidia.acceptLicense = true;
+    # bitwarden-desktop (2026.x) still depends on electron_39, which nixpkgs
+    # marks as EOL/insecure. Allow it explicitly until nixpkgs bumps the
+    # bitwarden-desktop recipe to a newer electron version.
+    permittedInsecurePackages = [ "electron-39.8.10" ];
+  };
+
+  resolveHostSpec = defaultSystem: spec:
+    if builtins.isAttrs spec && !(spec ? _file) && !(spec ? options) && !(spec ? config) && spec ? hostConfig then
+      {
+        hostConfig = spec.hostConfig;
+        system = spec.system or defaultSystem;
+      }
+    else
+      {
+        hostConfig = spec;
+        system = defaultSystem;
+      };
+
 in
 {
-  inherit wrapModuleFile mkSystemModules;
+  inherit wrapModuleFile mkSystemModules nixpkgsConfig;
   inherit (lib.my) computeModulePath;
 
-  # Build a Darwin (macOS) system configuration
-  mkDarwinConfiguration = host-config:
+  # Build a Darwin (macOS) system configuration (accepts path/module or { hostConfig, system? })
+  mkDarwinConfiguration = hostSpec:
     let
-      system = "aarch64-darwin";
+      resolved = resolveHostSpec "aarch64-darwin" hostSpec;
+      inherit (resolved) hostConfig system;
     in
     nix-darwin.lib.darwinSystem {
       inherit system;
@@ -68,19 +90,25 @@ in
         inherit self inputs lib overlays system;
         modulesRegistry = modulesRegistry;
       };
-      modules = [ host-config ]
-        ++ [
+      modules = [
+        hostConfig
+        {
+          nixpkgs = {
+            config = nixpkgsConfig;
+            overlays = overlays.${system}.list;
+          };
+        }
         home-manager.darwinModules.home-manager
         charon-key.darwinModules.default
         sops-nix.darwinModules.sops
         # antigravity-nix exposes only packages/overlays (no darwinModules);
         # google-antigravity* are injected via overlays/additions.nix
       ]
-        ++ (privateExtension.systemModules.all or [ ])
-        ++ (privateExtension.systemModules.darwin or [ ])
-        ++ mkSystemModules ../modules/systems/all
-        ++ mkSystemModules ../modules/systems/darwin
-        ++ [
+      ++ (privateExtension.systemModules.all or [ ])
+      ++ (privateExtension.systemModules.darwin or [ ])
+      ++ mkSystemModules ../modules/systems/all
+      ++ mkSystemModules ../modules/systems/darwin
+      ++ [
         # Import foundational modules separately (not package modules)
         ../modules/_core/user.nix
         ../modules/_core/theme.nix
@@ -88,10 +116,11 @@ in
       ];
     };
 
-  # Build a NixOS (Linux) system configuration
-  mkNixosConfiguration = host-config:
+  # Build a NixOS (Linux) system configuration (accepts path/module or { hostConfig, system? })
+  mkNixosConfiguration = hostSpec:
     let
-      system = "x86_64-linux";
+      resolved = resolveHostSpec "x86_64-linux" hostSpec;
+      inherit (resolved) hostConfig system;
     in
     nixpkgs.lib.nixosSystem {
       inherit system;
@@ -99,19 +128,25 @@ in
         inherit self inputs lib overlays system hardware;
         modulesRegistry = modulesRegistry;
       };
-      modules = [ host-config ]
-        ++ [
+      modules = [
+        hostConfig
+        {
+          nixpkgs = {
+            config = nixpkgsConfig;
+            overlays = overlays.${system}.list;
+          };
+        }
         # Core NixOS modules from inputs
         home-manager.nixosModules.home-manager
         vscode-server.nixosModules.default
         charon-key.nixosModules.default
         sops-nix.nixosModules.sops
       ]
-        ++ (privateExtension.systemModules.all or [ ])
-        ++ (privateExtension.systemModules.linux or [ ])
-        ++ mkSystemModules ../modules/systems/all
-        ++ mkSystemModules ../modules/systems/linux
-        ++ [
+      ++ (privateExtension.systemModules.all or [ ])
+      ++ (privateExtension.systemModules.linux or [ ])
+      ++ mkSystemModules ../modules/systems/all
+      ++ mkSystemModules ../modules/systems/linux
+      ++ [
         # Import foundational modules separately (not package modules)
         ../modules/_core/user.nix
         ../modules/_core/theme.nix

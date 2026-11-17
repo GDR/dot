@@ -1,48 +1,42 @@
-# Default values for dgarifullin user
-# Import in hosts and reference by section:
-#   hostUsers.dgarifullin = defaults.user // { enable = true; keys = [...]; ssh = [...] ++ defaults.ssh.knownHosts; };
-#   modules.home.editors.antigravity = defaults.antigravity;
+# Default user module for dgarifullin
+# Import inside hostUsers.dgarifullin = { imports = [ ../../users/dgarifullin.nix ]; ... };
 { lib, ... }:
 
 {
-  # hostUsers-compatible fields — passed via `defaults.user // { ... }`
-  user = {
-    fullName = "Damir Garifullin";
-    email = "gosugdr@gmail.com";
-    github = "gdr";
-    extraGroups = [ "wheel" "audio" "libvirtd" "input" ];
-    uid = 1000;
-    nixTrusted = true;
-    isPrimary = true;
-  };
+  fullName = lib.mkDefault "Damir Garifullin";
+  email = lib.mkDefault "gosugdr@gmail.com";
+  github = lib.mkDefault "gdr";
+  uid = lib.mkDefault 1000;
+  stateVersion = lib.mkDefault "26.05";
+  isPrimary = lib.mkDefault true;
+  nixTrusted = lib.mkDefault true;
+  inheritProfiles = lib.mkDefault true;
+  extraGroups = [ "wheel" "audio" ];
 
-  # SSH topology — host-invariant entries appended to each machine's ssh list.
-  # Keys and identity files are still specified per-host.
-  ssh.knownHosts = [
+  # SSH topology — host-invariant entries merged into each machine's ssh list.
+  # Keys and identity files are specified per host.
+  ssh = [
     { host = "nix-oldstar"; forwardAgent = false; }
     { host = "nix-goldstar"; forwardAgent = false; }
   ];
 
   # Antigravity IDE rules — identical across all machines.
-  # Reference as: modules.home.editors.antigravity = defaults.antigravity;
-  antigravity = {
-    rules = ''
-      # Global Rules
+  modules.home.editors.antigravity.rules = lib.mkDefault ''
+    # Global Rules
 
-      ## Communication
-      - Respond in Russian unless the user writes in English
-      - Direct, no fluff — answer immediately
-      - Dense, iterative style
+    ## Communication
+    - Respond in Russian unless the user writes in English
+    - Direct, no fluff — answer immediately
+    - Dense, iterative style
 
-      ## User Profile
-      - Expert: Linux, NixOS, kernel/C++, OSS, game optimization
-      - Preferences: NixOS/Endeavour, gaming/streaming, DSLR photography
-      - Regions of interest: Russia, Georgia
+    ## User Profile
+    - Expert: Linux, NixOS, kernel/C++, OSS, game optimization
+    - Preferences: NixOS/Endeavour, gaming/streaming, DSLR photography
+    - Regions of interest: Russia, Georgia
 
-      ## Code Style
-      - Comment non-obvious decisions
-      - Cite sources when referencing external docs
-      - Imperative mood in commit messages
-    '';
-  };
+    ## Code Style
+    - Comment non-obvious decisions
+    - Cite sources when referencing external docs
+    - Imperative mood in commit messages
+  '';
 }

@@ -1,25 +1,26 @@
 # Desktop profile — GUI environment, browsers, media, messengers, security
 # Suitable for any machine with a display manager / compositor.
+{ lib, system, ... }:
 {
-  userModules = {
-    home.browsers.enable = true;
+  profileModules = {
+    home.browsers.enable = lib.mkDefault true;
     # Desktop infrastructure — intentionally NOT enabling home.desktop.enable broadly
     # to avoid activating all WMs (awesomewm, hyprland). Pick a WM per host.
-    home.desktop.appearance.enable = true;
-    home.desktop.services.enable = true;
-    home.desktop.utils.enable = true;
-    home.desktop.widgets.enable = true;
-    home.downloads.enable = true;
-    home.media.enable = true;
-    home.messengers.enable = true;
-    home.security.enable = true;
-    home.utils.enable = true;
+    home.desktop.appearance.enable = lib.mkDefault true;
+    home.desktop.services.enable = lib.mkDefault true;
+    home.desktop.utils.enable = lib.mkDefault true;
+    home.desktop.widgets.enable = lib.mkDefault true;
+    home.downloads.enable = lib.mkDefault true;
+    home.media.enable = lib.mkDefault true;
+    home.messengers.enable = lib.mkDefault true;
+    home.security.enable = lib.mkDefault true;
+    home.utils.enable = lib.mkDefault true;
   };
-
-  system.linux = {
-    sound.enable = true;
-    networking.networkmanager.enable = true;
-    networking.tailscale.enable = true;
-    networking.firewall.enable = true;
+} // lib.optionalAttrs (lib.hasSuffix "-linux" system) {
+  modules.system.linux = {
+    sound.enable = lib.mkDefault true;
+    networking.networkmanager.enable = lib.mkDefault true;
+    networking.tailscale.enable = lib.mkDefault true;
+    networking.firewall.enable = lib.mkDefault true;
   };
 }

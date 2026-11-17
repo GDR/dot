@@ -1,6 +1,6 @@
 # Overlay aggregator
 { inputs, lib, system, ... }:
-{
+let
   # Custom packages and flake inputs
   additions = import ./additions.nix { inherit inputs system; };
 
@@ -12,4 +12,8 @@
   ollama = import ./ollama;
   proton-ge-bin = import ./proton-ge-bin;
   openldap = import ./openldap;
+in
+{
+  inherit additions patches antigravity ollama proton-ge-bin openldap;
+  list = [ additions patches antigravity ollama proton-ge-bin openldap ];
 }
