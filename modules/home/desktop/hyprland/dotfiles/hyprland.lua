@@ -42,6 +42,14 @@ hl.monitor({
     transform = 1,
 })
 
+-- Make workspace 1 the default workspace on the main 170 Hz monitor
+-- (otherwise DRM enumerates DP-1 as ID 0 and assigns workspace 1 to it)
+hl.workspace_rule({
+    workspace = "1",
+    monitor = primary_monitor,
+    default = true,
+})
+
 ------------------------------------------------------------
 -- Input
 ------------------------------------------------------------
@@ -67,6 +75,7 @@ hl.config({
 hl.config({
     cursor = {
         no_hardware_cursors = true,
+        default_monitor = primary_monitor,
     },
 })
 
@@ -276,6 +285,12 @@ hl.on("hyprland.start", function()
 
     -- Set XWayland primary monitor so Wine/Proton/X11 games default to the 170 Hz display
     hl.exec_cmd(xwayland_primary .. " " .. primary_monitor)
+
+    -- Focus the main 170 Hz monitor on startup (DRM enumerates DP-1 as ID 0 first,
+    -- and input.follow_mouse = 0 does not transfer focus from cursor placement alone)
+    if hl.get_monitor(primary_monitor) then
+        hl.dispatch(hl.dsp.focus({ monitor = primary_monitor }))
+    end
 end)
 
 -- Re-apply XWayland primary monitor after hotplug or layout changes
