@@ -23,8 +23,9 @@ hl.monitor({
 
 -- Middle 170 Hz (10-bit)
 -- P275MV MAX: 1600 nit peak brightness
+local primary_monitor = "DP-3"
 hl.monitor({
-    output = "DP-3",
+    output = primary_monitor,
     mode = "3840x2160@170",
     position = "2160x2160",
     scale = 1,
@@ -255,6 +256,13 @@ end
 -- Autostart
 ------------------------------------------------------------
 
+local xwayland_primary = config_home .. "/hypr/hypr-xwayland-primary.sh"
+local function sync_xwayland_primary()
+    if hl.get_monitor(primary_monitor) then
+        hl.exec_cmd(xwayland_primary .. " " .. primary_monitor)
+    end
+end
+
 hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("dunst")
@@ -265,4 +273,11 @@ hl.on("hyprland.start", function()
     -- Set GTK cursor theme for better app compatibility
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme 'WhiteSur-cursors'")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-size 24")
+
+    -- Set XWayland primary monitor so Wine/Proton/X11 games default to the 170 Hz display
+    hl.exec_cmd(xwayland_primary .. " " .. primary_monitor)
 end)
+
+-- Re-apply XWayland primary monitor after hotplug or layout changes
+hl.on("monitor.added", sync_xwayland_primary)
+hl.on("monitor.layout_changed", sync_xwayland_primary)

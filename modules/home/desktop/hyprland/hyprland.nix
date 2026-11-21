@@ -110,6 +110,7 @@ lib.my.mkFeature {
         pkgs.gcr_4
         pkgs.grim
         pkgs.slurp
+        pkgs.xrandr
       ];
 
       xdg.configFile."hypr-theme.lua".text = hyprTheme;
