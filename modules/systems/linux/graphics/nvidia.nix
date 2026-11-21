@@ -1,7 +1,6 @@
 # NVIDIA GPU drivers and settings - Linux system module
 {
   lib,
-  config,
   pkgs,
   ...
 }@args:
@@ -40,6 +39,12 @@ lib.my.mkSystemModuleV2 args {
       default = false;
       description = "Force full composition pipeline (mainly useful for X11)";
     };
+
+    branch = lib.mkOption {
+      type = lib.types.str;
+      default = "latest";
+      description = "NVIDIA driver branch from boot.kernelPackages.nvidiaPackages (e.g. stable, production, latest, beta, vulkan_beta)";
+    };
   };
 
   module =
@@ -56,8 +61,10 @@ lib.my.mkSystemModuleV2 args {
           powerManagement.finegrained = false;
           open = cfg.open;
           nvidiaSettings = !cfg.headless;
-          # Try Vulkan-focused beta branch for DXVK/VKD3D stability.
-          package = config.boot.kernelPackages.nvidiaPackages.vulkan_beta;
+          # Track the newest official NVIDIA release branch (new_feature/production)
+          # via NixOS's native hardware.nvidia.branch option; vulkan_beta lags behind
+          # Linux 7.3+ kernel compatibility (fails on removed kernel strncpy).
+          branch = cfg.branch;
           forceFullCompositionPipeline = cfg.forceCompositionPipeline;
         };
 

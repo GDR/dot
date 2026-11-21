@@ -15,7 +15,6 @@ let
   # Package modifications
   antigravity = import ./antigravity { inherit lib system; };
   ollama = import ./ollama;
-  proton-ge-bin = import ./proton-ge-bin;
   openldap = import ./openldap;
 in
 {
@@ -24,7 +23,6 @@ in
     patches
     antigravity
     ollama
-    proton-ge-bin
     openldap
     ;
   list = [
@@ -32,7 +30,6 @@ in
     patches
     antigravity
     ollama
-    proton-ge-bin
     openldap
   ];
 }
