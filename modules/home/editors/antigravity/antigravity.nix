@@ -7,19 +7,10 @@ lib.my.mkFeature {
   extraOptions = {
     rules = lib.mkOption {
       type = lib.types.lines;
-      default = ''
-        # Global Rules
-
-        ## Communication
-        - Direct, no fluff — answer immediately
-        - Dense, iterative style
-
-        ## Code Style
-        - Comment non-obvious decisions
-        - Cite sources when referencing external docs
-        - Imperative mood in commit messages
-      '';
-      description = "Content for ~/.gemini/config/AGENTS.md (global rules).";
+      # Empty by default so home.ai-tools.agentic can manage ~/.gemini/config/AGENTS.md
+      # via detached-repo-sync without colliding with a read-only Home Manager file.
+      default = "";
+      description = "Optional inline content for ~/.gemini/config/AGENTS.md (leave empty when managed by home.ai-tools.agentic).";
     };
 
     mcpServers = lib.mkOption {

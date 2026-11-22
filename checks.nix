@@ -397,7 +397,8 @@ if system == "x86_64-linux" then
       assert hasPackage "ripgrep" goldHome.packages;
       assert hasPackage "wl-clipboard" goldHome.packages;
       assert hasPackage "google-antigravity-ide-with-basic-store" goldHome.packages;
-      assert goldHome.file ? ".gemini/config/AGENTS.md";
+      assert goldHm.programs.antigravity-cli.enable;
+      assert !(goldHome.file ? ".gemini/config/AGENTS.md");
       pkgs.runCommand "module-platform-merge-check" { } "touch $out";
 
     detached-repos-edge-cases =
