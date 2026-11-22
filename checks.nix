@@ -247,6 +247,7 @@ if system == "x86_64-linux" then
       # nix-goldstar: agentic active, utils.detached-repos not cascaded
       assert goldEnabled ? "home.ai-tools.agentic";
       assert !(goldEnabled ? "home.utils.detached-repos");
+      assert goldHm.programs.agentic.enable;
       assert builtins.attrNames goldHm.programs.detachedRepos.repos == [ "agentic" ];
       assert goldHm.programs.detachedRepos.repos.agentic.pullUrl == "https://github.com/GDR/agentic.git";
       assert goldHm.programs.detachedRepos.repos.agentic.pushUrl == "git@github.com:GDR/agentic.git";
@@ -331,6 +332,7 @@ if system == "x86_64-linux" then
       # nix-oldstar: agentic and detached-repos disabled with zero footprint
       assert !(oldEnabled ? "home.ai-tools.agentic");
       assert !(oldEnabled ? "home.utils.detached-repos");
+      assert !oldHm.programs.agentic.enable;
       assert !(oldHm.home.file ? ".gemini/config/skills.json");
       assert !(oldHm.home.file ? ".gemini/config/hooks.json");
       assert oldHm.programs.detachedRepos.repos == { };
@@ -403,6 +405,7 @@ if system == "x86_64-linux" then
       assert !(bobFiles ? ".gemini/config/hooks.json");
       assert !(lib.elem "docker" bobGroups);
       assert bobHm.programs.detachedRepos.repos == { };
+      assert !bobHm.programs.agentic.enable;
       assert !(bobHm.home.activation ? detachedReposBootstrap);
       assert !(bobHm.home.activation ? agenticClaudeHooks);
       assert
@@ -420,6 +423,7 @@ if system == "x86_64-linux" then
       assert (dgarifullinFiles ? ".gemini/config/hooks.json");
       assert (lib.elem "docker" dgarifullinGroups);
       assert dgarifullinHm.programs.detachedRepos.repos ? agentic;
+      assert dgarifullinHm.programs.agentic.enable;
       assert dgarifullinHm.home.activation ? detachedReposBootstrap;
       assert dgarifullinHm.home.activation ? agenticClaudeHooks;
       assert dgarifullinHm.systemd.user.services ? "detached-repo-agentic-pull";
@@ -772,6 +776,7 @@ else if system == "aarch64-darwin" then
       in
       assert macEnabled ? "home.ai-tools.agentic";
       assert !(macEnabled ? "home.utils.detached-repos");
+      assert macHm.programs.agentic.enable;
       assert builtins.attrNames macHm.programs.detachedRepos.repos == [ "agentic" ];
       assert hasPackage "detached-repo-sync" macHome.packages;
       assert !(macHome.file ? ".gemini/config/AGENTS.md");
