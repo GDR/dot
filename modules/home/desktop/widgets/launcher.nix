@@ -28,10 +28,13 @@ lib.my.mkFeature {
 
         * {
             /* ── Palette ─────────────────────────────────────────────────── */
-            bg:          ${r.background};
-            bg-alt:      ${r.backgroundAlt};
-            bg-float:    ${r.backgroundFloat};
-            bg-select:   ${r.selection};
+            bg:           ${r.background};
+            bg-alt:       ${r.backgroundAlt};
+            bg-float:     ${r.backgroundFloat};
+            bg-glass:     ${r.backgroundAlt}b3;
+            bg-alt-glass: ${r.backgroundAlt}cc;
+            bg-select:    ${r.selection}cc;
+            border-glass: ${r.foreground}4d;
 
             fg:          ${r.foreground};
             fg-muted:    ${r.foregroundMuted};
@@ -44,14 +47,14 @@ lib.my.mkFeature {
             /* Required Rofi wildcard properties */
             background-color: transparent;
             text-color:       @fg;
-            font:             "${f.mono} 12";
+            font:             "${f.mono} Medium 12";
         }
 
         window {
-            background-color: @bg;
-            border:           2px solid;
-            border-color:     @accent;
-            border-radius:    12px;
+            background-color: @bg-glass;
+            border:           1px solid;
+            border-color:     @border-glass;
+            border-radius:    16px;
             padding:          0px;
             width:            600px;
         }
@@ -64,8 +67,10 @@ lib.my.mkFeature {
 
         /* ── Search bar ──────────────────────────────────────────────────────── */
         inputbar {
-            background-color: @bg-alt;
-            border-radius:    12px 12px 0px 0px;
+            background-color: @bg-alt-glass;
+            border:           0px 0px 1px 0px;
+            border-color:     @border-glass;
+            border-radius:    16px 16px 0px 0px;
             padding:          12px 16px;
             spacing:          8px;
             children:         [ prompt, entry ];
@@ -79,19 +84,20 @@ lib.my.mkFeature {
         entry {
             text-color:        @fg;
             placeholder:       "Search applications…";
-            placeholder-color: @fg-dim;
+            placeholder-color: @fg-muted;
             cursor:            text;
         }
 
         /* ── Results list ────────────────────────────────────────────────────── */
         listview {
             background-color: transparent;
+            border:           0px;
             columns:          1;
             lines:            8;
             scrollbar:        false;
             spacing:          2px;
             padding:          8px;
-            border-radius:    0px 0px 12px 12px;
+            border-radius:    0px 0px 16px 16px;
         }
 
         element {
