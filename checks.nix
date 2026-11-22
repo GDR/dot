@@ -233,6 +233,10 @@ if system == "x86_64-linux" then
         oldEnabled = self.nixosConfigurations.nix-oldstar.config._enabledFeatureSets.${user};
         skillsFile = goldHome.file.".gemini/config/skills.json" or null;
         skillsJson = if skillsFile != null then builtins.fromJSON skillsFile.text else { };
+        agenticLinkExec =
+          builtins.head
+            goldHm.systemd.user.services."detached-repo-agentic-link".Service.ExecStart;
+        agenticCfgJsonPath = builtins.elemAt (lib.splitString " " agenticLinkExec) 2;
       in
       # nix-goldstar: agentic active, utils.detached-repos not cascaded
       assert goldEnabled ? "home.ai-tools.agentic";
@@ -245,11 +249,22 @@ if system == "x86_64-linux" then
       assert goldHm.programs.detachedRepos.repos.agentic.autoPull;
       assert goldHm.programs.detachedRepos.repos.agentic.interval == 300;
       assert goldHm.programs.detachedRepos.repos.agentic.watch;
-      assert goldHm.programs.detachedRepos.repos.agentic.watchSubpaths == [ "skills" ];
+      assert
+        goldHm.programs.detachedRepos.repos.agentic.watchSubpaths == [
+          "skills"
+          "skills/design"
+          "skills/git"
+        ];
+      assert (builtins.head goldHm.programs.detachedRepos.repos.agentic.fanout).recursive == true;
       assert goldHm.programs.detachedRepos.repos.agentic.links == [ ];
       assert hasPackage "detached-repo-sync" goldHome.packages;
       assert goldHome.file ? ".gemini/config/skills.json";
-      assert skillsJson == { entries = [ { path = "/home/${user}/Workspaces/gdr/agentic/skills"; } ]; };
+      assert
+        skillsJson == {
+          inherits = [
+            { path = "/home/${user}/Workspaces/gdr/agentic/skills.json"; }
+          ];
+        };
       assert goldHm.home.activation ? detachedReposBootstrap;
       assert
         goldHm.home.activation.detachedReposBootstrap.before == [
@@ -267,9 +282,12 @@ if system == "x86_64-linux" then
       assert
         (goldHm.systemd.user.paths."detached-repo-agentic-link".Path.Unit or "")
         == "detached-repo-agentic-link.service";
-      assert lib.elem "/home/${user}/Workspaces/gdr/agentic/skills" (
-        goldHm.systemd.user.paths."detached-repo-agentic-link".Path.PathChanged or [ ]
-      );
+      assert
+        (goldHm.systemd.user.paths."detached-repo-agentic-link".Path.PathChanged or [ ]) == [
+          "/home/${user}/Workspaces/gdr/agentic/skills"
+          "/home/${user}/Workspaces/gdr/agentic/skills/design"
+          "/home/${user}/Workspaces/gdr/agentic/skills/git"
+        ];
       # nix-oldstar: agentic and detached-repos disabled with zero footprint
       assert !(oldEnabled ? "home.ai-tools.agentic");
       assert !(oldEnabled ? "home.utils.detached-repos");
@@ -283,7 +301,18 @@ if system == "x86_64-linux" then
         !(lib.any (k: lib.hasPrefix "detached-repo" k) (builtins.attrNames oldHm.systemd.user.timers));
       assert
         !(lib.any (k: lib.hasPrefix "detached-repo" k) (builtins.attrNames oldHm.systemd.user.paths));
-      pkgs.runCommand "agentic-detached-repos-check" { } "touch $out";
+      pkgs.runCommand "agentic-detached-repos-check"
+        {
+          nativeBuildInputs = [ pkgs.python3 ];
+        }
+        ''
+          python3 -c '
+          import json
+          data = json.load(open("${agenticCfgJsonPath}", encoding="utf-8"))
+          assert data["fanout"][0]["recursive"] is True, data
+          '
+          touch "$out"
+        '';
 
     multi-user-isolation =
       let
@@ -503,6 +532,20 @@ if system == "x86_64-linux" then
               };
             }).programs.detachedRepos.repos.badint.interval;
 
+        badRecursiveHm = mkBobLinux {
+          badrec = {
+            pullUrl = "https://example.com/badrec.git";
+            path = "Workspaces/badrec";
+            fanout = [
+              {
+                from = "skills";
+                into = [ ".agents/skills" ];
+                recursive = true;
+              }
+            ];
+          };
+        };
+        badRecursiveMsgs = map (a: a.message) (lib.filter (a: !a.assertion) badRecursiveHm.assertions);
         failedMsgs = map (a: a.message) (lib.filter (a: !a.assertion) badAssertionsHm.assertions);
         linksCfgJsonPath = builtins.elemAt (lib.splitString " " (
           builtins.head linksRepoLinux.systemd.user.services."detached-repo-linkrepo-link".Service.ExecStart
@@ -559,25 +602,31 @@ if system == "x86_64-linux" then
       # GAP-B5: agentic.nix path override updates skills.json + watcher paths
       assert
         builtins.fromJSON agenticOverrideLinux.home.file.".gemini/config/skills.json".text == {
-          entries = [ { path = "/srv/agentic/skills"; } ];
+          inherits = [ { path = "/srv/agentic/skills.json"; } ];
         };
       assert
         agenticOverrideLinux.systemd.user.paths."detached-repo-agentic-link".Path.PathChanged == [
           "/srv/agentic/skills"
+          "/srv/agentic/skills/design"
+          "/srv/agentic/skills/git"
         ];
       assert
         builtins.fromJSON agenticOverrideDarwin.home.file.".gemini/config/skills.json".text == {
-          entries = [ { path = "/srv/agentic/skills"; } ];
+          inherits = [ { path = "/srv/agentic/skills.json"; } ];
         };
       assert
         agenticOverrideDarwin.launchd.agents."detached-repo-agentic".config.WatchPaths == [
           "/srv/agentic/skills"
+          "/srv/agentic/skills/design"
+          "/srv/agentic/skills/git"
         ];
       # GAP-B6: HM assertions & interval = 0 rejection
       assert builtins.length failedMsgs == 3;
       assert lib.any (m: lib.hasInfix "invalid repository name" m) failedMsgs;
       assert lib.any (m: lib.hasInfix "non-empty absolute path" m) failedMsgs;
       assert lib.any (m: lib.hasInfix "watchSubpaths" m) failedMsgs;
+      assert builtins.length badRecursiveMsgs == 1;
+      assert lib.any (m: lib.hasInfix "must set requireFile" m) badRecursiveMsgs;
       assert !badIntervalEval.success;
       # GAP-B4: non-empty links serialized into generated config JSON
       pkgs.runCommand "detached-repos-edge-cases-check"
@@ -624,7 +673,13 @@ else if system == "aarch64-darwin" then
       assert builtins.attrNames macHm.programs.detachedRepos.repos == [ "agentic" ];
       assert hasPackage "detached-repo-sync" macHome.packages;
       assert macHome.file ? ".gemini/config/skills.json";
-      assert skillsJson == { entries = [ { path = "/Users/${user}/Workspaces/gdr/agentic/skills"; } ]; };
+      assert
+        skillsJson == {
+          inherits = [
+            { path = "/Users/${user}/Workspaces/gdr/agentic/skills.json"; }
+          ];
+        };
+      assert (builtins.head macHm.programs.detachedRepos.repos.agentic.fanout).recursive == true;
       assert macHm.home.activation ? detachedReposBootstrap;
       assert
         macHm.home.activation.detachedReposBootstrap.before == [
@@ -638,7 +693,12 @@ else if system == "aarch64-darwin" then
       assert (agentCfg.ProcessType or "") == "Background";
       assert (agentCfg.StartInterval or null) == 300;
       assert (agentCfg.ThrottleInterval or null) == 2;
-      assert (agentCfg.WatchPaths or [ ]) == [ "/Users/${user}/Workspaces/gdr/agentic/skills" ];
+      assert
+        (agentCfg.WatchPaths or [ ]) == [
+          "/Users/${user}/Workspaces/gdr/agentic/skills"
+          "/Users/${user}/Workspaces/gdr/agentic/skills/design"
+          "/Users/${user}/Workspaces/gdr/agentic/skills/git"
+        ];
       assert builtins.length (agentCfg.ProgramArguments or [ ]) == 3;
       assert builtins.elemAt (agentCfg.ProgramArguments or [ ]) 1 == "pull";
       pkgs.runCommand "agentic-detached-repos-check" { } "touch $out";

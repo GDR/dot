@@ -27,7 +27,11 @@ lib.my.mkFeature {
         autoPull = true;
         interval = 300;
         watch = true;
-        watchSubpaths = [ "skills" ];
+        watchSubpaths = [
+          "skills"
+          "skills/design"
+          "skills/git"
+        ];
         fanout = [
           {
             from = "skills";
@@ -36,14 +40,15 @@ lib.my.mkFeature {
               ".claude/skills"
             ];
             requireFile = "SKILL.md";
+            recursive = true;
           }
         ];
         links = [ ];
       };
 
       home.file.".gemini/config/skills.json".text = builtins.toJSON {
-        entries = [
-          { path = "${resolvedRepoPath}/skills"; }
+        inherits = [
+          { path = "${resolvedRepoPath}/skills.json"; }
         ];
       };
     };
