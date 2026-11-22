@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "agentic": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795343202,
+        "narHash": "sha256-rYINDj21OKMK2I1ItLjSykvb4ohe8lTYxraV5Ch4zQ4=",
+        "owner": "GDR",
+        "repo": "agentic",
+        "rev": "9b86c11dee6513442e9841e7926ffbc017113073",
+        "type": "github"
+      },
+      "original": {
+        "owner": "GDR",
+        "repo": "agentic",
+        "type": "github"
+      }
+    },
     "antigravity-nix": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -338,6 +358,7 @@
     },
     "root": {
       "inputs": {
+        "agentic": "agentic",
         "antigravity-nix": "antigravity-nix",
         "charon-key": "charon-key",
         "clavis": "clavis",

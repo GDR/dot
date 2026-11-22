@@ -59,6 +59,11 @@
       url = "github:GDR/learnharness";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    agentic = {
+      url = "github:GDR/agentic";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
