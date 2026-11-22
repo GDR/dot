@@ -233,6 +233,12 @@ if system == "x86_64-linux" then
         oldEnabled = self.nixosConfigurations.nix-oldstar.config._enabledFeatureSets.${user};
         skillsFile = goldHome.file.".gemini/config/skills.json" or null;
         skillsJson = if skillsFile != null then builtins.fromJSON skillsFile.text else { };
+        hooksFile = goldHome.file.".gemini/config/hooks.json" or null;
+        hooksJson =
+          if hooksFile != null then
+            builtins.fromJSON (builtins.unsafeDiscardStringContext hooksFile.text)
+          else
+            { };
         agenticLinkExec =
           builtins.head
             goldHm.systemd.user.services."detached-repo-agentic-link".Service.ExecStart;
@@ -289,6 +295,11 @@ if system == "x86_64-linux" then
             { path = "/home/${user}/Workspaces/gdr/agentic/skills.json"; }
           ];
         };
+      assert goldHome.file ? ".gemini/config/hooks.json";
+      assert (builtins.head hooksJson.commit-skill-gate.PreToolUse).matcher == "run_command";
+      assert lib.hasInfix "agentic-commit-skill-gate-antigravity"
+        (builtins.head (builtins.head hooksJson.commit-skill-gate.PreToolUse).hooks).command;
+      assert goldHm.home.activation ? agenticClaudeHooks;
       assert goldHm.home.activation ? detachedReposBootstrap;
       assert
         goldHm.home.activation.detachedReposBootstrap.before == [
@@ -317,9 +328,11 @@ if system == "x86_64-linux" then
       assert !(oldEnabled ? "home.ai-tools.agentic");
       assert !(oldEnabled ? "home.utils.detached-repos");
       assert !(oldHm.home.file ? ".gemini/config/skills.json");
+      assert !(oldHm.home.file ? ".gemini/config/hooks.json");
       assert oldHm.programs.detachedRepos.repos == { };
       assert !(hasPackage "detached-repo-sync" oldHm.home.packages);
       assert !(oldHm.home.activation ? detachedReposBootstrap);
+      assert !(oldHm.home.activation ? agenticClaudeHooks);
       assert
         !(lib.any (k: lib.hasPrefix "detached-repo" k) (builtins.attrNames oldHm.systemd.user.services));
       assert
@@ -383,9 +396,11 @@ if system == "x86_64-linux" then
       assert !(hasPackage "detached-repo-sync" bobPkgs);
       assert !(bobFiles ? ".gemini/antigravity/mcp_config.json");
       assert !(bobFiles ? ".gemini/config/skills.json");
+      assert !(bobFiles ? ".gemini/config/hooks.json");
       assert !(lib.elem "docker" bobGroups);
       assert bobHm.programs.detachedRepos.repos == { };
       assert !(bobHm.home.activation ? detachedReposBootstrap);
+      assert !(bobHm.home.activation ? agenticClaudeHooks);
       assert
         !(lib.any (k: lib.hasPrefix "detached-repo" k) (builtins.attrNames bobHm.systemd.user.services));
       assert
@@ -398,9 +413,11 @@ if system == "x86_64-linux" then
       assert hasPackage "detached-repo-sync" dgarifullinPkgs;
       assert (dgarifullinFiles ? ".gemini/antigravity/mcp_config.json");
       assert (dgarifullinFiles ? ".gemini/config/skills.json");
+      assert (dgarifullinFiles ? ".gemini/config/hooks.json");
       assert (lib.elem "docker" dgarifullinGroups);
       assert dgarifullinHm.programs.detachedRepos.repos ? agentic;
       assert dgarifullinHm.home.activation ? detachedReposBootstrap;
+      assert dgarifullinHm.home.activation ? agenticClaudeHooks;
       assert dgarifullinHm.systemd.user.services ? "detached-repo-agentic-pull";
       assert dgarifullinHm.systemd.user.timers ? "detached-repo-agentic-pull";
       assert dgarifullinHm.systemd.user.paths ? "detached-repo-agentic-link";
@@ -584,6 +601,9 @@ if system == "x86_64-linux" then
         linksCfgJsonPath = builtins.elemAt (lib.splitString " " (
           builtins.head linksRepoLinux.systemd.user.services."detached-repo-linkrepo-link".Service.ExecStart
         )) 2;
+        overrideHooksSource = agenticOverrideLinux.home.file.".gemini/config/hooks.json".source;
+        claudeActData = goldHm.home.activation.agenticClaudeHooks.data;
+        claudeActFile = pkgs.writeText "agentic-claude-hooks-act.sh" claudeActData;
       in
       # GAP-B1: watch = true, watchSubpaths = [] falls back to [ repoDir ]
       assert
@@ -638,6 +658,8 @@ if system == "x86_64-linux" then
         builtins.fromJSON agenticOverrideLinux.home.file.".gemini/config/skills.json".text == {
           inherits = [ { path = "/srv/agentic/skills.json"; } ];
         };
+      assert agenticOverrideLinux.home.file ? ".gemini/config/hooks.json";
+      assert agenticOverrideDarwin.home.file ? ".gemini/config/hooks.json";
       assert
         agenticOverrideLinux.systemd.user.paths."detached-repo-agentic-link".Path.PathChanged == [
           "/srv/agentic/rules"
@@ -671,9 +693,39 @@ if system == "x86_64-linux" then
         }
         ''
           python3 -c '
-          import json
+          import json, re, subprocess, tempfile
+          from pathlib import Path
+
           data = json.load(open("${linksCfgJsonPath}", encoding="utf-8"))
           assert data["links"] == [{"from": "rules/r.md", "to": ".agents/rules/r.md"}], data
+
+          hooks_cfg = json.loads(Path("${overrideHooksSource}").read_text(encoding="utf-8"))
+          gate_cmd = hooks_cfg["commit-skill-gate"]["PreToolUse"][0]["hooks"][0]["command"]
+          gate_text = Path(gate_cmd).read_text(encoding="utf-8")
+          assert "/srv/agentic/hooks/commit_skill_gate.py" in gate_text, gate_text
+          gate_res = subprocess.run([gate_cmd], input="{}", text=True, capture_output=True, check=True)
+          assert json.loads(gate_res.stdout) == {"decision": "allow"}, gate_res.stdout
+
+          act_text = Path("${claudeActFile}").read_text(encoding="utf-8")
+          merge_script = re.search(r"/nix/store/[0-9a-z]+-agentic-merge-claude-hooks\.py", act_text).group(0)
+          claude_gate = re.search(r"/nix/store/[0-9a-z]+-agentic-commit-skill-gate-claude", act_text).group(0)
+
+          with tempfile.TemporaryDirectory() as tmpdir:
+              settings_path = Path(tmpdir) / ".claude" / "settings.json"
+              settings_path.parent.mkdir(parents=True)
+              settings_path.write_text(json.dumps({
+                  "permissions": {"deny": ["Bash(git push*)"]},
+                  "hooks": {"PreToolUse": [{"matcher": "Write", "hooks": [{"type": "command", "command": "/bin/true"}]}]},
+              }), encoding="utf-8")
+              subprocess.run(["python3", "-B", merge_script, str(settings_path), claude_gate], check=True)
+              merged = json.loads(settings_path.read_text(encoding="utf-8"))
+              assert merged["permissions"] == {"deny": ["Bash(git push*)"]}, merged
+              assert len(merged["hooks"]["PreToolUse"]) == 2, merged
+              assert merged["hooks"]["PreToolUse"][0]["matcher"] == "Write", merged
+              assert merged["hooks"]["PreToolUse"][1]["hooks"][0]["command"] == claude_gate, merged
+              # Re-running merge must be idempotent
+              subprocess.run(["python3", "-B", merge_script, str(settings_path), claude_gate], check=True)
+              assert json.loads(settings_path.read_text(encoding="utf-8")) == merged
           '
           touch "$out"
         '';
@@ -710,6 +762,8 @@ else if system == "aarch64-darwin" then
       assert hasPackage "detached-repo-sync" macHome.packages;
       assert !(macHome.file ? ".gemini/config/AGENTS.md");
       assert macHome.file ? ".gemini/config/skills.json";
+      assert macHome.file ? ".gemini/config/hooks.json";
+      assert macHm.home.activation ? agenticClaudeHooks;
       assert
         skillsJson == {
           inherits = [
