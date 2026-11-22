@@ -191,6 +191,25 @@ hl.window_rule({
 })
 
 ------------------------------------------------------------
+-- Layer rules
+------------------------------------------------------------
+
+-- Frosted-glass blur behind SwayNC control center and notification popups
+hl.layer_rule({
+    name = "swaync-control-center-blur",
+    match = { namespace = "^swaync-control-center$" },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+
+hl.layer_rule({
+    name = "swaync-notification-blur",
+    match = { namespace = "^swaync-notification-window$" },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+
+------------------------------------------------------------
 -- Key bindings
 ------------------------------------------------------------
 
@@ -206,6 +225,10 @@ hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("rofi -show drun"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "maximized" }))
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
+
+-- Notifications (SwayNC)
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("swaync-client -d -sw"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "l" }))
@@ -274,7 +297,7 @@ end
 
 hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
-    hl.exec_cmd("dunst")
+    hl.exec_cmd("swaync")
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("blueman-applet")
