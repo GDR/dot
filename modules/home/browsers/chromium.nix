@@ -7,12 +7,14 @@ lib.my.mkFeature {
   darwinModule =
     { config, lib, ... }:
     lib.mkIf (config.homebrew.enable or false) {
-      homebrew.casks = [ "chromium" ];
+      # Upstream `chromium` cask was disabled on 2026-09-01 due to Gatekeeper checks;
+      # `ungoogled-chromium` installs Chromium.app and remains active.
+      homebrew.casks = [ "ungoogled-chromium" ];
     };
   homeModuleDarwin = _: {
     programs.chromium = {
       enable = true;
-      package = null; # Install Chromium via: brew install --cask chromium
+      package = null; # Installed via homebrew cask `ungoogled-chromium`
     };
   };
   homeModuleLinux = _: {
