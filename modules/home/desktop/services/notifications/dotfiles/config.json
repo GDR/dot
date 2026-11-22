@@ -1,0 +1,87 @@
+{
+  "ignore-gtk-theme": true,
+  "layer": "overlay",
+  "control-center-layer": "top",
+  "layer-shell": true,
+  "layer-shell-cover-screen": true,
+  "cssPriority": "user",
+  "keyboard-shortcuts": true,
+  "transition-time": 200,
+  "hide-on-clear": false,
+  "hide-on-action": true,
+  "relative-timestamps": true,
+  "positionX": "right",
+  "positionY": "top",
+  "fit-to-screen": true,
+  "control-center-width": 360,
+  "control-center-height": 0,
+  "control-center-margin-top": 8,
+  "control-center-margin-bottom": 8,
+  "control-center-margin-right": 8,
+  "control-center-margin-left": 0,
+  "notification-window-width": 380,
+  "image-visibility": "when-available",
+  "timeout": 10,
+  "timeout-low": 5,
+  "timeout-critical": 0,
+  "widgets": [
+    "title",
+    "dnd",
+    "buttons-grid",
+    "slider#volume",
+    "mpris",
+    "notifications"
+  ],
+  "widget-config": {
+    "title": {
+      "text": "Notification Center",
+      "clear-all-button": true,
+      "button-text": "Clear All"
+    },
+    "dnd": {
+      "text": "Do Not Disturb"
+    },
+    "buttons-grid": {
+      "buttons-per-row": 4,
+      "actions": [
+        {
+          "label": "",
+          "command": "swaync-client -cp; sleep 0.3; hyprctl eval 'hl.exec_cmd([['$HOME'/.config/hypr/hypr-screenshot.sh region]])'"
+        },
+        {
+          "label": "󰹑",
+          "command": "swaync-client -cp; sleep 0.3; hyprctl eval 'hl.exec_cmd([['$HOME'/.config/swaync/swaync-record.sh]])'"
+        },
+        {
+          "label": "",
+          "command": "swaync-client -cp; sleep 0.3; hyprctl eval 'hl.exec_cmd([[hyprpicker -a]])'"
+        },
+        {
+          "label": "󰪚",
+          "command": "swaync-client -cp; hyprctl eval 'hl.exec_cmd([[galculator]])'"
+        }
+      ]
+    },
+    "mpris": {
+      "show-album-art": "always",
+      "autohide": true
+    },
+    "slider#volume": {
+      "label": "󰕾 ",
+      "cmd_getter": "pamixer --get-volume",
+      "cmd_setter": "pamixer --set-volume $(printf %.0f $value)",
+      "min": 0,
+      "max": 100,
+      "min_limit": 0,
+      "max_limit": 100,
+      "value_scale": 0
+    },
+    "backlight": {
+      "label": "󰃠 ",
+      "device": "intel_backlight"
+    },
+    "notifications": {
+      "vexpand": true
+    }
+  }
+}
