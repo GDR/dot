@@ -711,7 +711,7 @@ if system == "x86_64-linux" then
           assert json.loads(gate_res.stdout) == {"decision": "allow"}, gate_res.stdout
 
           act_text = Path("${claudeActFile}").read_text(encoding="utf-8")
-          merge_script = re.search(r"/nix/store/[0-9a-z]+-agentic-merge-claude-hooks\.py", act_text).group(0)
+          merge_script = re.search(r"/nix/store/[0-9a-z]+-merge_claude_hooks\.py", act_text).group(0)
           claude_gate = re.search(r"/nix/store/[0-9a-z]+-agentic-commit-skill-gate-claude", act_text).group(0)
 
           with tempfile.TemporaryDirectory() as tmpdir:
