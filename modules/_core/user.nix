@@ -422,7 +422,10 @@ in
         useGlobalPkgs = true;
         # Back up existing files instead of failing
         backupFileExtension = "backup";
-        sharedModules = optional (
+        sharedModules = [
+          ./detached-repos-hm.nix
+        ]
+        ++ optional (
           inputs ? learnharness && inputs.learnharness ? homeManagerModules.default
         ) inputs.learnharness.homeManagerModules.default;
 
