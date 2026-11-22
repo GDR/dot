@@ -89,6 +89,8 @@ lib.my.mkFeature {
         "--enable-gpu-rasterization"
         "--enable-zero-copy"
         "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,WebRTCPipeWireCapturer"
+        # Avoid Hyprland 0.57+ getAutoHDRImageDescription() feedback loop that triggers SDR<->HDR DRM modesets on fullscreen
+        "--disable-features=WaylandWpColorManagerV1"
         "--enable-accelerated-video-decode"
         "--ozone-platform-hint=auto"
         "--force-device-scale-factor=1.25"
