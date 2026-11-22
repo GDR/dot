@@ -1,8 +1,8 @@
-# Agentic — shared AI skills repository sync, fanout, and Antigravity wiring
+# Agentic — shared AI skills and rules repository sync, fanout, and harness wiring
 { lib, ... }:
 
 lib.my.mkFeature {
-  description = "Shared agentic skills repository sync, fanout, and Antigravity wiring";
+  description = "Shared agentic skills and rules repository sync, fanout, and harness wiring";
 
   homeModule =
     { config, lib, ... }:
@@ -28,6 +28,7 @@ lib.my.mkFeature {
         interval = 300;
         watch = true;
         watchSubpaths = [
+          "rules"
           "skills"
           "skills/design"
           "skills/git"
@@ -43,7 +44,28 @@ lib.my.mkFeature {
             recursive = true;
           }
         ];
-        links = [ ];
+        links = [
+          {
+            from = "rules/AGENTS.md";
+            to = ".gemini/config/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".claude/CLAUDE.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".codex/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".config/opencode/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".gemini/GEMINI.md";
+          }
+        ];
       };
 
       home.file.".gemini/config/skills.json".text = builtins.toJSON {

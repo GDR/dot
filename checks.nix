@@ -251,13 +251,37 @@ if system == "x86_64-linux" then
       assert goldHm.programs.detachedRepos.repos.agentic.watch;
       assert
         goldHm.programs.detachedRepos.repos.agentic.watchSubpaths == [
+          "rules"
           "skills"
           "skills/design"
           "skills/git"
         ];
       assert (builtins.head goldHm.programs.detachedRepos.repos.agentic.fanout).recursive == true;
-      assert goldHm.programs.detachedRepos.repos.agentic.links == [ ];
+      assert
+        goldHm.programs.detachedRepos.repos.agentic.links == [
+          {
+            from = "rules/AGENTS.md";
+            to = ".gemini/config/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".claude/CLAUDE.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".codex/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".config/opencode/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".gemini/GEMINI.md";
+          }
+        ];
       assert hasPackage "detached-repo-sync" goldHome.packages;
+      assert !(goldHome.file ? ".gemini/config/AGENTS.md");
       assert goldHome.file ? ".gemini/config/skills.json";
       assert
         skillsJson == {
@@ -284,6 +308,7 @@ if system == "x86_64-linux" then
         == "detached-repo-agentic-link.service";
       assert
         (goldHm.systemd.user.paths."detached-repo-agentic-link".Path.PathChanged or [ ]) == [
+          "/home/${user}/Workspaces/gdr/agentic/rules"
           "/home/${user}/Workspaces/gdr/agentic/skills"
           "/home/${user}/Workspaces/gdr/agentic/skills/design"
           "/home/${user}/Workspaces/gdr/agentic/skills/git"
@@ -310,6 +335,14 @@ if system == "x86_64-linux" then
           import json
           data = json.load(open("${agenticCfgJsonPath}", encoding="utf-8"))
           assert data["fanout"][0]["recursive"] is True, data
+          expected_links = [
+              {"from": "rules/AGENTS.md", "to": ".gemini/config/AGENTS.md"},
+              {"from": "rules/AGENTS.md", "to": ".claude/CLAUDE.md"},
+              {"from": "rules/AGENTS.md", "to": ".codex/AGENTS.md"},
+              {"from": "rules/AGENTS.md", "to": ".config/opencode/AGENTS.md"},
+              {"from": "rules/AGENTS.md", "to": ".gemini/GEMINI.md"},
+          ]
+          assert data["links"] == expected_links, data
           '
           touch "$out"
         '';
@@ -607,6 +640,7 @@ if system == "x86_64-linux" then
         };
       assert
         agenticOverrideLinux.systemd.user.paths."detached-repo-agentic-link".Path.PathChanged == [
+          "/srv/agentic/rules"
           "/srv/agentic/skills"
           "/srv/agentic/skills/design"
           "/srv/agentic/skills/git"
@@ -617,6 +651,7 @@ if system == "x86_64-linux" then
         };
       assert
         agenticOverrideDarwin.launchd.agents."detached-repo-agentic".config.WatchPaths == [
+          "/srv/agentic/rules"
           "/srv/agentic/skills"
           "/srv/agentic/skills/design"
           "/srv/agentic/skills/git"
@@ -673,6 +708,7 @@ else if system == "aarch64-darwin" then
       assert !(macEnabled ? "home.utils.detached-repos");
       assert builtins.attrNames macHm.programs.detachedRepos.repos == [ "agentic" ];
       assert hasPackage "detached-repo-sync" macHome.packages;
+      assert !(macHome.file ? ".gemini/config/AGENTS.md");
       assert macHome.file ? ".gemini/config/skills.json";
       assert
         skillsJson == {
@@ -681,6 +717,29 @@ else if system == "aarch64-darwin" then
           ];
         };
       assert (builtins.head macHm.programs.detachedRepos.repos.agentic.fanout).recursive == true;
+      assert
+        macHm.programs.detachedRepos.repos.agentic.links == [
+          {
+            from = "rules/AGENTS.md";
+            to = ".gemini/config/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".claude/CLAUDE.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".codex/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".config/opencode/AGENTS.md";
+          }
+          {
+            from = "rules/AGENTS.md";
+            to = ".gemini/GEMINI.md";
+          }
+        ];
       assert macHm.home.activation ? detachedReposBootstrap;
       assert
         macHm.home.activation.detachedReposBootstrap.before == [
@@ -696,6 +755,7 @@ else if system == "aarch64-darwin" then
       assert (agentCfg.ThrottleInterval or null) == 2;
       assert
         (agentCfg.WatchPaths or [ ]) == [
+          "/Users/${user}/Workspaces/gdr/agentic/rules"
           "/Users/${user}/Workspaces/gdr/agentic/skills"
           "/Users/${user}/Workspaces/gdr/agentic/skills/design"
           "/Users/${user}/Workspaces/gdr/agentic/skills/git"
