@@ -118,8 +118,8 @@ window#waybar.empty .modules-center {
 #custom-updatespacman,
 #custom-idle-indicator.active,
 #custom-idle-indicator,
-#custom-notification-silencing-indicator.active,
-#custom-notification-silencing-indicator #custom-screenrecording-indicator,
+#custom-notification,
+#custom-screenrecording-indicator,
 #custom-update,
 #custom-omarchy {
     min-width: 14px;
@@ -140,6 +140,7 @@ window#waybar.empty .modules-center {
 #custom-updatespacman:hover,
 #idle_inhibitor:hover,
 #custom-weather:hover,
+#custom-notification:hover,
 #tray:hover,
 #battery:hover,
 #pulseaudio:hover,
@@ -224,9 +225,16 @@ window#waybar.empty .modules-center {
 }
 
 #custom-idle-indicator.active,
-#custom-notification-silencing-indicator.active {
+#custom-notification.dnd-none,
+#custom-notification.dnd-notification,
+#custom-notification.dnd-inhibited-none,
+#custom-notification.dnd-inhibited-notification {
     color: #c95d0f;
     opacity: 1;
+}
+
+#custom-notification.notification {
+    color: @red;
 }
 
 #power-profiles-daemon.performance {
