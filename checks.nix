@@ -292,8 +292,10 @@ if system == "x86_64-linux" then
       assert goldHome.file ? ".gemini/config/skills.json";
       assert
         skillsJson == {
-          inherits = [
-            { path = "/home/${user}/Workspaces/gdr/agentic/skills.json"; }
+          entries = [
+            { path = "/home/${user}/Workspaces/gdr/agentic/skills/design"; }
+            { path = "/home/${user}/Workspaces/gdr/agentic/skills/git"; }
+            { path = "/home/${user}/Workspaces/gdr/agentic/skills/security"; }
           ];
         };
       assert goldHome.file ? ".gemini/config/hooks.json";
@@ -658,7 +660,11 @@ if system == "x86_64-linux" then
       # GAP-B5: agentic.nix path override updates skills.json + watcher paths
       assert
         builtins.fromJSON agenticOverrideLinux.home.file.".gemini/config/skills.json".text == {
-          inherits = [ { path = "/srv/agentic/skills.json"; } ];
+          entries = [
+            { path = "/srv/agentic/skills/design"; }
+            { path = "/srv/agentic/skills/git"; }
+            { path = "/srv/agentic/skills/security"; }
+          ];
         };
       assert agenticOverrideLinux.home.file ? ".gemini/config/hooks.json";
       assert agenticOverrideDarwin.home.file ? ".gemini/config/hooks.json";
@@ -672,7 +678,11 @@ if system == "x86_64-linux" then
         ];
       assert
         builtins.fromJSON agenticOverrideDarwin.home.file.".gemini/config/skills.json".text == {
-          inherits = [ { path = "/srv/agentic/skills.json"; } ];
+          entries = [
+            { path = "/srv/agentic/skills/design"; }
+            { path = "/srv/agentic/skills/git"; }
+            { path = "/srv/agentic/skills/security"; }
+          ];
         };
       assert
         agenticOverrideDarwin.launchd.agents."detached-repo-agentic".config.WatchPaths == [
@@ -770,8 +780,10 @@ else if system == "aarch64-darwin" then
       assert macHm.home.activation ? agenticClaudeHooks;
       assert
         skillsJson == {
-          inherits = [
-            { path = "/Users/${user}/Workspaces/gdr/agentic/skills.json"; }
+          entries = [
+            { path = "/Users/${user}/Workspaces/gdr/agentic/skills/design"; }
+            { path = "/Users/${user}/Workspaces/gdr/agentic/skills/git"; }
+            { path = "/Users/${user}/Workspaces/gdr/agentic/skills/security"; }
           ];
         };
       assert (builtins.head macHm.programs.detachedRepos.repos.agentic.fanout).recursive == true;

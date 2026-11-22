@@ -23,6 +23,12 @@ lib.my.mkFeature {
         else
           "${config.home.homeDirectory}/${lib.removePrefix "./" repoPath}";
 
+      skillCategories = [
+        "design"
+        "git"
+        "security"
+      ];
+
       mkCommitSkillGate =
         harness:
         pkgs.writeShellScript "agentic-commit-skill-gate-${harness}" ''
@@ -52,10 +58,8 @@ lib.my.mkFeature {
         watchSubpaths = [
           "rules"
           "skills"
-          "skills/design"
-          "skills/git"
-          "skills/security"
-        ];
+        ]
+        ++ map (cat: "skills/${cat}") skillCategories;
         fanout = [
           {
             from = "skills";
@@ -92,9 +96,9 @@ lib.my.mkFeature {
       };
 
       home.file.".gemini/config/skills.json".text = builtins.toJSON {
-        inherits = [
-          { path = "${resolvedRepoPath}/skills.json"; }
-        ];
+        entries = map (cat: {
+          path = "${resolvedRepoPath}/skills/${cat}";
+        }) skillCategories;
       };
 
       home.file.".gemini/config/hooks.json".text = builtins.toJSON {
