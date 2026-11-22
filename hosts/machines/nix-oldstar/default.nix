@@ -3,7 +3,6 @@
   imports = [
     hardware.nixosModules.lenovo-thinkpad-t480
     ./hardware-configuration.nix
-    ../../../profiles/server.nix
   ];
 
   system.stateVersion = "26.05";
@@ -50,21 +49,35 @@
       }
     ];
     modules = {
+      home.cli.enable = true;
       home.editors.ghidra.enable = true;
+      home.editors.neovim.enable = true;
+      home.editors.vscode-server.enable = true;
+      home.shell.enable = true;
+      home.virtualisation.docker.enable = true;
     };
     sudo.nopasswd = true;
   };
 
   time.timeZone = "Europe/Moscow";
 
-  modules.system.all.sops.enable = true;
+  modules.system.all = {
+    fonts.enable = true;
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
+    sops.enable = true;
+  };
 
   modules.system.linux = {
     networking.networkmanager.enable = true;
-    # server profile enables tailscale by default; oldstar runs on LAN only
+    # oldstar runs on LAN only
     networking.tailscale.enable = false;
-    networking.openssh.userMap = {
-      "dgarifullin" = "gdr";
+    networking.openssh = {
+      enable = true;
+      userMap = {
+        "dgarifullin" = "gdr";
+      };
     };
     graphics.intel = {
       enable = true;
@@ -77,6 +90,7 @@
       lidSwitch = "ignore";
     };
     networking.firewall = {
+      enable = true;
       allowedTCPPorts = [
         22
         80

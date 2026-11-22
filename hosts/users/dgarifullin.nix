@@ -10,7 +10,6 @@
   stateVersion = lib.mkDefault "26.05";
   isPrimary = lib.mkDefault true;
   nixTrusted = lib.mkDefault true;
-  inheritProfiles = lib.mkDefault true;
   extraGroups = [
     "wheel"
     "audio"

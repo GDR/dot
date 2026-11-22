@@ -1,11 +1,4 @@
-{ ... }:
-{
-  imports = [
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
-    ../../../profiles/macos.nix
-  ];
-
+_: {
   system.stateVersion = 5;
   nix.enable = true;
   ids.gids.nixbld = 30000;
@@ -20,15 +13,6 @@
       }
     ];
     modules = {
-      home.editors.cursor.enable = true;
-      home.editors.antigravity.enable = true;
-      home.networking.sing-box.enable = true;
-      home.security.clavis.enable = true;
-      # desktop profile enables home.utils broadly; select Darwin-supported utils explicitly
-      home.utils.enable = false;
-      home.utils.obsidian.enable = true;
-      home.utils.logseq.enable = true;
-      home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
       home.ai-tools.enable = true;
       home.ai-tools.learnharness = {
         enable = true;
@@ -52,6 +36,23 @@
           };
         };
       };
+      home.browsers.enable = true;
+      home.cli.enable = true;
+      home.downloads.enable = true;
+      home.editors.antigravity.enable = true;
+      home.editors.cursor.enable = true;
+      home.editors.neovim.enable = true;
+      home.media.enable = true;
+      home.messengers.enable = true;
+      home.networking.sing-box.enable = true;
+      home.security.enable = true;
+      home.security.clavis.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+      home.utils.logseq.enable = true;
+      home.utils.obsidian.enable = true;
+      home.utils.raycast.enable = false; # disabled: nixpkgs download URL broken
+      home.virtualisation.docker.enable = true;
     };
   };
 
@@ -93,13 +94,19 @@
     }
   ];
 
-  modules.system.all.sops.enable = true;
+  modules.system.all = {
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
+    sops.enable = true;
+  };
 
   modules.system.darwin = {
     homebrew = {
       enable = true;
       user = "dgarifullin";
     };
+    macos-settings.enable = true;
     openssh = {
       enable = true;
       userMap = {

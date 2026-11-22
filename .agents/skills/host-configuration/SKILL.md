@@ -13,9 +13,6 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
 {
   imports = [
     ./hardware-configuration.nix
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
-    # ../../../profiles/gaming.nix
   ];
 
   system.stateVersion = "26.05";
@@ -34,8 +31,18 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
       { host = "github.com"; user = "git"; identityFile = "~/.ssh/<hostname>_id_ed25519"; }
     ];
     modules = {
-      home.desktop.hyprland.enable = true;  # WM choice is host-specific
+      home.cli.enable = true;
+      home.desktop = {
+        appearance.enable = true;
+        hyprland.enable = true;  # WM choice is host-specific
+        services.enable = true;
+        utils.enable = true;
+        widgets.enable = true;
+      };
       home.editors.antigravity.enable = true;
+      home.editors.neovim.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
     };
     sudo.nopasswd = true;                   # remove if not needed
   };
@@ -43,7 +50,12 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
   networking.hostName = "<hostname>";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all.fonts.enable = true;
+  modules.system.all = {
+    fonts.enable = true;
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
+  };
 
   modules.system.linux = {
     networking.openssh = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
@@ -60,12 +72,6 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
 ```nix
 { ... }:
 {
-  imports = [
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
-    ../../../profiles/macos.nix
-  ];
-
   system.stateVersion = 5;
   nix.enable = true;
 
@@ -74,17 +80,27 @@ description: Configuring NixOS/Darwin hosts, adding users, managing host-specifi
     enable = true;
     modules = {
       home.ai-tools.enable = true;
-      home.security.clavis.enable = true;
+      home.cli.enable = true;
       home.editors.antigravity.enable = true;
+      home.editors.neovim.enable = true;
+      home.security.clavis.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
     };
   };
 
   networking.hostName = "<hostname>";
   environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all.sops.enable = true;
+  modules.system.all = {
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
+    sops.enable = true;
+  };
   modules.system.darwin = {
     homebrew = { enable = true; user = "dgarifullin"; };
+    macos-settings.enable = true;
     openssh  = { enable = true; userMap = { "dgarifullin" = "gdr"; }; };
   };
 
@@ -125,7 +141,6 @@ Generate: `nixos-generate-config --show-hardware-config`
   stateVersion = lib.mkDefault "26.05";
   isPrimary = lib.mkDefault true;
   nixTrusted = lib.mkDefault true;
-  inheritProfiles = lib.mkDefault true;
 
   ssh = [
     { host = "nix-oldstar"; forwardAgent = false; }
@@ -144,7 +159,7 @@ Generate: `nixos-generate-config --show-hardware-config`
    # or for Darwin:
    darwinConfigurations.<hostname> = flakeHelpers.mkDarwinConfiguration ./hosts/machines/<hostname>;
    ```
-4. Pick profiles — `developer` for any machine, `desktop` for GUI, `server` for headless
+4. Enable desired user modules (`hostUsers.<user>.modules.*`) and system modules (`modules.system.{all,linux,darwin}.*`) explicitly
 5. Add `justfile` target (optional)
 
 ## SSH Keys
@@ -164,16 +179,16 @@ keys = [{
 
 | Setting | File |
 |---------|------|
-| User modules & keys | `default.nix` → `hostUsers.<user>.modules` (via profiles) |
-| System modules | `default.nix` → `modules.system.{all,linux,darwin}` (via profiles) |
+| User modules & keys | `default.nix` → `hostUsers.<user>.modules` |
+| System modules | `default.nix` → `modules.system.{all,linux,darwin}` |
 | Hostname, timezone, theme | `default.nix` |
 | Boot loader, kernel | `hardware-configuration.nix` |
 | Filesystems, hardware drivers | `hardware-configuration.nix` |
 
 ## Current Hosts
 
-| Host | Platform | Profiles | Rebuild command |
-|------|----------|----------|-----------------|
-| `nix-goldstar` | NixOS | developer + desktop + gaming | `just nix-goldstar` |
-| `nix-oldstar` | NixOS | server | `just nix-oldstar` |
-| `mac-brightstar` | Darwin | developer + desktop + macos | `just mac-brightstar` |
+| Host | Platform | Role | Rebuild command |
+|------|----------|------|-----------------|
+| `nix-goldstar` | NixOS | Desktop, Hyprland, NVIDIA, gaming | `just nix-goldstar` |
+| `nix-oldstar` | NixOS | Server & remote builder | `just nix-oldstar` |
+| `mac-brightstar` | Darwin | MacBook workstation, clavis, homebrew | `just mac-brightstar` |

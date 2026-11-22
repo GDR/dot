@@ -2,9 +2,6 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
-    ../../../profiles/gaming.nix
   ];
 
   system.stateVersion = "26.05";
@@ -37,8 +34,18 @@
       }
     ];
     modules = {
+      home.browsers.enable = true;
       home.browsers.vivaldi.enable = true;
-      home.desktop.hyprland.enable = true;
+      home.cli.enable = true;
+      home.desktop = {
+        appearance.enable = true;
+        hyprland.enable = true;
+        services.enable = true;
+        utils.enable = true;
+        widgets.enable = true;
+      };
+      home.downloads.enable = true;
+      home.editors.neovim.enable = true;
       home.editors.ghidra.enable = true;
       home.editors.antigravity = {
         enable = true;
@@ -61,26 +68,47 @@
           };
         };
       };
+      home.games.enable = true;
+      home.media.enable = true;
+      home.messengers.enable = true;
+      home.security.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
+      home.utils.enable = true;
+      home.virtualisation.docker.enable = true;
     };
   };
 
   networking.hostName = "nix-goldstar";
   environment.variables.DOTFILES_DIR = "/home/dgarifullin/Workspaces/gdr/dot";
 
-  modules.system.all.fonts.enable = true;
+  modules.system.all = {
+    fonts.enable = true;
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
+  };
 
   modules.system.linux = {
-    networking.firewall.allowedTCPPorts = [ 8080 ];
-    networking.openssh = {
-      enable = true;
-      userMap = {
-        "dgarifullin" = "gdr";
-      };
-    };
     graphics.nvidia = {
       enable = true;
       open = true;
     };
+    networking = {
+      firewall = {
+        enable = true;
+        allowedTCPPorts = [ 8080 ];
+      };
+      networkmanager.enable = true;
+      openssh = {
+        enable = true;
+        userMap = {
+          "dgarifullin" = "gdr";
+        };
+      };
+      tailscale.enable = true;
+    };
+    sound.enable = true;
   };
 
   time.timeZone = "Europe/Moscow";

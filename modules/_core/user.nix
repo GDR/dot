@@ -39,16 +39,16 @@ let
     knownModulePaths = allKnownModulePaths;
   };
 
-  # Forward explicitly set option values from host-level `modules` or `profileModules`
+  # Forward explicitly set option values from host-level `modules`
   # into `hostUsers.<user>.modules`. Options with defaults have isDefined = true at
   # priority 1500 (`mkOptionDefault`); gating on `highestPrio < 1500` avoids promoting
   # unset defaults so per-user `lib.mkDefault` (priority 1000) never collides.
   forwardTree =
-    cond: priority: skipEnable: optTree: schemaTree:
+    optTree: schemaTree:
     concatMapAttrs (
       k: v:
       if isOption v then
-        if skipEnable && k == "enable" then
+        if k == "enable" then
           { }
         else
           let
@@ -56,10 +56,10 @@ let
             explicitlySet = gOpt.isDefined && gOpt.highestPrio < 1500;
           in
           {
-            ${k} = mkIf (cond && explicitlySet) (mkOverride priority gOpt.value);
+            ${k} = mkIf explicitlySet (mkOverride 1100 gOpt.value);
           }
       else
-        { ${k} = forwardTree cond priority skipEnable optTree.${k} v; }
+        { ${k} = forwardTree optTree.${k} v; }
     ) schemaTree;
 
   # SSH key submodule
@@ -114,14 +114,10 @@ let
   userModule = types.submoduleWith {
     modules = [
       (
-        { name, config, ... }:
-        let
-          userSubCfg = config;
-        in
+        { name, ... }:
         {
           options = {
             enable = mkEnableOption "user ${name}";
-            inheritProfiles = mkEnableOption "inheriting host-level profileModules defaults";
 
             # Basic user info
             fullName = mkOption {
@@ -236,10 +232,7 @@ let
                 modules = [
                   {
                     options = generatedFeatureOptions;
-                    config = mkMerge [
-                      (forwardTree true 1100 true options.modules generatedFeatureOptions)
-                      (forwardTree userSubCfg.inheritProfiles 1050 false options.profileModules generatedFeatureOptions)
-                    ];
+                    config = forwardTree options.modules generatedFeatureOptions;
                   }
                 ];
               };
@@ -297,7 +290,6 @@ in
   };
 
   options.modules = generatedFeatureOptions;
-  options.profileModules = generatedFeatureOptions;
 
   options._modulesRegistry = mkOption {
     internal = true;

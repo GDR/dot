@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![CI](https://img.shields.io/github/check-runs/gdr/dot/master?style=flat-square&label=CI)](https://github.com/GDR/dot/actions)
 
-Personal NixOS & nix-darwin configuration built on a typed, per-user feature compiler (`mkFeature`), role-based profiles, and cross-platform system modules (`mkSystemModuleV2`).
+Personal NixOS & nix-darwin configuration built on a typed, per-user feature compiler (`mkFeature`) and cross-platform system modules (`mkSystemModuleV2`).
 
 ---
 
@@ -13,7 +13,7 @@ Personal NixOS & nix-darwin configuration built on a typed, per-user feature com
 
 - **Multi-platform** — Unified flake architecture across NixOS (`x86_64-linux`) and macOS (`aarch64-darwin`).
 - **Isolated per-user features (`mkFeature`)** — Home Manager configuration compiles strictly per enabled user, with optional two-stage system activation (`nixosModule` / `darwinModule`) and transitive `requires` resolution.
-- **Hierarchical enables & composable profiles** — Enable whole categories (`home.browsers.enable = true`), individual features (`home.browsers.vivaldi.enable = true`), or compose native role modules (`profiles/*.nix`).
+- **Hierarchical enables** — Enable whole categories (`home.browsers.enable = true`) or individual features (`home.browsers.vivaldi.enable = true`) directly in each host configuration.
 - **Dual-mode dotfiles** — Switch seamlessly between immutable `/nix/store` generation-safe symlinks and out-of-store live editing (`dotfiles.live` / `<feature>.dotfilesLive`).
 - **Hardware-backed SSH & zero-drift auth** — macOS Keychain/Touch ID SSH & `age` agent (`clavis`), Git SSH commit signing, dynamic GitHub `AuthorizedKeysCommand` (`charon-key`), and `sops-nix` + Bitwarden secret workflows.
 - **Auto-discovery** — Drop a `.nix` file under `modules/home/` or `modules/systems/{all,linux,darwin}/` and it is registered automatically.
@@ -30,7 +30,7 @@ Personal NixOS & nix-darwin configuration built on a typed, per-user feature com
 - [Guides](#guides)
   - [Create a New Host](#create-a-new-host)
   - [Create a New User](#create-a-new-user)
-  - [Profiles & Hierarchical Enables](#profiles--hierarchical-enables)
+  - [Hierarchical Enables](#hierarchical-enables)
   - [Create a New Module](#create-a-new-module)
   - [Dotfile Symlink Modes](#dotfile-symlink-modes)
 - [Security & Secrets Management](#security--secrets-management)
@@ -77,20 +77,22 @@ flowchart TD
         FH --> MB
     end
 
-    subgraph Composition ["Users & Profiles"]
+    subgraph Composition ["Users"]
         UD["User Defaults (hosts/users/dgarifullin.nix)"]
-        PR["Role Profiles (profiles/*.nix modules)"]
         NG --> UD
         NO --> UD
         MB --> UD
-        UD --> PR
     end
 
     subgraph Compiler ["Module & Feature Engine"]
         MF["User Features (lib.my.mkFeature in modules/home/*)"]
         MS["System Modules (lib.my.mkSystemModuleV2 in modules/systems/*)"]
-        PR --> MF
-        PR --> MS
+        NG --> MF
+        NG --> MS
+        NO --> MF
+        NO --> MS
+        MB --> MF
+        MB --> MS
     end
 
     subgraph Runtime ["Compiled System State"]
@@ -124,7 +126,6 @@ dot/
 │   ├── flakeHelpers.nix      # mkNixosConfiguration, mkDarwinConfiguration
 │   ├── moduleRegistry.nix    # Auto-discovery & transitive dependency resolver
 │   └── themes/               # Color themes (rose-pine-moon, catppuccin-macchiato, etc.)
-├── profiles/                 # Composable role bundles (developer, desktop, gaming, server, macos)
 ├── modules/
 │   ├── _core/                # Core infrastructure (registry.nix, user.nix, system.nix, theme.nix)
 │   ├── home/                 # Auto-discovered user features (mkFeature)
@@ -180,8 +181,6 @@ nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardwa
 {
   imports = [
     ./hardware-configuration.nix
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
   ];
 
   system.stateVersion = "26.05";
@@ -211,13 +210,27 @@ nixos-generate-config --show-hardware-config > hosts/machines/my-new-host/hardwa
     ];
 
     modules = {
-      home.desktop.hyprland.enable = true;
+      home.browsers.enable = true;
       home.browsers.vivaldi.enable = true;
+      home.cli.enable = true;
+      home.desktop = {
+        appearance.enable = true;
+        hyprland.enable = true;
+        services.enable = true;
+        utils.enable = true;
+        widgets.enable = true;
+      };
+      home.editors.neovim.enable = true;
+      home.shell.enable = true;
+      home.terminal.enable = true;
     };
   };
 
   modules.system.all = {
     fonts.enable = true;
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
     sops.enable = true;
   };
 
@@ -274,33 +287,15 @@ darwinConfigurations.my-new-host = flakeHelpers.mkDarwinConfiguration ./hosts/ma
 
 ---
 
-### Profiles & Hierarchical Enables
+### Hierarchical Enables
 
-Role profiles in [`profiles/`](profiles) are NixOS/nix-darwin modules setting `profileModules.home.*` and `modules.system.{all,linux,darwin}.*` with `lib.mkDefault`:
-
-| Profile | Included Modules |
-|---------|------------------|
-| `developer.nix` | `home.{cli,editors,shell,terminal}`, `home.virtualisation.docker`, `system.all.{nix.settings,nix.gc,shell.ssh}` |
-| `desktop.nix` | `home.{browsers,downloads,media,messengers,security,utils}`, `home.desktop.{appearance,services,utils,widgets}`, `system.linux.{sound,networking}` |
-| `gaming.nix` | `home.games` |
-| `server.nix` | `home.{cli,shell}`, `home.editors.neovim`, `home.virtualisation.docker`, `system.linux.networking.{openssh,tailscale,firewall}` |
-| `macos.nix` | `system.darwin.macos-settings` |
-
-Import multiple profiles in `imports = [ ... ];` and override cleanly via normal NixOS module priority:
+User features (`modules/home/`) and system modules (`modules/systems/`) support hierarchical and tier-level enables with specific overrides:
 
 ```nix
 {
-  imports = [
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
-  ];
-
-  hostUsers.dgarifullin = {
-    inheritProfiles = true;
-    modules = {
-      home.utils.enable = false;          # Disable category
-      home.utils.obsidian.enable = true;  # Selective opt-in wins over parent false
-    };
+  hostUsers.dgarifullin.modules = {
+    home.utils.enable = false;          # Disable category
+    home.utils.obsidian.enable = true;  # Selective opt-in wins over parent false
   };
 }
 ```

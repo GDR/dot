@@ -28,11 +28,11 @@ let
         knownModulePaths = map (m: m.path) moduleRegistry.allModules;
       };
       forwardTree =
-        cond: priority: skipEnable: optTree: schemaTree:
+        optTree: schemaTree:
         lib.concatMapAttrs (
           k: v:
           if lib.isOption v then
-            if skipEnable && k == "enable" then
+            if k == "enable" then
               { }
             else
               let
@@ -40,46 +40,44 @@ let
                 explicitlySet = gOpt.isDefined && gOpt.highestPrio < 1500;
               in
               {
-                ${k} = lib.mkIf (cond && explicitlySet) (lib.mkOverride priority gOpt.value);
+                ${k} = lib.mkIf explicitlySet (lib.mkOverride 1100 gOpt.value);
               }
           else
-            { ${k} = forwardTree cond priority skipEnable optTree.${k} v; }
+            { ${k} = forwardTree optTree.${k} v; }
         ) schemaTree;
 
       evalDsl =
         extraMod:
         lib.evalModules {
           modules = [
-            ({ options, ... }: {
-              options.modules = schema;
-              options.profileModules = schema;
-              options.hostUsers = lib.mkOption {
-                type = lib.types.attrsOf (
-                  lib.types.submoduleWith {
-                    modules = [
-                      ({ config, ... }: {
-                        options.inheritProfiles = lib.mkEnableOption "inherit profiles";
-                        options.modules = lib.mkOption {
-                          type = lib.types.submoduleWith {
-                            modules = [
-                              {
-                                options = schema;
-                                config = lib.mkMerge [
-                                  (forwardTree true 1100 true options.modules schema)
-                                  (forwardTree config.inheritProfiles 1050 false options.profileModules schema)
-                                ];
-                              }
-                            ];
+            (
+              { options, ... }:
+              {
+                options.modules = schema;
+                options.hostUsers = lib.mkOption {
+                  type = lib.types.attrsOf (
+                    lib.types.submoduleWith {
+                      modules = [
+                        {
+                          options.modules = lib.mkOption {
+                            type = lib.types.submoduleWith {
+                              modules = [
+                                {
+                                  options = schema;
+                                  config = forwardTree options.modules schema;
+                                }
+                              ];
+                            };
+                            default = { };
                           };
-                          default = { };
-                        };
-                      })
-                    ];
-                  }
-                );
-                default = { };
-              };
-            })
+                        }
+                      ];
+                    }
+                  );
+                  default = { };
+                };
+              }
+            )
             extraMod
           ];
         };

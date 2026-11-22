@@ -21,7 +21,6 @@ dot/
 │   ├── flakeHelpers.nix      # mkDarwinConfiguration, mkNixosConfiguration
 │   ├── moduleRegistry.nix    # Module discovery & transitive dependency resolver
 │   └── themes/               # Theme system (rose-pine-moon, catppuccin-macchiato, etc.)
-├── profiles/                 # Composable role bundles (developer, desktop, gaming, server, macos)
 ├── modules/
 │   ├── _core/                # Core infrastructure
 │   │   ├── registry.nix      # Module registry & feature catalog builder
@@ -53,32 +52,15 @@ dot/
 └── templates/                # Flake templates
 ```
 
-## Profiles
+## Host Composition
 
-Role-based bundles of module enables. Compose multiple profiles per host.
-
-```
-profiles/
-  developer.nix   # home: cli, editors, shell, terminal, docker + nix/ssh system baseline
-  desktop.nix     # home: browsers, desktop infrastructure, downloads, media, messengers, security, utils
-                  # system.linux: sound, networkmanager, tailscale, firewall
-  gaming.nix      # home: games.*
-  server.nix      # home: cli, shell, neovim, docker + system openssh/tailscale/firewall/vscode-server
-  macos.nix       # system.darwin: macos-settings
-```
-
-### Using profiles in a host
-
-Profiles and user defaults are native NixOS/nix-darwin modules composed with `imports` and `lib.mkDefault`:
+User defaults are native NixOS/nix-darwin submodules imported into `hostUsers.<user>` via `imports`, with per-host modules declared explicitly:
 
 ```nix
 { ... }:
 {
   imports = [
     ./hardware-configuration.nix
-    ../../../profiles/developer.nix
-    ../../../profiles/desktop.nix
-    ../../../profiles/gaming.nix
   ];
 
   system.stateVersion = "26.05";
@@ -86,15 +68,23 @@ Profiles and user defaults are native NixOS/nix-darwin modules composed with `im
   hostUsers.x = {
     imports = [ ../../users/x.nix ];
     enable = true;
-    modules.home.browsers.vivaldi.enable = true;  # host-specific additions
+    modules = {
+      home.cli.enable = true;
+      home.browsers.vivaldi.enable = true;
+      home.editors.neovim.enable = true;
+      home.shell.enable = true;
+    };
   };
 
-  modules.system.all.fonts.enable = true;
+  modules.system.all = {
+    fonts.enable = true;
+    nix.gc.enable = true;
+    nix.settings.enable = true;
+    shell.ssh.enable = true;
+  };
   modules.system.linux.graphics.nvidia.enable = true;
 }
 ```
-
-Profiles populate `profileModules.home.*` with `lib.mkDefault true`, inherited by users setting `inheritProfiles = true`.
 
 ### Module dependency requires
 
