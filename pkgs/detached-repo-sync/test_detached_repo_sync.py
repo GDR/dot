@@ -1390,6 +1390,151 @@ class DetachedRepoSyncTests(BaseDetachedRepoTest):
         self.assertTrue(d_det["detached"])
         self.assertIn(str(alpha_link), d_det["missingLinks"])
 
+    def test_t44_recursive_fanout_flattens_categories_and_ignores_nested_dirs(self) -> None:
+        self.init_remote_with_skills(
+            skills={
+                "design/alpha": {
+                    "SKILL.md": "# Alpha\n",
+                    "references/extra.md": "# Ref\n",
+                    "references/sub/SKILL.md": "# Should not fan out\n",
+                },
+                "git/beta": {"SKILL.md": "# Beta\n"},
+            },
+            extra_files={
+                "skills/design/empty-dir/notes.txt": "ignored\n",
+            },
+        )
+        cfg_path = self.write_config(
+            self.default_config_dict(
+                fanout=[
+                    {
+                        "from": "skills",
+                        "into": [".agents/skills", ".claude/skills"],
+                        "requireFile": "SKILL.md",
+                        "recursive": True,
+                    }
+                ]
+            )
+        )
+        rc, _, err = self.run_cli_inproc(["bootstrap", str(cfg_path)])
+        self.assertEqual(rc, 0, err)
+
+        repo_dir = self.home_dir / "Workspaces" / "gdr" / "agentic"
+        for into_rel in (".agents/skills", ".claude/skills"):
+            target_dir = self.home_dir / into_rel
+            self.assertEqual(sorted(p.name for p in target_dir.iterdir()), ["alpha", "beta"])
+            self.assertEqual(
+                (target_dir / "alpha").resolve(strict=True),
+                (repo_dir / "skills" / "design" / "alpha").resolve(strict=True),
+            )
+            self.assertEqual(
+                (target_dir / "beta").resolve(strict=True),
+                (repo_dir / "skills" / "git" / "beta").resolve(strict=True),
+            )
+            self.assertFalse((target_dir / "design").exists())
+            self.assertFalse((target_dir / "sub").exists())
+            self.assertFalse((target_dir / "empty-dir").exists())
+
+    def test_t45_recursive_fanout_relocates_flat_to_nested_cleanly(self) -> None:
+        self.init_remote_with_skills(skills={"alpha": {"SKILL.md": "# Alpha\n"}})
+        cfg_path = self.write_config(
+            self.default_config_dict(
+                fanout=[
+                    {
+                        "from": "skills",
+                        "into": [".agents/skills", ".claude/skills"],
+                        "requireFile": "SKILL.md",
+                        "recursive": True,
+                    }
+                ]
+            )
+        )
+        self.assertEqual(self.run_cli_inproc(["bootstrap", str(cfg_path)])[0], 0)
+
+        (self.work_dir / "skills" / "design").mkdir(parents=True, exist_ok=True)
+        self.git(["mv", "skills/alpha", "skills/design/alpha"], cwd=self.work_dir)
+        self.git(["commit", "-m", "move alpha into design category"], cwd=self.work_dir)
+        self.git(["push", "origin", "HEAD"], cwd=self.work_dir)
+
+        rc, _, err = self.run_cli_inproc(["pull", str(cfg_path)])
+        self.assertEqual(rc, 0, err)
+
+        repo_dir = self.home_dir / "Workspaces" / "gdr" / "agentic"
+        for into_rel in (".agents/skills", ".claude/skills"):
+            target_dir = self.home_dir / into_rel
+            self.assertEqual(sorted(p.name for p in target_dir.iterdir()), ["alpha"])
+            self.assertEqual(
+                (target_dir / "alpha").resolve(strict=True),
+                (repo_dir / "skills" / "design" / "alpha").resolve(strict=True),
+            )
+
+    def test_t46_recursive_fanout_duplicate_leaf_keeps_first(self) -> None:
+        self.init_remote_with_skills(
+            skills={
+                "cat1/dup": {"SKILL.md": "# First\n"},
+                "cat2/dup": {"SKILL.md": "# Second\n"},
+            }
+        )
+        cfg_path = self.write_config(
+            self.default_config_dict(
+                fanout=[
+                    {
+                        "from": "skills",
+                        "into": [".agents/skills"],
+                        "requireFile": "SKILL.md",
+                        "recursive": True,
+                    }
+                ]
+            )
+        )
+        rc, _, err = self.run_cli_inproc(["bootstrap", str(cfg_path)])
+        self.assertEqual(rc, 0)
+        self.assertIn("destination collision", err)
+        repo_dir = self.home_dir / "Workspaces" / "gdr" / "agentic"
+        dst = self.home_dir / ".agents" / "skills" / "dup"
+        self.assertEqual(
+            dst.resolve(strict=True),
+            (repo_dir / "skills" / "cat1" / "dup").resolve(strict=True),
+        )
+
+    def test_t47_recursive_fanout_config_validation(self) -> None:
+        bad_non_bool = self.write_config(
+            self.default_config_dict(
+                fanout=[
+                    {
+                        "from": "skills",
+                        "into": [".agents/skills"],
+                        "requireFile": "SKILL.md",
+                        "recursive": "true",
+                    }
+                ]
+            ),
+            filename="bad-rec-type.json",
+        )
+        rc1, _, err1 = self.run_cli_inproc(["link", str(bad_non_bool)])
+        self.assertNotEqual(rc1, 0)
+        self.assertIn("recursive must be a boolean", err1)
+
+        bad_missing_req = self.write_config(
+            self.default_config_dict(
+                fanout=[
+                    {
+                        "from": "skills",
+                        "into": [".agents/skills"],
+                        "recursive": True,
+                    }
+                ]
+            ),
+            filename="bad-rec-req.json",
+        )
+        rc2, _, err2 = self.run_cli_inproc(["link", str(bad_missing_req)])
+        self.assertNotEqual(rc2, 0)
+        self.assertIn("recursive requires requireFile", err2)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
 
 if __name__ == "__main__":
     unittest.main()

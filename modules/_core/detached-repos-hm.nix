@@ -61,6 +61,7 @@ let
             from
             into
             requireFile
+            recursive
             ;
         }) r.fanout;
         links = map (l: {
@@ -87,6 +88,11 @@ let
         type = lib.types.nullOr lib.types.str;
         default = null;
         description = "Optional filename required inside each fanout subdirectory (e.g. \"SKILL.md\").";
+      };
+      recursive = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Recursively discover leaf subdirectories matching requireFile and flatten into target directories.";
       };
     };
   };
@@ -185,6 +191,10 @@ in
           sub: sub != "" && !(lib.hasPrefix "/" sub) && !(lib.elem ".." (lib.splitString "/" sub))
         ) r.watchSubpaths;
         message = "programs.detachedRepos.repos.${name}.watchSubpaths entries must be relative subpaths without '..'.";
+      }) activeRepos)
+      ++ (lib.mapAttrsToList (name: r: {
+        assertion = lib.all (f: !f.recursive || (f.requireFile != null && f.requireFile != "")) r.fanout;
+        message = "programs.detachedRepos.repos.${name}.fanout entries with recursive = true must set requireFile.";
       }) activeRepos);
 
     home.packages = [ syncPkg ];

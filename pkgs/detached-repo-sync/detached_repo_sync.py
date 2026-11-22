@@ -23,6 +23,7 @@ class FanoutRule:
     from_path: Path
     into_dirs: tuple[Path, ...]
     require_file: Path | None
+    recursive: bool = False
 
 
 @dataclass(frozen=True)
@@ -209,11 +210,18 @@ def load_config(config_path: Path) -> RepoConfig:
         else:
             req_rel = validate_repo_relative_path(raw_req, f"fanout[{idx}].requireFile")
 
+        raw_rec = item.get("recursive", False)
+        if not isinstance(raw_rec, bool):
+            raise ConfigError(f"fanout[{idx}].recursive must be a boolean")
+        if raw_rec and req_rel is None:
+            raise ConfigError(f"fanout[{idx}].recursive requires requireFile")
+
         fanout_rules.append(
             FanoutRule(
                 from_path=from_rel,
                 into_dirs=tuple(into_paths),
                 require_file=req_rel,
+                recursive=raw_rec,
             )
         )
 
@@ -409,6 +417,101 @@ def write_manifest_atomic(
         raise
 
 
+def _collect_fanout_entries(
+    repo_real: Path,
+    src_root: Path,
+    rule: FanoutRule,
+    repo_name: str,
+) -> list[tuple[str, Path]]:
+    """Collect (entry_name, entry_real) pairs for a flat or recursive fanout rule."""
+    if not src_root.is_dir():
+        return []
+
+    entries: list[tuple[str, Path]] = []
+    if not rule.recursive:
+        for entry in sorted(src_root.iterdir(), key=lambda p: p.name):
+            if entry.name.startswith("."):
+                continue
+
+            try:
+                entry_real = entry.resolve(strict=True)
+            except OSError:
+                warn(repo_name, f"skipping broken entry {entry}")
+                continue
+            if not entry_real.is_relative_to(repo_real):
+                warn(
+                    repo_name,
+                    f"skipping {entry}: target {entry_real} escapes repoDir",
+                )
+                continue
+
+            if rule.require_file is not None:
+                if not entry.is_dir():
+                    continue
+                req_path = entry / rule.require_file
+                if not req_path.is_file():
+                    continue
+                try:
+                    req_real = req_path.resolve(strict=True)
+                except OSError:
+                    continue
+                if not req_real.is_relative_to(repo_real):
+                    warn(
+                        repo_name,
+                        f"skipping {entry}: requireFile resolves outside repoDir",
+                    )
+                    continue
+
+            entries.append((entry.name, entry_real))
+        return entries
+
+    assert rule.require_file is not None
+    visited_dirs: set[Path] = {src_root}
+
+    def _walk(cur_dir: Path) -> None:
+        for entry in sorted(cur_dir.iterdir(), key=lambda p: p.name):
+            if entry.name.startswith("."):
+                continue
+
+            try:
+                entry_real = entry.resolve(strict=True)
+            except OSError:
+                warn(repo_name, f"skipping broken entry {entry}")
+                continue
+            if not entry_real.is_relative_to(repo_real):
+                warn(
+                    repo_name,
+                    f"skipping {entry}: target {entry_real} escapes repoDir",
+                )
+                continue
+
+            if not entry_real.is_dir():
+                continue
+
+            req_path = entry / rule.require_file
+            if req_path.is_file():
+                try:
+                    req_real = req_path.resolve(strict=True)
+                except OSError:
+                    continue
+                if not req_real.is_relative_to(repo_real):
+                    warn(
+                        repo_name,
+                        f"skipping {entry}: requireFile resolves outside repoDir",
+                    )
+                    continue
+                entries.append((entry.name, entry_real))
+                continue
+
+            if entry_real in visited_dirs:
+                continue
+            visited_dirs.add(entry_real)
+            _walk(entry)
+
+    _walk(src_root)
+    return entries
+
+
 def link_repo(cfg: RepoConfig) -> int:
     if cfg.repo_dir.is_symlink() and not cfg.repo_dir.exists():
         warn(cfg.name, f"repoDir {cfg.repo_dir} is a broken symlink")
@@ -430,42 +533,7 @@ def link_repo(cfg: RepoConfig) -> int:
         if not src_root.is_relative_to(repo_real):
             warn(cfg.name, f"fanout source {rule.from_path} resolves outside repoDir; skipping")
             continue
-        entries: list[tuple[str, Path]] = []
-        if src_root.is_dir():
-            for entry in sorted(src_root.iterdir(), key=lambda p: p.name):
-                if entry.name.startswith("."):
-                    continue
-
-                try:
-                    entry_real = entry.resolve(strict=True)
-                except OSError:
-                    warn(cfg.name, f"skipping broken entry {entry}")
-                    continue
-                if not entry_real.is_relative_to(repo_real):
-                    warn(
-                        cfg.name,
-                        f"skipping {entry}: target {entry_real} escapes repoDir",
-                    )
-                    continue
-
-                if rule.require_file is not None:
-                    if not entry.is_dir():
-                        continue
-                    req_path = entry / rule.require_file
-                    if not req_path.is_file():
-                        continue
-                    try:
-                        req_real = req_path.resolve(strict=True)
-                    except OSError:
-                        continue
-                    if not req_real.is_relative_to(repo_real):
-                        warn(
-                            cfg.name,
-                            f"skipping {entry}: requireFile resolves outside repoDir",
-                        )
-                        continue
-
-                entries.append((entry.name, entry_real))
+        entries = _collect_fanout_entries(repo_real, src_root, rule, cfg.name)
 
         for into_dir in rule.into_dirs:
             sym_comp = has_symlink_component(into_dir, cfg.home_dir)
