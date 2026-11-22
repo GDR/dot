@@ -427,7 +427,10 @@ in
         ]
         ++ optional (
           inputs ? learnharness && inputs.learnharness ? homeManagerModules.default
-        ) inputs.learnharness.homeManagerModules.default;
+        ) inputs.learnharness.homeManagerModules.default
+        ++ optional (
+          inputs ? agentic && inputs.agentic ? homeManagerModules.default
+        ) inputs.agentic.homeManagerModules.default;
 
         users = mapAttrs (userName: userCfg: hmArgs: {
           imports = lib.my.compileUserHomeModules {
