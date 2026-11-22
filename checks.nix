@@ -261,6 +261,7 @@ if system == "x86_64-linux" then
           "skills"
           "skills/design"
           "skills/git"
+          "skills/security"
         ];
       assert (builtins.head goldHm.programs.detachedRepos.repos.agentic.fanout).recursive == true;
       assert
@@ -323,6 +324,7 @@ if system == "x86_64-linux" then
           "/home/${user}/Workspaces/gdr/agentic/skills"
           "/home/${user}/Workspaces/gdr/agentic/skills/design"
           "/home/${user}/Workspaces/gdr/agentic/skills/git"
+          "/home/${user}/Workspaces/gdr/agentic/skills/security"
         ];
       # nix-oldstar: agentic and detached-repos disabled with zero footprint
       assert !(oldEnabled ? "home.ai-tools.agentic");
@@ -666,6 +668,7 @@ if system == "x86_64-linux" then
           "/srv/agentic/skills"
           "/srv/agentic/skills/design"
           "/srv/agentic/skills/git"
+          "/srv/agentic/skills/security"
         ];
       assert
         builtins.fromJSON agenticOverrideDarwin.home.file.".gemini/config/skills.json".text == {
@@ -677,6 +680,7 @@ if system == "x86_64-linux" then
           "/srv/agentic/skills"
           "/srv/agentic/skills/design"
           "/srv/agentic/skills/git"
+          "/srv/agentic/skills/security"
         ];
       # GAP-B6: HM assertions & interval = 0 rejection
       assert builtins.length failedMsgs == 3;
@@ -813,6 +817,7 @@ else if system == "aarch64-darwin" then
           "/Users/${user}/Workspaces/gdr/agentic/skills"
           "/Users/${user}/Workspaces/gdr/agentic/skills/design"
           "/Users/${user}/Workspaces/gdr/agentic/skills/git"
+          "/Users/${user}/Workspaces/gdr/agentic/skills/security"
         ];
       assert builtins.length (agentCfg.ProgramArguments or [ ]) == 3;
       assert builtins.elemAt (agentCfg.ProgramArguments or [ ]) 1 == "pull";

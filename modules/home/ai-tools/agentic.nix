@@ -162,6 +162,7 @@ lib.my.mkFeature {
           "skills"
           "skills/design"
           "skills/git"
+          "skills/security"
         ];
         fanout = [
           {
