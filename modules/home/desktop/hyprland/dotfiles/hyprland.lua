@@ -118,10 +118,19 @@ hl.config({
 
         blur = {
             enabled = true,
+            variant = 0, -- kawase by default; toggled to acrylic (8) while Rofi is open
             size = 3,
             passes = 1,
 
             vibrancy = 0.1696,
+
+            acrylic = {
+                refraction = 22,
+                bulb = 48,
+                clarity = 0.0, -- 0 = pure creamy blurred backdrop (no sharpTex bleed-through); keeps curved bevel refraction + Fresnel/specular rim
+                aberration = 0.03,
+                tint = "rgba(cad3f516)",
+            },
         },
 
         shadow = {
@@ -208,6 +217,61 @@ hl.layer_rule({
     blur = true,
     ignore_alpha = 0.2,
 })
+
+-- Liquid-glass (acrylic) blur behind Rofi launcher
+hl.layer_rule({
+    name = "rofi-blur",
+    match = { namespace = "^rofi$" },
+    blur = true,
+    ignore_alpha = 0.1,
+})
+
+-- Scope native acrylic blur to Rofi's lifetime so other layers/windows keep lightweight kawase
+local function set_rofi_acrylic(active)
+    if active then
+        hl.config({
+            decoration = {
+                blur = {
+                    variant = 8, -- acrylic
+                    size = 14,
+                    passes = 4,
+                    vibrancy = 0.45,
+                    vibrancy_darkness = 0.2,
+                    contrast = 0.95,
+                    brightness = 0.62,
+                    noise = 0.018,
+                },
+            },
+        })
+    else
+        hl.config({
+            decoration = {
+                blur = {
+                    variant = 0, -- kawase
+                    size = 3,
+                    passes = 1,
+                    vibrancy = 0.1696,
+                    vibrancy_darkness = 0.0,
+                    contrast = 0.8916,
+                    brightness = 1.0,
+                    noise = 0.0117,
+                },
+            },
+        })
+    end
+end
+
+hl.on("layer.opened", function(layer)
+    if layer and layer.namespace == "rofi" then
+        set_rofi_acrylic(true)
+    end
+end)
+
+hl.on("layer.closed", function(layer)
+    if layer and layer.namespace == "rofi" then
+        set_rofi_acrylic(false)
+    end
+end)
 
 ------------------------------------------------------------
 -- Key bindings
