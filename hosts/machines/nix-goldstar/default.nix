@@ -34,6 +34,7 @@
       }
     ];
     modules = {
+      home.ai-tools.agentic.enable = true;
       home.browsers.enable = true;
       home.browsers.vivaldi.enable = true;
       home.cli.enable = true;
