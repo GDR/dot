@@ -14,6 +14,7 @@ final: _prev:
     else
       null;
   learnharness = inputs.learnharness.packages.${system}.default;
+  rea = inputs.agentic.packages.${system}.rea;
 
   # Antigravity 2.x packages from the upstream flake
   google-antigravity = inputs.antigravity-nix.packages.${system}.google-antigravity;
