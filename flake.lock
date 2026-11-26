@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795347692,
-        "narHash": "sha256-qeIIKVASZMKJmAiGnic5AL2S8nvsaZGfDPx/RZ6C1Os=",
+        "lastModified": 1795691410,
+        "narHash": "sha256-SCaeFosO8MKvvxQmVMjmFatYFe+AFZB7vm3lyNx7ITY=",
         "owner": "GDR",
         "repo": "agentic",
-        "rev": "e00d9b1a0c4ad51edbd3cf577cd6d2fd3b7e12c1",
+        "rev": "a956c027460e40cdcffc26df57cbb680f7503b81",
         "type": "github"
       },
       "original": {
