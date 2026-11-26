@@ -55,7 +55,12 @@ lib.my.mkFeature {
     };
 
   homeModuleLinux =
-    { pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       ideLinux = pkgs.symlinkJoin {
         name = "google-antigravity-ide-with-basic-store";
@@ -85,6 +90,33 @@ lib.my.mkFeature {
         antigravityLinux
         pkgs.mcp-nixos
       ];
+
+      # On NixOS, agy's strict built-in sandbox (exebox/sbox) mounts only FHS
+      # directories (/usr, /etc, /var) and explicit read_file() grants, omitting
+      # /nix. Without /nix mounted, sbox's `exec /proc/self/exe` fails with
+      # ENOENT because agy's ELF interpreter lives in /nix/store, and sandboxed
+      # commands cannot execute Nix-packaged binaries. Merge `read_file(/nix)`
+      # into settings.json while preserving all user-saved grants.
+      home.activation.antigravityCliNixSandbox = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        settings="${config.home.homeDirectory}/.gemini/antigravity-cli/settings.json"
+        if [ ! -L "$settings" ]; then
+          mkdir -p "$(dirname "$settings")"
+          if [ ! -f "$settings" ]; then
+            printf '{}\n' > "$settings"
+            chmod 600 "$settings"
+          fi
+          tmp="$(mktemp "$(dirname "$settings")/.settings.json.XXXXXX")"
+          if ${pkgs.jq}/bin/jq '
+            .permissions = (.permissions // {}) |
+            .permissions.allow = ((.permissions.allow // []) | if index("read_file(/nix)") then . else . + ["read_file(/nix)"] end)
+          ' "$settings" > "$tmp"; then
+            chmod 600 "$tmp"
+            mv "$tmp" "$settings"
+          else
+            rm -f "$tmp"
+          fi
+        fi
+      '';
     };
 
   homeModuleDarwin =
