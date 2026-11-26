@@ -67,6 +67,12 @@
             # Ghidra runs locally on goldstar — MCP plugin listens on :8089
             env.GHIDRA_MCP_URL = "http://127.0.0.1:8089";
           };
+          rea = {
+            # pkgs.rea installed by antigravity module (from agentic flake)
+            command = "rea";
+            args = [ "mcp" ];
+            env.REA_MCP_TOOL_CATALOG_PROFILE = "hot-cold";
+          };
         };
       };
       home.games.enable = true;
