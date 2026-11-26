@@ -89,6 +89,7 @@ lib.my.mkFeature {
         ideLinux
         antigravityLinux
         pkgs.mcp-nixos
+        pkgs.rea
       ];
 
       # On NixOS, agy's strict built-in sandbox (exebox/sbox) mounts only FHS
@@ -137,6 +138,7 @@ lib.my.mkFeature {
         pkgs.google-antigravity-ide
         pkgs.google-antigravity
         pkgs.mcp-nixos
+        pkgs.rea
       ];
     };
 }
