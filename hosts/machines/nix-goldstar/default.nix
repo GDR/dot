@@ -41,6 +41,7 @@
       home.desktop = {
         appearance.enable = true;
         hyprland.enable = true;
+        hyprland.dotfilesLive = true;
         services.enable = true;
         utils.enable = true;
         widgets.enable = true;
