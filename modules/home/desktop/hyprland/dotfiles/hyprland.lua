@@ -54,6 +54,7 @@ hl.workspace_rule({
 hl.workspace_rule({
     workspace = "9",
     monitor = top_monitor,
+    gaps_out = { top = 10, right = 1925, bottom = 10, left = 10 }, -- reserves right half of 3840px DP-2 for floating slots
 })
 
 ------------------------------------------------------------
@@ -125,7 +126,7 @@ hl.config({
         blur = {
             enabled = true,
             variant = 0, -- kawase by default; toggled to acrylic (8) while Rofi is open
-            size = 3,
+            size = 10,
             passes = 1,
 
             vibrancy = 0.1696,
@@ -205,15 +206,22 @@ hl.window_rule({
     float = true,
 })
 
--- Float and center Americas on workspace 9 (DP-2)
+-- Right-half floating slots on workspace 9 (DP-2, 3840x2160)
+local slots_dp2 = {
+    top_right    = { size = "1905 1065", move = "1925 10" },   -- B
+    bottom_right = { size = "1905 1065", move = "1925 1085" }, -- D
+}
+
+-- Pin Americas to bottom-right slot (D) on workspace 9 (DP-2)
 hl.window_rule({
     match = {
         class = "^(steam_proton)$",
         title = "^(Americas.*)$",
     },
-    workspace = "9",
+    workspace = "9 silent",
     float = true,
-    center = true,
+    size = slots_dp2.bottom_right.size,
+    move = slots_dp2.bottom_right.move,
 })
 
 ------------------------------------------------------------
@@ -249,8 +257,8 @@ local function set_rofi_acrylic(active)
         hl.config({
             decoration = {
                 blur = {
-                    variant = 8, -- acrylic
-                    size = 14,
+                    variant = 0, -- acrylic
+                    size = 4,
                     passes = 4,
                     vibrancy = 0.45,
                     vibrancy_darkness = 0.2,
@@ -265,8 +273,8 @@ local function set_rofi_acrylic(active)
             decoration = {
                 blur = {
                     variant = 0, -- kawase
-                    size = 3,
-                    passes = 1,
+                    size = 4,
+                    passes = 4,
                     vibrancy = 0.1696,
                     vibrancy_darkness = 0.0,
                     contrast = 0.8916,
