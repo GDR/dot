@@ -13,8 +13,9 @@ local theme = dofile(config_home .. "/hypr-theme.lua")
 
 -- Top 144 Hz (10-bit)
 -- P275MV MAX: 1600 nit peak brightness
+local top_monitor = "DP-2"
 hl.monitor({
-    output = "DP-2",
+    output = top_monitor,
     mode = "3840x2160@144",
     position = "2160x0",
     scale = 1,
@@ -48,6 +49,11 @@ hl.workspace_rule({
     workspace = "1",
     monitor = primary_monitor,
     default = true,
+})
+
+hl.workspace_rule({
+    workspace = "9",
+    monitor = top_monitor,
 })
 
 ------------------------------------------------------------
@@ -197,6 +203,17 @@ hl.window_rule({
         title = "^(Bitwarden.*)$",
     },
     float = true,
+})
+
+-- Float and center Americas on workspace 9 (DP-2)
+hl.window_rule({
+    match = {
+        class = "^(steam_proton)$",
+        title = "^(Americas.*)$",
+    },
+    workspace = "9",
+    float = true,
+    center = true,
 })
 
 ------------------------------------------------------------
