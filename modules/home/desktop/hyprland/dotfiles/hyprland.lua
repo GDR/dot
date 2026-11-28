@@ -34,8 +34,9 @@ hl.monitor({
 })
 
 -- Bottom 60 Hz LG (10-bit, rotated)
+local bottom_monitor = "DP-1"
 hl.monitor({
-    output = "DP-1",
+    output = bottom_monitor,
     mode = "3840x2160@60",
     position = "0x1320",
     scale = 1,
@@ -43,16 +44,27 @@ hl.monitor({
     transform = 1,
 })
 
--- Make workspace 1 the default workspace on the main 170 Hz monitor
--- (otherwise DRM enumerates DP-1 as ID 0 and assigns workspace 1 to it)
-hl.workspace_rule({
-    workspace = "1",
-    monitor = primary_monitor,
-    default = true,
-})
+-- Per-monitor workspace blocks (10 workspaces per screen, keyed by name so DRM order can't shift them)
+local monitor_order = { primary_monitor, top_monitor, bottom_monitor }
+local monitor_offsets = {
+    [primary_monitor] = 0,  -- DP-3: 1..10
+    [top_monitor]     = 10, -- DP-2: 11..20
+    [bottom_monitor]  = 20, -- DP-1: 21..30
+}
+
+for _, mon in ipairs(monitor_order) do
+    local offset = monitor_offsets[mon]
+    for slot = 1, 10 do
+        hl.workspace_rule({
+            workspace = tostring(offset + slot),
+            monitor = mon,
+            default = (slot == 1),
+        })
+    end
+end
 
 hl.workspace_rule({
-    workspace = "9",
+    workspace = "19", -- slot 9 on DP-2
     monitor = top_monitor,
     gaps_out = { top = 10, right = 1925, bottom = 10, left = 10 }, -- reserves right half of 3840px DP-2 for floating slots
 })
@@ -212,13 +224,13 @@ local slots_dp2 = {
     bottom_right = { size = "1905 1065", move = "1925 1085" }, -- D
 }
 
--- Pin Americas to bottom-right slot (D) on workspace 9 (DP-2)
+-- Pin Americas to bottom-right slot (D) on slot 9 of DP-2 (workspace 19)
 hl.window_rule({
     match = {
         class = "^(steam_proton)$",
         title = "^(Americas.*)$",
     },
-    workspace = "9 silent",
+    workspace = "19 silent",
     float = true,
     size = slots_dp2.bottom_right.size,
     move = slots_dp2.bottom_right.move,
@@ -331,13 +343,49 @@ hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "r" }))
 hl.bind(mainMod .. " + k", hl.dsp.focus({ direction = "u" }))
 hl.bind(mainMod .. " + j", hl.dsp.focus({ direction = "d" }))
 
--- Switch workspaces / Move windows to workspaces (loop)
-for i = 1, 9 do
-    hl.bind(mainMod .. " + " .. i, hl.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
+-- Switch focus between screens (Super+Tab / Super+Shift+Tab)
+local function cycle_monitor(step)
+    local active = hl.get_active_monitor()
+    local available = {}
+    local idx = 1
+    for _, name in ipairs(monitor_order) do
+        if hl.get_monitor(name) then
+            available[#available + 1] = name
+            if active and active.name == name then
+                idx = #available
+            end
+        end
+    end
+    if #available == 0 then
+        return
+    end
+    local next_idx = ((idx - 1 + step) % #available) + 1
+    hl.dispatch(hl.dsp.focus({ monitor = available[next_idx] }))
 end
-hl.bind(mainMod .. " + 0", hl.dsp.focus({ workspace = 10 }))
-hl.bind(mainMod .. " + SHIFT + 0", hl.dsp.window.move({ workspace = 10 }))
+
+hl.bind(mainMod .. " + Tab", function()
+    cycle_monitor(1)
+end)
+hl.bind(mainMod .. " + SHIFT + Tab", function()
+    cycle_monitor(-1)
+end)
+
+-- Per-screen workspaces: 1..9,0 operate on the focused monitor's 10-workspace block
+local function target_ws(slot)
+    local mon = hl.get_active_monitor()
+    local offset = (mon and monitor_offsets[mon.name]) or 0
+    return offset + slot
+end
+
+for slot = 1, 10 do
+    local key = (slot == 10) and "0" or tostring(slot)
+    hl.bind(mainMod .. " + " .. key, function()
+        hl.dispatch(hl.dsp.focus({ workspace = target_ws(slot) }))
+    end)
+    hl.bind(mainMod .. " + SHIFT + " .. key, function()
+        hl.dispatch(hl.dsp.window.move({ workspace = target_ws(slot) }))
+    end)
+end
 
 -- Example special workspace (scratchpad)
 -- hl.bind(mainMod .. " + S", hl.dsp.focus({ workspace = "special:magic" }))
