@@ -23,6 +23,7 @@ let
   python-mcp = pkgs.python3Packages.callPackage ./python-mcp { };
 
   linux = {
+    hypr-drag-hint = pkgs.callPackage ./hypr-drag-hint { };
     lmstudio = pkgs.callPackage ./lmstudio { };
     inherit python-mcp;
     ghidra-mcp = pkgs.callPackage ./ghidra-mcp { inherit python-mcp; };
