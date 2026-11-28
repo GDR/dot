@@ -31,8 +31,12 @@
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
+  boot.extraModprobeConfig = ''
+    options nvidia NVreg_RestrictProfilingToAdminUsers=0
+  '';
   boot.kernel.sysctl = {
     "vm.max_map_count" = 2147483642;
+    "kernel.perf_event_paranoid" = 1;
   };
 
   fileSystems."/" = {
