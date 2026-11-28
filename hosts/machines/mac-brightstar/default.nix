@@ -1,4 +1,6 @@
 _: {
+  imports = [ ./builders.nix ];
+
   system.stateVersion = 5;
   nix.enable = true;
   ids.gids.nixbld = 30000;
@@ -58,41 +60,6 @@ _: {
 
   networking.hostName = "mac-brightstar";
   environment.variables.DOTFILES_DIR = "/Users/dgarifullin/Workspaces/gdr/dot";
-
-  # ── Remote builder: nix-oldstar (x86_64-linux) ─────────────────────
-  nix.distributedBuilds = true;
-  nix.buildMachines = [
-    {
-      hostName = "nix-goldstar";
-      sshUser = "dgarifullin";
-      sshKey = "/etc/nix/brightstar-nixd_id_ed25519";
-      system = "x86_64-linux";
-      protocol = "ssh-ng";
-      maxJobs = 16;
-      speedFactor = 10;
-      supportedFeatures = [
-        "nixos-test"
-        "benchmark"
-        "big-parallel"
-        "kvm"
-      ];
-    }
-    {
-      hostName = "nix-oldstar";
-      sshUser = "dgarifullin";
-      sshKey = "/etc/nix/brightstar-nixd_id_ed25519";
-      system = "x86_64-linux";
-      protocol = "ssh-ng";
-      maxJobs = 8;
-      speedFactor = 2;
-      supportedFeatures = [
-        "nixos-test"
-        "benchmark"
-        "big-parallel"
-        "kvm"
-      ];
-    }
-  ];
 
   modules.system.all = {
     nix.gc.enable = true;
