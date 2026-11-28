@@ -4,7 +4,7 @@
 lib.my.mkFeature {
   description = "Essential shell utilities (bat, fzf, wget, direnv)";
   homeModule =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
       nrun = pkgs.writeShellScriptBin "nrun" ''
         if [ $# -eq 0 ]; then
@@ -33,6 +33,11 @@ lib.my.mkFeature {
         enable = true;
         nix-direnv.enable = true;
         silent = true;
+        config.whitelist.prefix = [
+          "${config.home.homeDirectory}/Workspaces/gdr"
+          "${config.home.homeDirectory}/Workspaces/gta"
+          "${config.home.homeDirectory}/.gemini/antigravity/worktrees/dot"
+        ];
       };
     };
 }
