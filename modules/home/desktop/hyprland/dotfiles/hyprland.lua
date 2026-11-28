@@ -118,7 +118,7 @@ hl.config({
         gaps_in = 5,
         gaps_out = 10,
         border_size = 2,
-        ["col.active_border"]   = theme.border_active,
+        ["col.active_border"]   = { colors = { theme.accent, theme.accent_alt, theme.accent }, angle = 45 },
         ["col.inactive_border"] = theme.border_inactive,
 
         layout = "dwindle",
@@ -160,8 +160,30 @@ hl.config({
             color = "rgba(000000AA)",
             color_inactive = "rgba(00000077)",
         },
+
+        glow = {
+            enabled = true,
+            range = 18,
+            render_power = 3,
+            color = { colors = { theme.glow_accent, theme.glow_accent_alt }, angle = 45 },
+            color_inactive = "rgba(00000000)",
+        },
     },
 })
+
+-- Subtle breathing pulse on the active window's perimeter glow
+local glow_phase = 0
+hl.timer(function()
+    glow_phase = (glow_phase + 0.12) % (2 * math.pi)
+    local range = math.floor(18 + 4 * math.sin(glow_phase) + 0.5)
+    hl.config({
+        decoration = {
+            glow = {
+                range = range,
+            },
+        },
+    })
+end, { timeout = 100, type = "repeat" })
 
 ------------------------------------------------------------
 -- Animations
@@ -171,13 +193,16 @@ hl.config({
     animations = {
         enabled = true,
 
-        bezier = { "myBezier", 0.05, 0.9, 0.1, 1.05 },
+        bezier = {
+            { "myBezier", 0.05, 0.9, 0.1, 1.05 },
+            { "linear", 0, 0, 1, 1 },
+        },
 
         animation = {
             { "windows", 1, 7, "myBezier" },
             { "windowsOut", 1, 7, "default", "popin 80%" },
             { "border", 1, 10, "default" },
-            { "borderangle", 1, 8, "default" },
+            { "borderangle", 1, 30, "linear", "loop" },
             { "fade", 1, 7, "default" },
             { "workspaces", 1, 6, "default" },
         },
@@ -343,7 +368,9 @@ hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "r" }))
 hl.bind(mainMod .. " + k", hl.dsp.focus({ direction = "u" }))
 hl.bind(mainMod .. " + j", hl.dsp.focus({ direction = "d" }))
 
--- Switch focus between screens (Super+Tab / Super+Shift+Tab)
+-- Switch focus between screens:
+--   Tap Super+Tab (cycles on release) or hold Super+Tab + 1/2/3 to jump directly
+--   (1 = main DP-3, 2 = top DP-2, 3 = side DP-1); Super+Shift+Tab cycles in reverse.
 local function cycle_monitor(step)
     local active = hl.get_active_monitor()
     local available = {}
@@ -363,14 +390,27 @@ local function cycle_monitor(step)
     hl.dispatch(hl.dsp.focus({ monitor = available[next_idx] }))
 end
 
+local tab_screen_select = false
+local tab_picked_screen = false
+
 hl.bind(mainMod .. " + Tab", function()
-    cycle_monitor(1)
+    tab_screen_select = true
+    tab_picked_screen = false
 end)
+hl.bind(mainMod .. " + Tab", function()
+    if tab_screen_select and not tab_picked_screen then
+        cycle_monitor(1)
+    end
+    tab_screen_select = false
+    tab_picked_screen = false
+end, { release = true })
+
 hl.bind(mainMod .. " + SHIFT + Tab", function()
     cycle_monitor(-1)
-end)
+end, { release = true })
 
 -- Per-screen workspaces: 1..9,0 operate on the focused monitor's 10-workspace block
+-- (while Super+Tab is held, 1/2/3 jump directly to monitor 1/2/3)
 local function target_ws(slot)
     local mon = hl.get_active_monitor()
     local offset = (mon and monitor_offsets[mon.name]) or 0
@@ -380,6 +420,14 @@ end
 for slot = 1, 10 do
     local key = (slot == 10) and "0" or tostring(slot)
     hl.bind(mainMod .. " + " .. key, function()
+        if tab_screen_select and slot <= #monitor_order then
+            local target = monitor_order[slot]
+            if hl.get_monitor(target) then
+                hl.dispatch(hl.dsp.focus({ monitor = target }))
+                tab_picked_screen = true
+            end
+            return
+        end
         hl.dispatch(hl.dsp.focus({ workspace = target_ws(slot) }))
     end)
     hl.bind(mainMod .. " + SHIFT + " .. key, function()
