@@ -15,6 +15,7 @@ let
     detached-repo-sync = pkgs.callPackage ./detached-repo-sync { };
     # Custom pre-commit to avoid Swift dependency on Darwin
     pre-commit = pkgs.callPackage ./pre-commit { };
+    terax = pkgs.callPackage ./terax { };
   };
 
   # mcp SDK 1.28.1 — nixpkgs has 1.27.0 but ghidra-mcp requires >=1.28.1
