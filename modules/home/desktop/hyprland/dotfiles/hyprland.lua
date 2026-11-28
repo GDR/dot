@@ -456,3 +456,10 @@ end)
 -- Re-apply XWayland primary monitor after hotplug or layout changes
 hl.on("monitor.added", sync_xwayland_primary)
 hl.on("monitor.layout_changed", sync_xwayland_primary)
+
+-- Raise focused floating windows above other floating windows
+hl.on("window.active", function(win)
+    if win and win.floating then
+        hl.dispatch(hl.dsp.window.bring_to_top())
+    end
+end)
