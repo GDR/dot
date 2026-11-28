@@ -115,8 +115,8 @@ hl.env("ENABLE_HDR_WSI", "1")
 
 hl.config({
     general = {
-        gaps_in = 5,
-        gaps_out = 25,
+        gaps_in = 10,
+        gaps_out = 10,
         border_size = 2,
         ["col.active_border"]   = theme.border_active,
         ["col.inactive_border"] = theme.border_inactive,
@@ -323,7 +323,6 @@ hl.bind(mainMod .. " + M", hl.dsp.exit())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("nautilus"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + P", hl.dsp.exec_cmd("rofi -show drun"))
-hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit")) -- dwindle
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "maximized" }))
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 
@@ -337,11 +336,16 @@ hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "r" }))
 hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "u" }))
 hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "d" }))
 
--- Move focus with mainMod + vim keys
-hl.bind(mainMod .. " + h", hl.dsp.focus({ direction = "l" }))
-hl.bind(mainMod .. " + l", hl.dsp.focus({ direction = "r" }))
-hl.bind(mainMod .. " + k", hl.dsp.focus({ direction = "u" }))
-hl.bind(mainMod .. " + j", hl.dsp.focus({ direction = "d" }))
+-- AwesomeWM-style window navigation & layout manipulation (Super + hjkl / Super + Shift + hjkl)
+hl.bind(mainMod .. " + j", hl.dsp.window.cycle_next())
+hl.bind(mainMod .. " + k", hl.dsp.window.cycle_next({ prev = true }))
+hl.bind(mainMod .. " + l", hl.dsp.layout("splitratio +0.05"), { repeating = true })
+hl.bind(mainMod .. " + h", hl.dsp.layout("splitratio -0.05"), { repeating = true })
+
+hl.bind(mainMod .. " + SHIFT + j", hl.dsp.window.swap({ direction = "d" }))
+hl.bind(mainMod .. " + SHIFT + k", hl.dsp.window.swap({ direction = "u" }))
+hl.bind(mainMod .. " + SHIFT + h", hl.dsp.window.swap({ direction = "l" }))
+hl.bind(mainMod .. " + SHIFT + l", hl.dsp.window.swap({ direction = "r" }))
 
 -- Switch focus between screens:
 --   Tap Super+Tab (cycles on release) or hold Super+Tab + 1/2/3 to jump directly
