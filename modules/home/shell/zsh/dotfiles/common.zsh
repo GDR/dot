@@ -63,3 +63,76 @@ sops() {
     command sops "$@"
   fi
 }
+
+# Session-scoped ephemeral nixpkgs PATH management (nadd / nls / nrm / nclear)
+typeset -ga _NADD_PKGS=()
+
+_nadd_apply() {
+  if (( ${#_NADD_PKGS} == 0 )); then
+    if [[ -n "${_NADD_BASE_PATH+x}" ]]; then
+      export PATH="$_NADD_BASE_PATH"
+      unset _NADD_BASE_PATH
+      rehash
+    fi
+    return 0
+  fi
+  local new_path
+  new_path="$(PATH="$_NADD_BASE_PATH" nix-shell -p "${_NADD_PKGS[@]}" --run 'printf "%s" "$PATH"')" || return $?
+  export PATH="$new_path"
+  rehash
+}
+
+nadd() {
+  if (( $# == 0 )); then
+    echo "Usage: nadd <pkg> [pkg...]" >&2
+    return 1
+  fi
+  [[ -z "${_NADD_BASE_PATH+x}" ]] && _NADD_BASE_PATH="$PATH"
+  local -a prev=("${_NADD_PKGS[@]}")
+  local pkg
+  for pkg in "$@"; do
+    (( ${_NADD_PKGS[(Ie)$pkg]} )) || _NADD_PKGS+=("$pkg")
+  done
+  if ! _nadd_apply; then
+    _NADD_PKGS=("${prev[@]}")
+    (( ${#_NADD_PKGS} == 0 )) && unset _NADD_BASE_PATH
+    return 1
+  fi
+}
+
+nls() {
+  if (( ${#_NADD_PKGS} == 0 )); then
+    echo "No active nadd packages."
+    return 0
+  fi
+  printf '%s\n' "${_NADD_PKGS[@]}"
+}
+
+nrm() {
+  if (( $# == 0 )); then
+    echo "Usage: nrm <pkg> [pkg...]" >&2
+    return 1
+  fi
+  local -a remaining=()
+  local pkg
+  for pkg in "${_NADD_PKGS[@]}"; do
+    (( ${argv[(Ie)$pkg]} )) || remaining+=("$pkg")
+  done
+  _NADD_PKGS=("${remaining[@]}")
+  _nadd_apply
+}
+
+nclear() {
+  _NADD_PKGS=()
+  _nadd_apply
+}
+
+_nrm() {
+  local -a candidates=()
+  local pkg
+  for pkg in "${_NADD_PKGS[@]}"; do
+    (( ${words[2,-1][(Ie)$pkg]} )) || candidates+=("$pkg")
+  done
+  _describe 'active nadd package' candidates
+}
+(( $+functions[compdef] )) && compdef _nrm nrm
