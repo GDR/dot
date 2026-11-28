@@ -422,24 +422,30 @@ end
 for slot = 1, 10 do
     local key = (slot == 10) and "0" or tostring(slot)
     hl.bind(mainMod .. " + " .. key, function()
-        if tab_screen_select and slot <= #monitor_order then
-            local target = monitor_order[slot]
-            if hl.get_monitor(target) then
-                hl.dispatch(hl.dsp.focus({ monitor = target }))
-                tab_picked_screen = true
+        if tab_screen_select then
+            tab_screen_select = false
+            tab_picked_screen = true
+            if slot <= #monitor_order then
+                local target = monitor_order[slot]
+                if hl.get_monitor(target) then
+                    hl.dispatch(hl.dsp.focus({ monitor = target }))
+                end
+                return
             end
-            return
         end
         hl.dispatch(hl.dsp.focus({ workspace = target_ws(slot) }))
     end)
     hl.bind(mainMod .. " + SHIFT + " .. key, function()
-        if tab_screen_move and slot <= #monitor_order then
-            local ws = hl.get_active_workspace(monitor_order[slot])
-            if ws then
-                hl.dispatch(hl.dsp.window.move({ workspace = ws.id }))
-                tab_picked_screen = true
+        if tab_screen_move then
+            tab_screen_move = false
+            tab_picked_screen = true
+            if slot <= #monitor_order then
+                local ws = hl.get_active_workspace(monitor_order[slot])
+                if ws then
+                    hl.dispatch(hl.dsp.window.move({ workspace = ws.id }))
+                end
+                return
             end
-            return
         end
         hl.dispatch(hl.dsp.window.move({ workspace = target_ws(slot) }))
     end)
