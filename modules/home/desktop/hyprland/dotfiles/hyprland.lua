@@ -113,6 +113,10 @@ hl.env("ENABLE_HDR_WSI", "1")
 -- General
 ------------------------------------------------------------
 
+-- Register native Lua BSP binary-tree layout before setting general.layout = "lua:bsp"
+local bsp_layout = dofile(config_home .. "/hypr/bsp_layout.lua")
+bsp_layout.register()
+
 hl.config({
     general = {
         gaps_in = 10,
@@ -121,7 +125,7 @@ hl.config({
         ["col.active_border"]   = theme.border_active,
         ["col.inactive_border"] = theme.border_inactive,
 
-        layout = "dwindle",
+        layout = "lua:bsp",
 
         allow_tearing = false,
     },
@@ -263,6 +267,13 @@ hl.layer_rule({
     ignore_alpha = 0.1,
 })
 
+-- Disable compositor pop-in animation on drag-landing hint (animates internally)
+hl.layer_rule({
+    name = "hypr-drag-hint-noanim",
+    match = { namespace = "^hypr-drag-hint$" },
+    no_anim = true,
+})
+
 -- Scope native acrylic blur to Rofi's lifetime so other layers/windows keep lightweight kawase
 local function set_rofi_acrylic(active)
     if active then
@@ -342,10 +353,10 @@ hl.bind(mainMod .. " + k", hl.dsp.window.cycle_next({ prev = true }))
 hl.bind(mainMod .. " + l", hl.dsp.layout("splitratio +0.05"), { repeating = true })
 hl.bind(mainMod .. " + h", hl.dsp.layout("splitratio -0.05"), { repeating = true })
 
-hl.bind(mainMod .. " + SHIFT + j", hl.dsp.window.swap({ direction = "d" }))
-hl.bind(mainMod .. " + SHIFT + k", hl.dsp.window.swap({ direction = "u" }))
-hl.bind(mainMod .. " + SHIFT + h", hl.dsp.window.swap({ direction = "l" }))
-hl.bind(mainMod .. " + SHIFT + l", hl.dsp.window.swap({ direction = "r" }))
+hl.bind(mainMod .. " + SHIFT + j", hl.dsp.layout("swapdir d"))
+hl.bind(mainMod .. " + SHIFT + k", hl.dsp.layout("swapdir u"))
+hl.bind(mainMod .. " + SHIFT + h", hl.dsp.layout("swapdir l"))
+hl.bind(mainMod .. " + SHIFT + l", hl.dsp.layout("swapdir r"))
 
 -- Hold-to-glow Waybar plasma indicator on keyboard monitor switches:
 --   - Pressing Caps+Tab / Caps+1..3 sets state="active" (fast 0.2s fade-in, stays lit while Caps is held)
@@ -467,9 +478,8 @@ end
 -- hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 -- hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 
--- Move/resize windows with mainMod + LMB/RMB and dragging
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+-- Frozen-background BSP drag & live split-ratio resize binds
+bsp_layout.bind_mouse(mainMod)
 
 -- Screenshot bindings (save to ~/Screenshots + copy to clipboard)
 local screenshot = config_home .. "/hypr/hypr-screenshot.sh"

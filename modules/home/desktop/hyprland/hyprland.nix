@@ -174,9 +174,24 @@ lib.my.mkFeature {
         Install.WantedBy = [ "timers.target" ];
       };
 
+      systemd.user.services.hypr-drag-hint = {
+        Unit = {
+          Description = "Hyprland tiled window drag-and-drop landing hint overlay";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${pkgs.hypr-drag-hint}/bin/hypr-drag-hint --color ${r.accent}";
+          Restart = "on-failure";
+          RestartSec = 1;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
       home.packages = [
         pkgs.gcr_4
         pkgs.grim
+        pkgs.hypr-drag-hint
         pkgs.slurp
         pkgs.xrandr
       ];
