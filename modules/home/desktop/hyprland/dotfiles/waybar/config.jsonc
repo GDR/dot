@@ -16,6 +16,7 @@
             "~/.config/waybar/base.jsonc"
         ],
         "output": "DP-2",
+        "position": "bottom",
         "custom/focus-glow": {
             "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-2\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
             "return-type": "json",
