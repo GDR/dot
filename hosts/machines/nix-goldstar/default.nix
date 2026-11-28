@@ -84,6 +84,7 @@
       home.security.enable = true;
       home.shell.enable = true;
       home.terminal.enable = true;
+      home.terminal.ghostty.dotfilesLive = true;
       home.utils.enable = true;
       home.virtualisation.docker.enable = true;
     };

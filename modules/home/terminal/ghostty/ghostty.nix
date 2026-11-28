@@ -58,13 +58,13 @@ lib.my.mkFeature {
         package = if pkgs.stdenv.hostPlatform.isDarwin then pkgs.ghostty-bin else pkgs.ghostty;
       };
 
-      # Generated theme file — written by Nix, sourced by config via config-file = theme
-      # Works on both NixOS and Darwin (xdg.configFile is cross-platform in home-manager)
-      xdg.configFile."ghostty/theme".text = mkGhosttyTheme theme;
+      # Generated theme file — written outside ~/.config/ghostty so the whole dotfiles/
+      # directory can be symlinked in live mode (sourced via config-file = ../ghostty-theme)
+      xdg.configFile."ghostty-theme".text = mkGhosttyTheme theme;
     };
 
   dotfiles = {
-    path = "ghostty/config";
-    source = "modules/home/terminal/ghostty/dotfiles/config";
+    path = "ghostty";
+    source = "modules/home/terminal/ghostty/dotfiles";
   };
 }
