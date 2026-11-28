@@ -307,43 +307,92 @@ tooltip label {
     color: #df6124;
 }
 
-/* Focused monitor top-edge center glow */
-@keyframes focus-glow-pulse {
-    0% {
-        box-shadow:
-            0 0 8px alpha(@accent, 0.7),
-            0 0 18px alpha(@accent-alt, 0.4);
-    }
-    100% {
-        box-shadow:
-            0 0 14px alpha(@accent, 0.95),
-            0 0 28px alpha(@accent-alt, 0.65);
-    }
-}
-
-#custom-focus-glow {
-    min-width: 0px;
-    min-height: 0px;
+/* Focused monitor dual-lobe plasma wave glow (unique per-monitor overlay bars) */
+window#waybar.focus-glow-dp3,
+window#waybar.focus-glow-dp3 *,
+window#waybar.focus-glow-dp2,
+window#waybar.focus-glow-dp2 *,
+window#waybar.focus-glow-dp1,
+window#waybar.focus-glow-dp1 * {
     padding: 0px;
     margin: 0px;
-    background: transparent;
     border: none;
     box-shadow: none;
 }
 
-#custom-focus-glow.focused {
-    min-width: 160px;
-    min-height: 4px;
-    margin: 8px 10px;
+/* Shared base for all 3 unique monitor glow instances (unfocused = fast 0.2s fade-out) */
+#custom-focus-glow.dp3,
+#custom-focus-glow.dp2,
+#custom-focus-glow.dp1 {
+    min-width: 1800px;
+    min-height: 150px;
     padding: 0px;
-    border-radius: 999px;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        @accent 25%,
-        @accent-alt 50%,
-        @accent 75%,
-        transparent 100%
-    );
-    animation: focus-glow-pulse 2.2s ease-in-out infinite alternate;
+    margin: 0px;
+    border: none;
+    border-radius: 0px;
+    box-shadow: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-size: 62% 4px, 56% 100%, 56% 100%, 96% 100%;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+#custom-focus-glow.dp1 {
+    min-width: 1480px;
+    min-height: 136px;
+}
+
+/* Top-edge monitors (DP-3 landscape, DP-1 portrait): farthest-side feathered to 62% for zero hard bottom seam */
+#custom-focus-glow.dp3,
+#custom-focus-glow.dp1 {
+    background-position: 50% 0%, 36% 0%, 64% 0%, 50% 0%;
+    background-image:
+        linear-gradient(90deg, transparent 0%, #8839ef 22%, @accent 50%, #1e66f5 78%, transparent 100%),
+        radial-gradient(ellipse farthest-side at 50% 0%, rgba(166, 92, 246, 0.85) 0%, rgba(136, 57, 239, 0.30) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 0%, rgba(84, 138, 247, 0.82) 0%, rgba(30, 102, 245, 0.26) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 0%, rgba(24, 25, 38, 0.50) 0%, rgba(24, 25, 38, 0.18) 38%, transparent 66%);
+}
+
+#custom-focus-glow.dp3.day,
+#custom-focus-glow.dp1.day {
+    background-image:
+        linear-gradient(90deg, transparent 0%, #4c1d95 20%, #6d28d9 50%, #1e3a8a 80%, transparent 100%),
+        radial-gradient(ellipse farthest-side at 50% 0%, rgba(91, 33, 182, 0.90) 0%, rgba(76, 29, 149, 0.38) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 0%, rgba(29, 78, 216, 0.88) 0%, rgba(30, 58, 138, 0.35) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 0%, rgba(17, 17, 27, 0.66) 0%, rgba(24, 25, 38, 0.26) 40%, transparent 66%);
+}
+
+/* Bottom-edge monitor (DP-2, top screen): always anchored at bottom (100%) */
+#custom-focus-glow.dp2 {
+    background-position: 50% 100%, 36% 100%, 64% 100%, 50% 100%;
+    background-image:
+        linear-gradient(90deg, transparent 0%, #8839ef 22%, @accent 50%, #1e66f5 78%, transparent 100%),
+        radial-gradient(ellipse farthest-side at 50% 100%, rgba(166, 92, 246, 0.85) 0%, rgba(136, 57, 239, 0.30) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 100%, rgba(84, 138, 247, 0.82) 0%, rgba(30, 102, 245, 0.26) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 100%, rgba(24, 25, 38, 0.50) 0%, rgba(24, 25, 38, 0.18) 38%, transparent 66%);
+}
+
+#custom-focus-glow.dp2.day {
+    background-image:
+        linear-gradient(90deg, transparent 0%, #4c1d95 20%, #6d28d9 50%, #1e3a8a 80%, transparent 100%),
+        radial-gradient(ellipse farthest-side at 50% 100%, rgba(91, 33, 182, 0.90) 0%, rgba(76, 29, 149, 0.38) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 100%, rgba(29, 78, 216, 0.88) 0%, rgba(30, 58, 138, 0.35) 32%, transparent 62%),
+        radial-gradient(ellipse farthest-side at 50% 100%, rgba(17, 17, 27, 0.66) 0%, rgba(24, 25, 38, 0.26) 40%, transparent 66%);
+}
+
+/* Active (Caps held): fast 0.2s fade-in and stay on until Caps is released */
+#custom-focus-glow.dp3.active,
+#custom-focus-glow.dp2.active,
+#custom-focus-glow.dp1.active {
+    opacity: 1;
+    transition: opacity 0.2s ease-out;
+}
+
+/* Decay (Caps released): smooth gradual 1.2s fade-out with no position snap */
+#custom-focus-glow.dp3.decay,
+#custom-focus-glow.dp2.decay,
+#custom-focus-glow.dp1.decay {
+    opacity: 0;
+    transition: opacity 1.2s ease-in-out;
 }

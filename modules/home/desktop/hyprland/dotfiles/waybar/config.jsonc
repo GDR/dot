@@ -3,34 +3,82 @@
         "include": [
             "~/.config/waybar/base.jsonc"
         ],
-        "output": "DP-3",
-        "custom/focus-glow": {
-            "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-3\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
-            "return-type": "json",
-            "signal": 10,
-            "tooltip": false
-        }
+        "output": "DP-3"
     },
     {
         "include": [
             "~/.config/waybar/base.jsonc"
         ],
         "output": "DP-2",
-        "position": "bottom",
-        "custom/focus-glow": {
-            "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-2\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
+        "position": "bottom"
+    },
+    {
+        "include": [
+            "~/.config/waybar/base.jsonc"
+        ],
+        "output": "DP-1"
+    },
+    {
+        "name": "focus-glow-dp3",
+        "output": "DP-3",
+        "position": "top",
+        "mode": "overlay",
+        "layer": "overlay",
+        "exclusive": false,
+        "passthrough": true,
+        "gtk-layer-shell": true,
+        "reload_style_on_change": true,
+        "margin-top": -40,
+        "height": 150,
+        "modules-center": [
+            "custom/focus-glow#dp3"
+        ],
+        "custom/focus-glow#dp3": {
+            "exec": "sh -c 'f=\"${XDG_RUNTIME_DIR:-/tmp}/waybar-focus-glow\"; [ -f \"$f\" ] && read state mon < \"$f\" || { state=idle; mon=; }; h=$(date +%H); if [ \"$h\" -ge 7 ] && [ \"$h\" -lt 20 ]; then mode=day; else mode=night; fi; if [ \"$mon\" = \"DP-3\" ] && [ \"$state\" = \"active\" ]; then cls=active; elif [ \"$mon\" = \"DP-3\" ] && [ \"$state\" = \"decay\" ]; then cls=decay; else cls=unfocused; fi; echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":[\\\"$cls\\\",\\\"$mode\\\"]}\"'",
             "return-type": "json",
             "signal": 10,
             "tooltip": false
         }
     },
     {
-        "include": [
-            "~/.config/waybar/base.jsonc"
+        "name": "focus-glow-dp2",
+        "output": "DP-2",
+        "position": "bottom",
+        "mode": "overlay",
+        "layer": "overlay",
+        "exclusive": false,
+        "passthrough": true,
+        "gtk-layer-shell": true,
+        "reload_style_on_change": true,
+        "margin-bottom": -40,
+        "height": 150,
+        "modules-center": [
+            "custom/focus-glow#dp2"
         ],
+        "custom/focus-glow#dp2": {
+            "exec": "sh -c 'f=\"${XDG_RUNTIME_DIR:-/tmp}/waybar-focus-glow\"; [ -f \"$f\" ] && read state mon < \"$f\" || { state=idle; mon=; }; h=$(date +%H); if [ \"$h\" -ge 7 ] && [ \"$h\" -lt 20 ]; then mode=day; else mode=night; fi; if [ \"$mon\" = \"DP-2\" ] && [ \"$state\" = \"active\" ]; then cls=active; elif [ \"$mon\" = \"DP-2\" ] && [ \"$state\" = \"decay\" ]; then cls=decay; else cls=unfocused; fi; echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":[\\\"$cls\\\",\\\"$mode\\\"]}\"'",
+            "return-type": "json",
+            "signal": 10,
+            "tooltip": false
+        }
+    },
+    {
+        "name": "focus-glow-dp1",
         "output": "DP-1",
-        "custom/focus-glow": {
-            "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-1\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
+        "position": "top",
+        "mode": "overlay",
+        "layer": "overlay",
+        "exclusive": false,
+        "passthrough": true,
+        "gtk-layer-shell": true,
+        "reload_style_on_change": true,
+        "margin-top": -40,
+        "height": 136,
+        "modules-center": [
+            "custom/focus-glow#dp1"
+        ],
+        "custom/focus-glow#dp1": {
+            "exec": "sh -c 'f=\"${XDG_RUNTIME_DIR:-/tmp}/waybar-focus-glow\"; [ -f \"$f\" ] && read state mon < \"$f\" || { state=idle; mon=; }; h=$(date +%H); if [ \"$h\" -ge 7 ] && [ \"$h\" -lt 20 ]; then mode=day; else mode=night; fi; if [ \"$mon\" = \"DP-1\" ] && [ \"$state\" = \"active\" ]; then cls=active; elif [ \"$mon\" = \"DP-1\" ] && [ \"$state\" = \"decay\" ]; then cls=decay; else cls=unfocused; fi; echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":[\\\"$cls\\\",\\\"$mode\\\"]}\"'",
             "return-type": "json",
             "signal": 10,
             "tooltip": false

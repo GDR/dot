@@ -25,7 +25,6 @@
         "bluetooth"
     ],
     "modules-center": [
-        "custom/focus-glow",
         "mpris"
     ],
     "modules-right": [

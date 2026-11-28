@@ -347,6 +347,53 @@ hl.bind(mainMod .. " + SHIFT + k", hl.dsp.window.swap({ direction = "u" }))
 hl.bind(mainMod .. " + SHIFT + h", hl.dsp.window.swap({ direction = "l" }))
 hl.bind(mainMod .. " + SHIFT + l", hl.dsp.window.swap({ direction = "r" }))
 
+-- Hold-to-glow Waybar plasma indicator on keyboard monitor switches:
+--   - Pressing Caps+Tab / Caps+1..3 sets state="active" (fast 0.2s fade-in, stays lit while Caps is held)
+--   - Releasing Caps (code:66) sets state="decay" (immediate smooth 1.0s fade-out)
+--   - Never triggered by mouse movement or clicks.
+local glow_monitor = nil
+
+local function set_monitor_glow(state, mon_name)
+    hl.exec_cmd(
+        "sh -c 'printf \"%s %s\\n\" \""
+            .. state
+            .. "\" \""
+            .. (mon_name or "")
+            .. "\" > \"${XDG_RUNTIME_DIR:-/tmp}/waybar-focus-glow\"; pkill -RTMIN+10 waybar'"
+    )
+end
+
+local function activate_monitor_glow(mon_name)
+    glow_monitor = mon_name
+    set_monitor_glow("active", mon_name)
+end
+
+-- Listen to raw keyboard release events for physical Caps Lock (evdev 58 / XKB 66).
+-- Unlike `bindr`, `input.keyboard.key` always fires on Caps release even when other
+-- keys (1, 2, 3, Tab, Shift) were pressed while Caps was held.
+hl.on("input.keyboard.key", function(a, b, c)
+    if not glow_monitor then
+        return
+    end
+    local key, state
+    if type(a) == "table" then
+        key = a.keycode or a.key or a[1]
+        state = a.state
+        if state == nil then
+            state = a.pressed
+        end
+    else
+        key = a
+        state = (c ~= nil) and c or b
+    end
+    local released = (state == 0 or state == false or state == "released")
+    if released and (key == 58 or key == 66) then
+        local mon = glow_monitor
+        glow_monitor = nil
+        set_monitor_glow("decay", mon)
+    end
+end)
+
 -- Switch focus between screens (Caps = MOD3 via caps:hyper):
 --   Caps+Tab / Caps+Shift+Tab cycle monitors forward/backward.
 --   Caps+1/2/3 jumps directly to monitor 1/2/3 (1 = main DP-3, 2 = top DP-2, 3 = side DP-1);
@@ -367,7 +414,9 @@ local function cycle_monitor(step)
         return
     end
     local next_idx = ((idx - 1 + step) % #available) + 1
-    hl.dispatch(hl.dsp.focus({ monitor = available[next_idx] }))
+    local target = available[next_idx]
+    hl.dispatch(hl.dsp.focus({ monitor = target }))
+    activate_monitor_glow(target)
 end
 
 hl.bind("MOD3 + Tab", function()
@@ -382,6 +431,7 @@ for idx, target in ipairs(monitor_order) do
     hl.bind("MOD3 + " .. key, function()
         if hl.get_monitor(target) then
             hl.dispatch(hl.dsp.focus({ monitor = target }))
+            activate_monitor_glow(target)
         end
     end)
     hl.bind("MOD3 + SHIFT + " .. key, function()
@@ -478,11 +528,6 @@ end)
 -- Re-apply XWayland primary monitor after hotplug or layout changes
 hl.on("monitor.added", sync_xwayland_primary)
 hl.on("monitor.layout_changed", sync_xwayland_primary)
-
--- Refresh Waybar's focused-monitor top-edge glow indicator
-hl.on("monitor.focused", function()
-    hl.exec_cmd("pkill -RTMIN+10 waybar")
-end)
 
 -- Raise focused floating windows above other floating windows
 hl.on("window.active", function(win)
