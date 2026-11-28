@@ -4,6 +4,7 @@
 
 # Load the Nix-generated theme (written to ~/.config/ghostty/theme)
 config-file = theme
+minimum-contrast = 3
 
 # ── Font ─────────────────────────────────────────────────────────────────────
 font-family = JetBrainsMono Nerd Font
