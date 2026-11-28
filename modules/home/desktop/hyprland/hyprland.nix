@@ -94,10 +94,6 @@ lib.my.mkFeature {
         return {
           border_active   = "${rgba r.borderFocused "ee"}",
           border_inactive = "${rgba r.border "66"}",
-          accent          = "${rgba r.accent "ee"}",
-          accent_alt      = "${rgba r.accentAlt "ee"}",
-          glow_accent     = "${rgba r.accent "aa"}",
-          glow_accent_alt = "${rgba r.accentAlt "aa"}",
           shadow_color    = "${rgba r.background "cc"}",
           shadow_inactive = "${rgba r.background "99"}",
         }

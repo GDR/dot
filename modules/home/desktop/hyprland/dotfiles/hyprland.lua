@@ -6,10 +6,6 @@
 --   ~/.config/hypr-theme.lua
 local config_home = os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config")
 local theme = dofile(config_home .. "/hypr-theme.lua")
-local accent          = theme.accent or theme.border_active
-local accent_alt      = theme.accent_alt or accent
-local glow_accent     = theme.glow_accent or accent
-local glow_accent_alt = theme.glow_accent_alt or accent_alt
 
 ------------------------------------------------------------
 -- Monitors
@@ -122,7 +118,7 @@ hl.config({
         gaps_in = 5,
         gaps_out = 10,
         border_size = 2,
-        ["col.active_border"]   = { colors = { accent, accent_alt, accent }, angle = 45 },
+        ["col.active_border"]   = theme.border_active,
         ["col.inactive_border"] = theme.border_inactive,
 
         layout = "dwindle",
@@ -164,30 +160,8 @@ hl.config({
             color = "rgba(000000AA)",
             color_inactive = "rgba(00000077)",
         },
-
-        glow = {
-            enabled = true,
-            range = 18,
-            render_power = 3,
-            color = { colors = { glow_accent, glow_accent_alt }, angle = 45 },
-            color_inactive = "rgba(00000000)",
-        },
     },
 })
-
--- Subtle breathing pulse on the active window's perimeter glow
-local glow_phase = 0
-hl.timer(function()
-    glow_phase = (glow_phase + 0.12) % (2 * math.pi)
-    local range = math.floor(18 + 4 * math.sin(glow_phase) + 0.5)
-    hl.config({
-        decoration = {
-            glow = {
-                range = range,
-            },
-        },
-    })
-end, { timeout = 100, type = "repeat" })
 
 ------------------------------------------------------------
 -- Animations
@@ -197,16 +171,13 @@ hl.config({
     animations = {
         enabled = true,
 
-        bezier = {
-            { "myBezier", 0.05, 0.9, 0.1, 1.05 },
-            { "linear", 0, 0, 1, 1 },
-        },
+        bezier = { "myBezier", 0.05, 0.9, 0.1, 1.05 },
 
         animation = {
             { "windows", 1, 7, "myBezier" },
             { "windowsOut", 1, 7, "default", "popin 80%" },
             { "border", 1, 10, "default" },
-            { "borderangle", 1, 30, "linear", "loop" },
+            { "borderangle", 1, 8, "default" },
             { "fade", 1, 7, "default" },
             { "workspaces", 1, 6, "default" },
         },
