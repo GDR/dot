@@ -10,7 +10,9 @@
             "~/.config/waybar/base.jsonc"
         ],
         "output": "DP-2",
-        "position": "bottom"
+        "position": "bottom",
+        "margin-top": 0,
+        "margin-bottom": 20
     },
     {
         "include": [
@@ -28,7 +30,7 @@
         "passthrough": true,
         "gtk-layer-shell": true,
         "reload_style_on_change": true,
-        "margin-top": -40,
+        "margin-top": -56,
         "height": 150,
         "modules-center": [
             "custom/focus-glow#dp3"
@@ -50,7 +52,7 @@
         "passthrough": true,
         "gtk-layer-shell": true,
         "reload_style_on_change": true,
-        "margin-bottom": -40,
+        "margin-bottom": -56,
         "height": 150,
         "modules-center": [
             "custom/focus-glow#dp2"
@@ -72,7 +74,7 @@
         "passthrough": true,
         "gtk-layer-shell": true,
         "reload_style_on_change": true,
-        "margin-top": -40,
+        "margin-top": -56,
         "height": 136,
         "modules-center": [
             "custom/focus-glow#dp1"

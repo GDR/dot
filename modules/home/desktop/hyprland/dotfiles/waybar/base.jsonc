@@ -5,9 +5,10 @@
     "mod": "dock",
     "passthrough": false,
     "gtk-layer-shell": true,
-    "margin-top": 0,
-    "margin-left": 0,
-    "margin-right": 0,
+    "height": 36,
+    "margin-top": 20,
+    "margin-left": 20,
+    "margin-right": 20,
     "margin-bottom": 0,
     "modules-left": [
         "custom/omarchy",
