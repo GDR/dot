@@ -136,3 +136,16 @@ _nrm() {
   _describe 'active nadd package' candidates
 }
 (( $+functions[compdef] )) && compdef _nrm nrm
+
+# Lazy-load `just` completions on first Tab (works even when `just` enters PATH via nix develop / direnv / nadd)
+_just_lazy() {
+  (( $+commands[just] )) || return 1
+  eval "$(just --completions zsh)"
+  if (( $+functions[_clap_dynamic_completer_just] )); then
+    _clap_dynamic_completer_just "$@"
+  elif (( $+functions[_just] )); then
+    compdef _just just
+    _just "$@"
+  fi
+}
+(( $+functions[compdef] )) && compdef _just_lazy just
