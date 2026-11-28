@@ -5,7 +5,7 @@
         ],
         "output": "DP-3",
         "custom/focus-glow": {
-            "exec": "sh -c 'mon=$(hyprctl activemonitor -j 2>/dev/null | sed -n \"s/.*\\\"name\\\": \\\"\\([^\\\"]*\\)\\\".*/\\1/p\" | head -n1); if [ \"$mon\" = \"DP-3\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
+            "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-3\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
             "return-type": "json",
             "signal": 10,
             "tooltip": false
@@ -17,7 +17,7 @@
         ],
         "output": "DP-2",
         "custom/focus-glow": {
-            "exec": "sh -c 'mon=$(hyprctl activemonitor -j 2>/dev/null | sed -n \"s/.*\\\"name\\\": \\\"\\([^\\\"]*\\)\\\".*/\\1/p\" | head -n1); if [ \"$mon\" = \"DP-2\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
+            "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-2\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
             "return-type": "json",
             "signal": 10,
             "tooltip": false
@@ -29,7 +29,7 @@
         ],
         "output": "DP-1",
         "custom/focus-glow": {
-            "exec": "sh -c 'mon=$(hyprctl activemonitor -j 2>/dev/null | sed -n \"s/.*\\\"name\\\": \\\"\\([^\\\"]*\\)\\\".*/\\1/p\" | head -n1); if [ \"$mon\" = \"DP-1\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
+            "exec": "sh -c 'mon=$(hyprctl monitors 2>/dev/null | awk \"/^Monitor /{m=\\$2} /focused: yes/{print m; exit}\"); if [ \"$mon\" = \"DP-1\" ]; then echo \"{\\\"text\\\":\\\" \\\",\\\"class\\\":\\\"focused\\\"}\"; else echo \"{\\\"text\\\":\\\"\\\",\\\"class\\\":\\\"unfocused\\\"}\"; fi'",
             "return-type": "json",
             "signal": 10,
             "tooltip": false
