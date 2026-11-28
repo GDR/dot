@@ -40,6 +40,7 @@ _: {
       };
       home.browsers.enable = true;
       home.cli.enable = true;
+      home.cli.lazygit.enable = true;
       home.cli.lazyworktree.enable = true;
       home.downloads.enable = true;
       home.editors.antigravity.enable = true;

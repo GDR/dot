@@ -38,6 +38,7 @@
       home.browsers.enable = true;
       home.browsers.vivaldi.enable = true;
       home.cli.enable = true;
+      home.cli.lazygit.enable = true;
       home.cli.lazyworktree.enable = true;
       home.desktop = {
         appearance.enable = true;
