@@ -78,7 +78,7 @@ hl.config({
         kb_layout = "us,ru",
         kb_options = "grp:alt_space_toggle,caps:hyper",
 
-        follow_mouse = 0,
+        follow_mouse = 1,
         touchpad = {
             natural_scroll = false,
         },
@@ -529,8 +529,7 @@ hl.on("hyprland.start", function()
     -- Set XWayland primary monitor so Wine/Proton/X11 games default to the 170 Hz display
     hl.exec_cmd(xwayland_primary .. " " .. primary_monitor)
 
-    -- Focus the main 170 Hz monitor on startup (DRM enumerates DP-1 as ID 0 first,
-    -- and input.follow_mouse = 0 does not transfer focus from cursor placement alone)
+    -- Focus the main 170 Hz monitor on startup (DRM enumerates DP-1 as ID 0 first)
     if hl.get_monitor(primary_monitor) then
         hl.dispatch(hl.dsp.focus({ monitor = primary_monitor }))
     end
