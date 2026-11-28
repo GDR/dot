@@ -64,9 +64,9 @@ for _, mon in ipairs(monitor_order) do
 end
 
 hl.workspace_rule({
-    workspace = "11", -- slot 9 on DP-2
+    workspace = "11", -- slot 1 on DP-2
     monitor = top_monitor,
-    gaps_out = { top = 10, right = 1925, bottom = 10, left = 10 }, -- reserves right half of 3840px DP-2 for floating slots
+    gaps_out = { top = 20, right = 1930, bottom = 20, left = 20 }, -- reserves right half of 3840px DP-2 for floating slots
 })
 
 ------------------------------------------------------------
@@ -120,7 +120,7 @@ bsp_layout.register()
 hl.config({
     general = {
         gaps_in = 10,
-        gaps_out = 10,
+        gaps_out = 20,
         border_size = 2,
         ["col.active_border"]   = theme.border_active,
         ["col.inactive_border"] = theme.border_inactive,
@@ -222,13 +222,14 @@ hl.window_rule({
     float = true,
 })
 
--- Right-half floating slots on workspace 9 (DP-2, 3840x2160)
+-- Right-half floating slots on workspace 11 (DP-2, 3840x2160, bottom Waybar reserves 56px)
+-- Matches 2x2 tiled grid: gaps_in=10 (20px inner), gaps_out=20, border_size=2
 local slots_dp2 = {
-    top_right    = { size = "1905 1065", move = "1925 10" },   -- B
-    bottom_right = { size = "1905 1065", move = "1925 1085" }, -- D
+    top_right    = { size = "1886 1018", move = "1932 22" },   -- B
+    bottom_right = { size = "1886 1018", move = "1932 1064" }, -- D
 }
 
--- Pin Americas to bottom-right slot (D) on slot 9 of DP-2 (workspace 19)
+-- Pin Americas to bottom-right slot (D) on workspace 11 (DP-2)
 hl.window_rule({
     match = {
         class = "^(steam_proton)$",
