@@ -89,6 +89,7 @@ let
       mkdir -p $out/bin
       cp -r opt usr/* $out
       makeWrapper $out/opt/warpdotdev/warp-terminal/warp $out/bin/warp-terminal \
+        --set-default WGPU_POWER_PREF high \
         ${lib.optionalString waylandSupport "--set WARP_ENABLE_WAYLAND 1"}
 
       runHook postInstall
