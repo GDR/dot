@@ -373,29 +373,42 @@ local tab_screen_select = false
 local tab_screen_move = false
 local tab_picked_screen = false
 
-hl.bind(mainMod .. " + Tab", function()
-    tab_screen_select = true
-    tab_picked_screen = false
-end)
-hl.bind(mainMod .. " + Tab", function()
+-- Clear hold state whether Tab, Super, or Shift is released first; otherwise
+-- releasing a modifier before Tab drops the release bind and leaves Super+1/2/3
+-- stuck in monitor-select mode.
+local function end_tab_select()
     if tab_screen_select and not tab_picked_screen then
         cycle_monitor(1)
     end
     tab_screen_select = false
     tab_picked_screen = false
-end, { release = true })
+end
 
-hl.bind(mainMod .. " + SHIFT + Tab", function()
-    tab_screen_move = true
-    tab_picked_screen = false
-end)
-hl.bind(mainMod .. " + SHIFT + Tab", function()
+local function end_tab_move()
     if tab_screen_move and not tab_picked_screen then
         cycle_monitor(-1)
     end
     tab_screen_move = false
     tab_picked_screen = false
-end, { release = true })
+end
+
+hl.bind(mainMod .. " + Tab", function()
+    tab_screen_select = true
+    tab_picked_screen = false
+end)
+hl.bind(mainMod .. " + Tab", end_tab_select, { release = true })
+hl.bind(mainMod .. " + Super_L", end_tab_select, { release = true })
+hl.bind(mainMod .. " + Super_R", end_tab_select, { release = true })
+
+hl.bind(mainMod .. " + SHIFT + Tab", function()
+    tab_screen_move = true
+    tab_picked_screen = false
+end)
+hl.bind(mainMod .. " + SHIFT + Tab", end_tab_move, { release = true })
+hl.bind(mainMod .. " + SHIFT + Super_L", end_tab_move, { release = true })
+hl.bind(mainMod .. " + SHIFT + Super_R", end_tab_move, { release = true })
+hl.bind(mainMod .. " + SHIFT + Shift_L", end_tab_move, { release = true })
+hl.bind(mainMod .. " + SHIFT + Shift_R", end_tab_move, { release = true })
 
 -- Per-screen workspaces: 1..9,0 operate on the focused monitor's 10-workspace block
 -- (while Super+Tab is held, 1/2/3 jump directly to monitor 1/2/3;
