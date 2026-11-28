@@ -306,3 +306,44 @@ tooltip label {
 #cpu.critical {
     color: #df6124;
 }
+
+/* Focused monitor top-edge center glow */
+@keyframes focus-glow-pulse {
+    0% {
+        box-shadow:
+            0 0 8px alpha(@accent, 0.7),
+            0 0 18px alpha(@accent-alt, 0.4);
+    }
+    100% {
+        box-shadow:
+            0 0 14px alpha(@accent, 0.95),
+            0 0 28px alpha(@accent-alt, 0.65);
+    }
+}
+
+#custom-focus-glow {
+    min-width: 0px;
+    min-height: 0px;
+    padding: 0px;
+    margin: 0px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+#custom-focus-glow.focused {
+    min-width: 160px;
+    min-height: 4px;
+    margin: 8px 10px;
+    padding: 0px;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        @accent 25%,
+        @accent-alt 50%,
+        @accent 75%,
+        transparent 100%
+    );
+    animation: focus-glow-pulse 2.2s ease-in-out infinite alternate;
+}

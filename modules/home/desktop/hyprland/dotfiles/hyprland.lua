@@ -116,7 +116,7 @@ hl.env("ENABLE_HDR_WSI", "1")
 hl.config({
     general = {
         gaps_in = 5,
-        gaps_out = 10,
+        gaps_out = 25,
         border_size = 2,
         ["col.active_border"]   = theme.border_active,
         ["col.inactive_border"] = theme.border_inactive,
@@ -479,6 +479,11 @@ end)
 -- Re-apply XWayland primary monitor after hotplug or layout changes
 hl.on("monitor.added", sync_xwayland_primary)
 hl.on("monitor.layout_changed", sync_xwayland_primary)
+
+-- Refresh Waybar's focused-monitor top-edge glow indicator
+hl.on("monitor.focused", function()
+    hl.exec_cmd("pkill -RTMIN+10 waybar")
+end)
 
 -- Raise focused floating windows above other floating windows
 hl.on("window.active", function(win)
