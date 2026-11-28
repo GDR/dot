@@ -98,12 +98,80 @@ lib.my.mkFeature {
           shadow_inactive = "${rgba r.background "99"}",
         }
       '';
+
+      hyprWallpaper = pkgs.writeShellApplication {
+        name = "hypr-wallpaper";
+        runtimeInputs = [
+          pkgs.awww
+          pkgs.coreutils
+        ];
+        text = ''
+          hour=$((10#$(TZ=UTC-3 date +%H)))
+          if (( hour >= 8 && hour < 20 )); then
+            img="$HOME/Documents/wallpaper/10-15-Day-6k.jpg"
+          else
+            img="$HOME/Documents/wallpaper/10-15-Night-6k.jpg"
+          fi
+
+          for _ in $(seq 1 20); do
+            if awww query >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.25
+          done
+
+          exec awww img "$img" --transition-type fade --transition-duration 1
+        '';
+      };
     in
     {
       # Start gnome-keyring daemon as a user systemd service (secrets only; SSH uses programs.ssh.startAgent).
       services.gnome-keyring = {
         enable = true;
         components = [ "secrets" ];
+      };
+
+      systemd.user.services.awww-daemon = {
+        Unit = {
+          Description = "Wayland wallpaper daemon (awww)";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = "${pkgs.awww}/bin/awww-daemon";
+          Restart = "on-failure";
+          RestartSec = 1;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      systemd.user.services.hypr-wallpaper = {
+        Unit = {
+          Description = "Set Hyprland day/night wallpaper";
+          PartOf = [ "graphical-session.target" ];
+          After = [
+            "graphical-session.target"
+            "awww-daemon.service"
+          ];
+          Wants = [ "awww-daemon.service" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${hyprWallpaper}/bin/hypr-wallpaper";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      systemd.user.timers.hypr-wallpaper = {
+        Unit.Description = "Switch Hyprland wallpaper at 08:00 and 20:00 (UTC+3)";
+        Timer = {
+          OnCalendar = [
+            "*-*-* 08:00:00"
+            "*-*-* 20:00:00"
+          ];
+          Persistent = true;
+        };
+        Install.WantedBy = [ "timers.target" ];
       };
 
       home.packages = [
