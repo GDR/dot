@@ -129,7 +129,6 @@ lib.my.mkFeature {
           "c" = "cursor";
           "ls" = "eza -l --group-directories-first";
           "dotfiles" = "cd ~/Workspaces/gdr/dot";
-          "lwt" = "lazyworktree";
           "lg" = "lazygit";
         };
       };
