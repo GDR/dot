@@ -366,6 +366,7 @@ local function cycle_monitor(step)
 end
 
 local tab_screen_select = false
+local tab_screen_move = false
 local tab_picked_screen = false
 
 hl.bind(mainMod .. " + Tab", function()
@@ -381,11 +382,20 @@ hl.bind(mainMod .. " + Tab", function()
 end, { release = true })
 
 hl.bind(mainMod .. " + SHIFT + Tab", function()
-    cycle_monitor(-1)
+    tab_screen_move = true
+    tab_picked_screen = false
+end)
+hl.bind(mainMod .. " + SHIFT + Tab", function()
+    if tab_screen_move and not tab_picked_screen then
+        cycle_monitor(-1)
+    end
+    tab_screen_move = false
+    tab_picked_screen = false
 end, { release = true })
 
 -- Per-screen workspaces: 1..9,0 operate on the focused monitor's 10-workspace block
--- (while Super+Tab is held, 1/2/3 jump directly to monitor 1/2/3)
+-- (while Super+Tab is held, 1/2/3 jump directly to monitor 1/2/3;
+--  while Super+Shift+Tab is held, 1/2/3 move the focused window to that monitor's active workspace)
 local function target_ws(slot)
     local mon = hl.get_active_monitor()
     local offset = (mon and monitor_offsets[mon.name]) or 0
@@ -406,6 +416,14 @@ for slot = 1, 10 do
         hl.dispatch(hl.dsp.focus({ workspace = target_ws(slot) }))
     end)
     hl.bind(mainMod .. " + SHIFT + " .. key, function()
+        if tab_screen_move and slot <= #monitor_order then
+            local ws = hl.get_active_workspace(monitor_order[slot])
+            if ws then
+                hl.dispatch(hl.dsp.window.move({ workspace = ws.id }))
+                tab_picked_screen = true
+            end
+            return
+        end
         hl.dispatch(hl.dsp.window.move({ workspace = target_ws(slot) }))
     end)
 end
