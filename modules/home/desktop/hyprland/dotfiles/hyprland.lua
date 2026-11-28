@@ -241,6 +241,18 @@ hl.window_rule({
     move = slots_dp2.bottom_right.move,
 })
 
+-- Pin Tracy Profiler to top-right slot (B) on workspace 11 (DP-2)
+hl.window_rule({
+    match = {
+        class = "^(tracy)$",
+        title = "^(Tracy Profiler.*)$",
+    },
+    workspace = "11 silent",
+    float = true,
+    size = slots_dp2.top_right.size,
+    move = slots_dp2.top_right.move,
+})
+
 ------------------------------------------------------------
 -- Layer rules
 ------------------------------------------------------------
