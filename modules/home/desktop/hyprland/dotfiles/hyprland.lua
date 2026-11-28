@@ -64,7 +64,7 @@ for _, mon in ipairs(monitor_order) do
 end
 
 hl.workspace_rule({
-    workspace = "19", -- slot 9 on DP-2
+    workspace = "11", -- slot 9 on DP-2
     monitor = top_monitor,
     gaps_out = { top = 10, right = 1925, bottom = 10, left = 10 }, -- reserves right half of 3840px DP-2 for floating slots
 })
@@ -230,7 +230,7 @@ hl.window_rule({
         class = "^(steam_proton)$",
         title = "^(Americas.*)$",
     },
-    workspace = "19 silent",
+    workspace = "11 silent",
     float = true,
     size = slots_dp2.bottom_right.size,
     move = slots_dp2.bottom_right.move,
