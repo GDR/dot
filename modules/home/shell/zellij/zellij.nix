@@ -26,6 +26,16 @@ lib.my.mkFeature {
           mouse_mode = true;
           pane_frames = true;
           scroll_buffer_size = 10000;
+          copy_on_select = false;
+
+          keybinds.shared._children = [
+            {
+              bind = {
+                _args = [ "Ctrl Shift c" ];
+                Copy = { };
+              };
+            }
+          ];
 
           themes.${theme.name} = {
             fg = t.foreground;
