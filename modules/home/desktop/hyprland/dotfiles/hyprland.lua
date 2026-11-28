@@ -145,7 +145,7 @@ hl.config({
             range = 25,
             render_power = 3,
             offset = { 0, 8 },
-            color = "rgba(000000BB)",
+            color = "rgba(000000AA)",
             color_inactive = "rgba(00000077)",
         },
     },
